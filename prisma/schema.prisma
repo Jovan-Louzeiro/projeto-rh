@@ -1,0 +1,71 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Sexo {
+  MASCULINO
+  FEMININO
+  INTERSEXO
+  NAO_INFORMADO
+}
+
+enum Genero {
+  HOMEM
+  MULHER
+  NAO_BINARIO
+  NAO_INFORMADO
+  OUTRO
+}
+
+enum Escolaridade {
+  NAO_INFORMADO
+  FUNDAMENTAL_INCOMPLETO
+  FUNDAMENTAL_COMPLETO
+  MEDIO_INCOMPLETO
+  MEDIO_COMPLETO
+  TECNICO_INCOMPLETO
+  TECNICO_COMPLETO
+  SUPERIOR_INCOMPLETO
+  SUPERIOR_COMPLETO
+  POS_GRADUACAO
+  MESTRADO
+  DOUTORADO
+}
+
+enum Nivel {
+  NIVEL1 @map("1")
+  NIVEL2 @map("2")
+  NIVEL3 @map("3")
+  NIVEL4 @map("4")
+  NIVEL5 @map("5")
+}
+
+enum Racacor {
+  BRANCA
+  PRETA
+  PARDA
+  AMARELA
+  INDIGENA
+  NAO_DECLARADA
+}
+
+model servidores {
+  id_servidor Int @id @default(autoincrement())
+  matricula String @unique @db.VarChar(50)
+  nome_completo String @db.VarChar(150)
+  nome_social String? @db.VarChar(150)
+  cpf String @unique @db.VarChar(11)
+  rg String @unique @db.VarChar(30)
+  data_nascimento DateTime
+  nome_mae String @db.VarChar(150)
+  sexo Sexo
+  genero Genero
+  racacor Racacor
+  escolaridade Escolaridade
+  nivel Nivel
+}
