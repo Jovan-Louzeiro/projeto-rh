@@ -7,65 +7,232 @@ datasource db {
   provider = "postgresql"
 }
 
-enum Sexo {
-  MASCULINO
-  FEMININO
-  INTERSEXO
-  NAO_INFORMADO
+model Sexo {
+  id_sexo Int @id @default(autoincrement())
+  descricao String @db.VarChar(10)
+
+  servidores Servidores[]
 }
 
-enum Genero {
-  HOMEM
-  MULHER
-  NAO_BINARIO
-  NAO_INFORMADO
-  OUTRO
+model Genero {
+  id_genero Int @id @default(autoincrement())
+  descricao String 
+
+  servidores Servidores[]
 }
 
-enum Escolaridade {
-  NAO_INFORMADO
-  FUNDAMENTAL_INCOMPLETO
-  FUNDAMENTAL_COMPLETO
-  MEDIO_INCOMPLETO
-  MEDIO_COMPLETO
-  TECNICO_INCOMPLETO
-  TECNICO_COMPLETO
-  SUPERIOR_INCOMPLETO
-  SUPERIOR_COMPLETO
-  POS_GRADUACAO
-  MESTRADO
-  DOUTORADO
+model Racacor {
+  id_racacor Int @id @default(autoincrement())
+  descricao String @db.VarChar(10)
+
+  servidores Servidores[]
 }
 
-enum Nivel {
-  NIVEL1 @map("1")
-  NIVEL2 @map("2")
-  NIVEL3 @map("3")
-  NIVEL4 @map("4")
-  NIVEL5 @map("5")
+model Escolaridade {
+  id_escolaridade Int @id @default(autoincrement())
+  descricao String @db.VarChar(20)
+
+  servidores Servidores[]
 }
 
-enum Racacor {
-  BRANCA
-  PRETA
-  PARDA
-  AMARELA
-  INDIGENA
-  NAO_DECLARADA
+model Nivel {
+  id_nivel Int @id @default(autoincrement())
+  descricao String @db.VarChar(10)
+
+  servidores Servidores[]
 }
 
-model servidores {
+model EstadoCivil {
+  id_estado_civil Int @id @default(autoincrement())
+  descricao String @db.VarChar(15)
+
+  servidor Servidores[]
+}
+
+model Pais {
+  id_pais Int @id @default(autoincrement())
+  nome String @db.VarChar(100)
+  gentilico String @db.VarChar(100)
+  codigo_iso String @unique @db.Char(2)
+
+  estados Estado[]
+
+  servidores_nascimento Servidores[] @relation("PaisNascimento")
+  servidores_nacionalidade Servidores[] @relation("Nacionalidade")
+}
+
+model Estado{
+  id_estado Int @id @default(autoincrement())
+  nome String @db.VarChar(100)
+  uf String @unique @db.Char(2)
+
+  pais_id Int
+  pais Pais @relation(fields: [pais_id], references: [id_pais])
+
+  municipios Municipio[]
+
+  endereco_servidores Servidores[] @relation("EstadoEndereco")
+}
+
+model Municipio{
+  id_municipio Int @id @default(autoincrement())
+  nome String @db.VarChar (100)
+
+  estado_id Int
+  estado Estado @relation(fields: [estado_id], references: [id_estado])
+
+  servidores_nascimento Servidores[] @relation("MunicipioNascimento")
+
+  servidores_endereco Servidores[] @relation("MunicipioEndereco")
+}
+
+model Zona{
+  id_zona Int @id @default(autoincrement())
+  descricao String @db.VarChar(10)
+
+  servidores_endereco Servidores[] @relation("ZonaEndereco")
+}
+
+model LocalizacaoDiferenciada{
+  id_localizacao_diferenciada Int @id @default(autoincrement())
+  descricao String @db.VarChar(50)
+
+  servidores Servidores[]
+}
+
+model Cargo{
+  id_cargo Int @id @default(autoincrement())
+  descricao String @db.VarChar(50)
+
+  servidores Servidores[]
+}
+
+model Departamento{
+  id_departamento Int @id @default(autoincrement())
+  descricao String @db.VarChar(50)
+
+  servidores Servidores[]
+}
+
+model TipoVinculo{
+  id_tipo_vinculo Int @id @default(autoincrement())
+  descricao String @db.VarChar(50)
+
+  servidores Servidores[]
+}
+
+model TipoEnsinoMedioCursado{
+  id_tipo_ensino_medio_cursado Int @id @default(autoincrement())
+  descricao String @db.VarChar(50)
+
+  servidores Servidores[]
+}
+
+model Situacao{
+  id_situacao Int @id @default(autoincrement())
+  descricao String @db.VarChar(30)
+
+  servidores Servidores[]
+}
+
+model Servidores {
   id_servidor Int @id @default(autoincrement())
   matricula String @unique @db.VarChar(50)
+
+  // Identificação
   nome_completo String @db.VarChar(150)
   nome_social String? @db.VarChar(150)
   cpf String @unique @db.VarChar(11)
-  rg String @unique @db.VarChar(30)
+  rg String @unique @db.VarChar(11)
+
+  // Nacimento
   data_nascimento DateTime
+
+  pais_nascimento_id Int
+  pais_nascimento Pais @relation( "PaisNascimento", fields: [pais_nascimento_id], references: [id_pais])
+
+  municipio_nascimento_id Int
+  municipio_nascimento Municipio @relation("MunicipioNascimento", fields: [municipio_nascimento_id], references: [id_municipio])
+
+
+
+  // Nacionalidade
+  nacionalidade_id Int
+  nacionalidade Pais @relation("Nacionalidade", fields: [nacionalidade_id], references: [id_pais])
+
+  ano_chegada_brasil Int
+
+
+  // Filiação
+  cpf_mae String? @db.VarChar(11)
   nome_mae String @db.VarChar(150)
-  sexo Sexo
-  genero Genero
-  racacor Racacor
-  escolaridade Escolaridade
-  nivel Nivel
+  cpf_pai String? @db.VarChar(11)
+  nome_pai String @db.VarChar(150)
+
+  // Estado Civil
+  estado_civil_id Int
+  estado_civil EstadoCivil @relation(fields: [estado_civil_id], references: [id_estado_civil])
+  
+  uniao_estavel Boolean @default(false)
+
+  // Características
+  sexo_id Int
+  sexo Sexo @relation(fields: [sexo_id], references: [id_sexo])
+
+
+  genero_id Int
+  genero Genero @relation(fields: [genero_id], references: [id_genero])
+
+  racacor_id Int
+  racacor Racacor @relation(fields: [racacor_id], references: [id_racacor])
+
+  // Nivel
+  nivel_id Int
+  nivel Nivel @relation(fields: [nivel_id], references: [id_nivel])
+
+  // Contato
+  telefone_fixo String @db.VarChar(11) 
+  telefone_movel String @db.VarChar(11)
+  email String @db.VarChar(150)
+
+  // Endereço
+  cep String @db.VarChar(8)
+  logradouro String @db.VarChar(100)
+  numero String? @db.VarChar(10)
+  complemento String? @db.VarChar(100)
+  bairro String @db.VarChar(50)
+
+  uf_endereco_id Int
+  uf_endereco Estado @relation("EstadoEndereco", fields: [uf_endereco_id], references: [id_estado])
+
+  municipio_endereco_id Int
+  municipio_endereco Municipio @relation("MunicipioEndereco", fields: [municipio_endereco_id], references: [id_municipio])
+
+  zona_endereco_id Int
+  zona_endereco Zona @relation("ZonaEndereco", fields: [zona_endereco_id], references: [id_zona])
+
+  localizacao_diferenciada_id Int?
+  localizacao_diferenciada LocalizacaoDiferenciada? @relation(fields: [localizacao_diferenciada_id], references: [id_localizacao_diferenciada])
+
+  // Dados Funcionais
+  admissao DateTime
+  
+  cargo_id Int
+  cargo Cargo @relation(fields: [cargo_id], references: [id_cargo])
+
+  departamento_id Int
+  departamento Departamento @relation(fields: [departamento_id], references: [id_departamento])
+
+  tipo_vinculo_id Int
+  tipo_vinculo TipoVinculo @relation(fields: [tipo_vinculo_id], references: [id_tipo_vinculo])
+
+  escolaridade_id Int
+  escolaridade Escolaridade @relation(fields: [escolaridade_id],references: [id_escolaridade])
+
+  tipo_ensino_medio_cursado_id Int
+  tipo_ensino_medio_cursado TipoEnsinoMedioCursado @relation(fields: [tipo_ensino_medio_cursado_id], references: [id_tipo_ensino_medio_cursado])
+
+  situacao_id Int
+  situacao Situacao @relation(fields: [situacao_id], references: [id_situacao])
+
 }
