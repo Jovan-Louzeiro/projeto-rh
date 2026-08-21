@@ -8,231 +8,318 @@ datasource db {
 }
 
 model Sexo {
-  id_sexo Int @id @default(autoincrement())
-  descricao String @db.VarChar(10)
+  id_sexo   Int    @id @default(autoincrement())
+  descricao String @unique @db.VarChar(10)
 
-  servidores Servidores[]
+  servidores Servidor[]
 }
 
 model Genero {
-  id_genero Int @id @default(autoincrement())
-  descricao String 
+  id_genero Int    @id @default(autoincrement())
+  descricao String @unique
 
-  servidores Servidores[]
+  servidores Servidor[]
 }
 
-model Racacor {
-  id_racacor Int @id @default(autoincrement())
-  descricao String @db.VarChar(10)
+model RacaCor {
+  id_racacor Int    @id @default(autoincrement())
+  descricao  String @unique @db.VarChar(10)
 
-  servidores Servidores[]
+  servidores Servidor[]
 }
 
 model Escolaridade {
-  id_escolaridade Int @id @default(autoincrement())
-  descricao String @db.VarChar(20)
+  id_escolaridade Int    @id @default(autoincrement())
+  descricao       String @unique @db.VarChar(20)
 
-  servidores Servidores[]
+  servidores Servidor[]
 }
 
 model Nivel {
-  id_nivel Int @id @default(autoincrement())
-  descricao String @db.VarChar(10)
+  id_nivel  Int    @id @default(autoincrement())
+  descricao String @unique @db.VarChar(10)
 
-  servidores Servidores[]
+  servidores Servidor[]
 }
 
 model EstadoCivil {
-  id_estado_civil Int @id @default(autoincrement())
-  descricao String @db.VarChar(15)
+  id_estado_civil Int    @id @default(autoincrement())
+  descricao       String @unique @db.VarChar(15)
 
-  servidor Servidores[]
+  servidores Servidor[]
 }
 
 model Pais {
-  id_pais Int @id @default(autoincrement())
-  nome String @db.VarChar(100)
-  gentilico String @db.VarChar(100)
+  id_pais    Int    @id @default(autoincrement())
+  nome       String @unique @db.VarChar(100)
+  gentilico  String @db.VarChar(100)
   codigo_iso String @unique @db.Char(2)
 
   estados Estado[]
 
-  servidores_nascimento Servidores[] @relation("PaisNascimento")
-  servidores_nacionalidade Servidores[] @relation("Nacionalidade")
+  servidores_nascimento    Servidor[] @relation("PaisNascimento")
+  servidores_nacionalidade Servidor[] @relation("Nacionalidade")
 }
 
-model Estado{
-  id_estado Int @id @default(autoincrement())
-  nome String @db.VarChar(100)
-  uf String @unique @db.Char(2)
+model Estado {
+  id_estado Int    @id @default(autoincrement())
+  nome      String @unique @db.VarChar(100)
+  uf        String @unique @db.Char(2)
 
   pais_id Int
-  pais Pais @relation(fields: [pais_id], references: [id_pais])
+  pais    Pais @relation(fields: [pais_id], references: [id_pais])
 
   municipios Municipio[]
-
-  endereco_servidores Servidores[] @relation("EstadoEndereco")
+  rg         RG[]        @relation("RgUf")
+  ctps       CTPS[]      @relation("CtpsUf")
 }
 
-model Municipio{
-  id_municipio Int @id @default(autoincrement())
-  nome String @db.VarChar (100)
+model Municipio {
+  id_municipio Int    @id @default(autoincrement())
+  nome         String @db.VarChar(100)
 
   estado_id Int
-  estado Estado @relation(fields: [estado_id], references: [id_estado])
+  estado    Estado @relation(fields: [estado_id], references: [id_estado])
 
-  servidores_nascimento Servidores[] @relation("MunicipioNascimento")
+  servidores_nascimento Servidor[] @relation("MunicipioNascimento")
 
-  servidores_endereco Servidores[] @relation("MunicipioEndereco")
+  servidores_endereco Servidor[] @relation("MunicipioEndereco")
+
+  @@unique([nome, estado_id])
 }
 
-model Zona{
-  id_zona Int @id @default(autoincrement())
-  descricao String @db.VarChar(10)
+model ZonaEndereco {
+  id_zona_endereco Int    @id @default(autoincrement())
+  descricao        String @unique @db.VarChar(10)
 
-  servidores_endereco Servidores[] @relation("ZonaEndereco")
+  servidores_endereco Servidor[] @relation("ZonaEndereco")
 }
 
-model LocalizacaoDiferenciada{
-  id_localizacao_diferenciada Int @id @default(autoincrement())
-  descricao String @db.VarChar(50)
+model LocalizacaoDiferenciada {
+  id_localizacao_diferenciada Int    @id @default(autoincrement())
+  descricao                   String @unique @db.VarChar(50)
 
-  servidores Servidores[]
+  servidores Servidor[]
 }
 
-model Cargo{
-  id_cargo Int @id @default(autoincrement())
-  descricao String @db.VarChar(50)
+model Cargo {
+  id_cargo  Int    @id @default(autoincrement())
+  descricao String @unique @db.VarChar(50)
 
-  servidores Servidores[]
+  servidores Servidor[]
 }
 
-model Departamento{
-  id_departamento Int @id @default(autoincrement())
-  descricao String @db.VarChar(50)
+model Funcao {
+  id_funcao Int    @id @default(autoincrement())
+  descricao String @unique @db.VarChar(50)
 
-  servidores Servidores[]
+  servidores Servidor[]
 }
 
-model TipoVinculo{
-  id_tipo_vinculo Int @id @default(autoincrement())
-  descricao String @db.VarChar(50)
+model Departamento {
+  id_departamento Int    @id @default(autoincrement())
+  descricao       String @unique @db.VarChar(50)
 
-  servidores Servidores[]
+  servidores Servidor[]
 }
 
-model TipoEnsinoMedioCursado{
-  id_tipo_ensino_medio_cursado Int @id @default(autoincrement())
-  descricao String @db.VarChar(50)
+model TipoVinculo {
+  id_tipo_vinculo Int    @id @default(autoincrement())
+  descricao       String @unique @db.VarChar(50)
 
-  servidores Servidores[]
+  servidores Servidor[]
 }
 
-model Situacao{
-  id_situacao Int @id @default(autoincrement())
-  descricao String @db.VarChar(30)
+model TipoEnsinoMedioCursado {
+  id_tipo_ensino_medio_cursado Int    @id @default(autoincrement())
+  descricao                    String @unique @db.VarChar(50)
 
-  servidores Servidores[]
+  servidores Servidor[]
 }
 
-model Servidores {
+model Situacao {
+  id_situacao Int    @id @default(autoincrement())
+  descricao   String @unique @db.VarChar(30)
+
+  servidores Servidor[]
+}
+
+model RG {
+  id_rg            Int    @id @default(autoincrement())
+  rg               String @unique @db.VarChar(30)
+  rg_orgao_emissor String @db.VarChar(30)
+
+  rg_uf_id Int
+  rg_uf    Estado @relation("RgUf", fields: [rg_uf_id], references: [id_estado])
+
+  rg_data_emissao DateTime
+
+  servidor Servidor?
+}
+
+model TituloEleitor {
+  id_titulo_eleitor Int    @id @default(autoincrement())
+  numero            String @unique @db.VarChar(20)
+  zona              String @db.VarChar(10)
+  secao             String @db.VarChar(10)
+
+  servidor Servidor?
+}
+
+model CTPS {
+  id_ctps Int    @id @default(autoincrement())
+  numero  String @db.VarChar(15)
+  serie   String @db.VarChar(5)
+
+  uf_ctps_id Int
+  uf_ctps    Estado @relation("CtpsUf", fields: [uf_ctps_id], references: [id_estado])
+
+  data_emissao DateTime
+
+  servidor Servidor?
+
+  @@unique([numero, serie, uf_ctps_id])
+}
+
+model CNH {
+  id_cnh        Int      @id @default(autoincrement())
+  numero        String   @unique @db.VarChar(15)
+  categoria     String   @db.VarChar(15)
+  data_emissao  DateTime
+  data_validade DateTime
+
+  servidor Servidor?
+}
+
+model CID {
+  id_cid Int    @id @default(autoincrement())
+  codigo String @unique @db.VarChar(10)
+
+  servidor_cid ServidorCid[]
+}
+
+model ServidorCid {
+  id_servidor_cid Int @id @default(autoincrement())
+
+  servidor_id Int
+  servidor    Servidor @relation(fields: [servidor_id], references: [id_servidor])
+
+  cid_id Int
+  cid    CID @relation(fields: [cid_id], references: [id_cid])
+
+  @@unique([servidor_id, cid_id])
+}
+
+model Servidor {
   id_servidor Int @id @default(autoincrement())
-  matricula String @unique @db.VarChar(50)
 
   // Identificação
-  nome_completo String @db.VarChar(150)
-  nome_social String? @db.VarChar(150)
-  cpf String @unique @db.VarChar(11)
-  rg String @unique @db.VarChar(11)
+  matricula     String  @unique @db.VarChar(50)
+  nome_completo String  @db.VarChar(150)
+  nome_social   String? @db.VarChar(150)
+  cpf           String  @unique @db.VarChar(11)
+
+  rg_id Int @unique
+  rg    RG  @relation(fields: [rg_id], references: [id_rg])
+
+  nis_pis String @unique @db.VarChar(20)
 
   // Nacimento
   data_nascimento DateTime
 
   pais_nascimento_id Int
-  pais_nascimento Pais @relation( "PaisNascimento", fields: [pais_nascimento_id], references: [id_pais])
+  pais_nascimento    Pais @relation("PaisNascimento", fields: [pais_nascimento_id], references: [id_pais])
 
-  municipio_nascimento_id Int
-  municipio_nascimento Municipio @relation("MunicipioNascimento", fields: [municipio_nascimento_id], references: [id_municipio])
-
-
+  municipio_nascimento_id Int?
+  municipio_nascimento    Municipio? @relation("MunicipioNascimento", fields: [municipio_nascimento_id], references: [id_municipio])
 
   // Nacionalidade
   nacionalidade_id Int
-  nacionalidade Pais @relation("Nacionalidade", fields: [nacionalidade_id], references: [id_pais])
+  nacionalidade    Pais @relation("Nacionalidade", fields: [nacionalidade_id], references: [id_pais])
 
-  ano_chegada_brasil Int
-
+  ano_chegada_brasil Int?
 
   // Filiação
-  cpf_mae String? @db.VarChar(11)
-  nome_mae String @db.VarChar(150)
-  cpf_pai String? @db.VarChar(11)
-  nome_pai String @db.VarChar(150)
+  cpf_mae  String? @db.VarChar(11)
+  nome_mae String  @db.VarChar(150)
+  cpf_pai  String? @db.VarChar(11)
+  nome_pai String  @db.VarChar(150)
 
   // Estado Civil
   estado_civil_id Int
-  estado_civil EstadoCivil @relation(fields: [estado_civil_id], references: [id_estado_civil])
-  
+  estado_civil    EstadoCivil @relation(fields: [estado_civil_id], references: [id_estado_civil])
+
   uniao_estavel Boolean @default(false)
 
   // Características
   sexo_id Int
-  sexo Sexo @relation(fields: [sexo_id], references: [id_sexo])
-
+  sexo    Sexo @relation(fields: [sexo_id], references: [id_sexo])
 
   genero_id Int
-  genero Genero @relation(fields: [genero_id], references: [id_genero])
+  genero    Genero @relation(fields: [genero_id], references: [id_genero])
 
   racacor_id Int
-  racacor Racacor @relation(fields: [racacor_id], references: [id_racacor])
-
-  // Nivel
-  nivel_id Int
-  nivel Nivel @relation(fields: [nivel_id], references: [id_nivel])
+  racacor    RacaCor @relation(fields: [racacor_id], references: [id_racacor])
 
   // Contato
-  telefone_fixo String @db.VarChar(11) 
+  telefone_fixo  String @db.VarChar(11)
   telefone_movel String @db.VarChar(11)
-  email String @db.VarChar(150)
+  email          String @db.VarChar(150)
 
   // Endereço
-  cep String @db.VarChar(8)
-  logradouro String @db.VarChar(100)
-  numero String? @db.VarChar(10)
+  cep         String  @db.VarChar(8)
+  logradouro  String  @db.VarChar(100)
+  numero      String? @db.VarChar(10)
   complemento String? @db.VarChar(100)
-  bairro String @db.VarChar(50)
-
-  uf_endereco_id Int
-  uf_endereco Estado @relation("EstadoEndereco", fields: [uf_endereco_id], references: [id_estado])
+  bairro      String  @db.VarChar(50)
 
   municipio_endereco_id Int
-  municipio_endereco Municipio @relation("MunicipioEndereco", fields: [municipio_endereco_id], references: [id_municipio])
+  municipio_endereco    Municipio @relation("MunicipioEndereco", fields: [municipio_endereco_id], references: [id_municipio])
 
   zona_endereco_id Int
-  zona_endereco Zona @relation("ZonaEndereco", fields: [zona_endereco_id], references: [id_zona])
+  zona_endereco    ZonaEndereco @relation("ZonaEndereco", fields: [zona_endereco_id], references: [id_zona_endereco])
 
   localizacao_diferenciada_id Int?
-  localizacao_diferenciada LocalizacaoDiferenciada? @relation(fields: [localizacao_diferenciada_id], references: [id_localizacao_diferenciada])
+  localizacao_diferenciada    LocalizacaoDiferenciada? @relation(fields: [localizacao_diferenciada_id], references: [id_localizacao_diferenciada])
+
+  // Documentos
+  titulo_eleitor_id Int           @unique
+  titulo_eleitor    TituloEleitor @relation(fields: [titulo_eleitor_id], references: [id_titulo_eleitor])
+
+  ctps_id Int  @unique
+  ctps    CTPS @relation(fields: [ctps_id], references: [id_ctps])
+
+  cnh_id Int @unique
+  cnh    CNH @relation(fields: [cnh_id], references: [id_cnh])
+
+  // Saúde
+  cartao_sus   String        @db.VarChar(20)
+  servidor_cid ServidorCid[]
 
   // Dados Funcionais
   admissao DateTime
-  
+
   cargo_id Int
-  cargo Cargo @relation(fields: [cargo_id], references: [id_cargo])
+  cargo    Cargo @relation(fields: [cargo_id], references: [id_cargo])
+
+  funcao_id Int
+  funcao    Funcao @relation(fields: [funcao_id], references: [id_funcao])
 
   departamento_id Int
-  departamento Departamento @relation(fields: [departamento_id], references: [id_departamento])
+  departamento    Departamento @relation(fields: [departamento_id], references: [id_departamento])
 
   tipo_vinculo_id Int
-  tipo_vinculo TipoVinculo @relation(fields: [tipo_vinculo_id], references: [id_tipo_vinculo])
+  tipo_vinculo    TipoVinculo @relation(fields: [tipo_vinculo_id], references: [id_tipo_vinculo])
 
   escolaridade_id Int
-  escolaridade Escolaridade @relation(fields: [escolaridade_id],references: [id_escolaridade])
+  escolaridade    Escolaridade @relation(fields: [escolaridade_id], references: [id_escolaridade])
 
   tipo_ensino_medio_cursado_id Int
-  tipo_ensino_medio_cursado TipoEnsinoMedioCursado @relation(fields: [tipo_ensino_medio_cursado_id], references: [id_tipo_ensino_medio_cursado])
+  tipo_ensino_medio_cursado    TipoEnsinoMedioCursado @relation(fields: [tipo_ensino_medio_cursado_id], references: [id_tipo_ensino_medio_cursado])
 
   situacao_id Int
-  situacao Situacao @relation(fields: [situacao_id], references: [id_situacao])
+  situacao    Situacao @relation(fields: [situacao_id], references: [id_situacao])
 
+  nivel_id Int
+  nivel    Nivel @relation(fields: [nivel_id], references: [id_nivel])
 }
