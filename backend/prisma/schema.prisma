@@ -39,7 +39,6 @@ model Nivel {
   id_nivel  Int    @id @default(autoincrement())
   descricao String @unique @db.VarChar(10)
 
-  servidores Servidor[]
 }
 
 model EstadoCivil {
@@ -57,8 +56,7 @@ model Pais {
 
   estados Estado[]
 
-  servidores_nascimento    Servidor[] @relation("PaisNascimento")
-  servidores_nacionalidade Servidor[] @relation("Nacionalidade")
+  servidores_nascimento    Servidor[] @relation("PaisOrigem")
 }
 
 model Estado {
@@ -106,28 +104,28 @@ model Cargo {
   id_cargo  Int    @id @default(autoincrement())
   descricao String @unique @db.VarChar(50)
 
-  servidores Servidor[]
+  historicos_funcionais HistoricoFuncional[]
 }
 
 model Funcao {
   id_funcao Int    @id @default(autoincrement())
   descricao String @unique @db.VarChar(50)
 
-  servidores Servidor[]
+  historicos_funcionais HistoricoFuncional[]
 }
 
 model Departamento {
   id_departamento Int    @id @default(autoincrement())
   descricao       String @unique @db.VarChar(50)
 
-  servidores Servidor[]
+  historicos_funcionais HistoricoFuncional[]
 }
 
 model TipoVinculo {
   id_tipo_vinculo Int    @id @default(autoincrement())
   descricao       String @unique @db.VarChar(50)
 
-  servidores Servidor[]
+  historicos_funcionais HistoricoFuncional[]
 }
 
 model TipoEnsinoMedioCursado {
@@ -141,12 +139,13 @@ model Situacao {
   id_situacao Int    @id @default(autoincrement())
   descricao   String @unique @db.VarChar(30)
 
-  servidores Servidor[]
+  historico_funcional HistoricoFuncional[]
+  servidor Servidor[]
 }
 
 model RG {
   id_rg            Int    @id @default(autoincrement())
-  rg               String @unique @db.VarChar(30)
+  rg               String @db.VarChar(30)
   rg_orgao_emissor String @db.VarChar(30)
 
   rg_uf_id Int
@@ -154,7 +153,10 @@ model RG {
 
   rg_data_emissao DateTime
 
-  servidor Servidor?
+  servidor_id Int @unique
+  servidor Servidor @relation(fields: [servidor_id], references: [id_servidor])
+
+  @@unique([rg, rg_orgao_emissor, rg_uf_id])
 }
 
 model TituloEleitor {
@@ -163,20 +165,28 @@ model TituloEleitor {
   zona              String @db.VarChar(10)
   secao             String @db.VarChar(10)
 
-  servidor Servidor?
+  servidor_id Int @unique
+  servidor Servidor @relation(fields: [servidor_id], references: [id_servidor])
+}
+
+enum TipoCTPS{
+  ANTIGO
+  NOVO
 }
 
 model CTPS {
   id_ctps Int    @id @default(autoincrement())
-  numero  String @db.VarChar(15)
-  serie   String @db.VarChar(5)
+  tipo_ctps TipoCTPS
+  numero  String? @db.VarChar(15)
+  serie   String? @db.VarChar(5)
 
-  uf_ctps_id Int
-  uf_ctps    Estado @relation("CtpsUf", fields: [uf_ctps_id], references: [id_estado])
+  uf_ctps_id Int?
+  uf_ctps    Estado? @relation("CtpsUf", fields: [uf_ctps_id], references: [id_estado])
 
-  data_emissao DateTime
+  data_emissao DateTime?
 
-  servidor Servidor?
+  servidor_id Int @unique
+  servidor Servidor @relation(fields: [servidor_id], references: [id_servidor])
 
   @@unique([numero, serie, uf_ctps_id])
 }
@@ -188,7 +198,8 @@ model CNH {
   data_emissao  DateTime
   data_validade DateTime
 
-  servidor Servidor?
+  servidor_id Int @unique
+  servidor Servidor @relation(fields: [servidor_id], references: [id_servidor])
 }
 
 model CID {
@@ -210,6 +221,99 @@ model ServidorCid {
   @@unique([servidor_id, cid_id])
 }
 
+model Nacionalidade {
+  id_nacionalidade Int @id @default(autoincrement())
+  descricao String @unique @db.VarChar(15)
+
+  servidores Servidor[]
+}
+
+enum TipoCertidao{
+  NASCIMENTO
+  CASAMENTO
+}
+
+model Certidao{
+  id_certidao Int @id @default(autoincrement())
+  nova_certidao Boolean
+  matricula String @db.VarChar(50)
+  tipo_certidao TipoCertidao
+
+  termo String? @db.VarChar(5)
+  folha String? @db.VarChar(5)
+  livro String? @db.VarChar(5)
+
+  data_emissao DateTime
+
+  servidor_id Int @unique
+  servidor Servidor @relation(fields: [servidor_id], references: [id_servidor])
+
+}
+
+model CursoFormacaoContinuada {
+  id_curso_formacao_continuada Int @id @default(autoincrement())
+  descricao String @unique @db.VarChar(50)
+
+  servidores ServidorCursoFormacaoContinuada[]
+}
+
+model ServidorCursoFormacaoContinuada {
+  id_servidor_curso_formacao_continuada Int @id @default(autoincrement())
+
+  servidor_id Int
+  servidor Servidor @relation(fields: [servidor_id], references: [id_servidor])
+
+  curso_formacao_continuada_id Int
+  curso_formacao_continuada CursoFormacaoContinuada @relation(fields: [curso_formacao_continuada_id], references: [id_curso_formacao_continuada])
+
+  @@unique([servidor_id, curso_formacao_continuada_id])
+
+}
+
+enum TipoContato{
+  TELEFONE_FIXO
+  TELEFONE_MOVEL
+  EMAIL
+}
+
+model Contato{
+  id_contato Int @id @default(autoincrement())
+  tipo_contato TipoContato
+  contato String @db.VarChar(150)
+  principal    Boolean     @default(false)
+
+  servidor_id Int
+  servidor Servidor @relation(fields: [servidor_id], references: [id_servidor])
+
+}
+
+model HistoricoFuncional{
+  id_historico_funcional Int @id @default(autoincrement())
+
+  servidor_id Int
+  servidor Servidor @relation(fields: [servidor_id], references: [id_servidor])
+
+  cargo_id Int
+  cargo    Cargo @relation(fields: [cargo_id], references: [id_cargo])
+
+  funcao_id Int?
+  funcao    Funcao? @relation(fields: [funcao_id], references: [id_funcao])
+
+  departamento_id Int?
+  departamento    Departamento? @relation(fields: [departamento_id], references: [id_departamento])
+
+  tipo_vinculo_id Int
+  tipo_vinculo    TipoVinculo @relation(fields: [tipo_vinculo_id], references: [id_tipo_vinculo])
+
+  situacao_id Int
+  situacao    Situacao @relation(fields: [situacao_id], references: [id_situacao])
+
+  data_inicio DateTime
+  data_fim DateTime?
+
+}
+
+
 model Servidor {
   id_servidor Int @id @default(autoincrement())
 
@@ -219,25 +323,23 @@ model Servidor {
   nome_social   String? @db.VarChar(150)
   cpf           String  @unique @db.VarChar(11)
 
-  rg_id Int @unique
-  rg    RG  @relation(fields: [rg_id], references: [id_rg])
+  rg RG?
 
-  nis_pis String @unique @db.VarChar(20)
+  nis_pis String? @unique @db.VarChar(20)
 
-  // Nacimento
+  // Nacimento / Nacionalidade
   data_nascimento DateTime
 
-  pais_nascimento_id Int
-  pais_nascimento    Pais @relation("PaisNascimento", fields: [pais_nascimento_id], references: [id_pais])
+  nacionalidade_id Int
+  nacionalidade Nacionalidade @relation(fields: [nacionalidade_id], references: [id_nacionalidade])
+
+  pais_origem_id Int?
+  pais_origem    Pais? @relation("PaisOrigem", fields: [pais_origem_id], references: [id_pais])
+
+  ano_chegada_brasil Int?
 
   municipio_nascimento_id Int?
   municipio_nascimento    Municipio? @relation("MunicipioNascimento", fields: [municipio_nascimento_id], references: [id_municipio])
-
-  // Nacionalidade
-  nacionalidade_id Int
-  nacionalidade    Pais @relation("Nacionalidade", fields: [nacionalidade_id], references: [id_pais])
-
-  ano_chegada_brasil Int?
 
   // Filiação
   cpf_mae  String? @db.VarChar(11)
@@ -246,25 +348,23 @@ model Servidor {
   nome_pai String  @db.VarChar(150)
 
   // Estado Civil
-  estado_civil_id Int
-  estado_civil    EstadoCivil @relation(fields: [estado_civil_id], references: [id_estado_civil])
+  estado_civil_id Int?
+  estado_civil    EstadoCivil? @relation(fields: [estado_civil_id], references: [id_estado_civil])
 
-  uniao_estavel Boolean @default(false)
+  uniao_estavel Boolean? @default(false)
 
   // Características
   sexo_id Int
   sexo    Sexo @relation(fields: [sexo_id], references: [id_sexo])
 
-  genero_id Int
-  genero    Genero @relation(fields: [genero_id], references: [id_genero])
+  genero_id Int?
+  genero    Genero? @relation(fields: [genero_id], references: [id_genero])
 
   racacor_id Int
   racacor    RacaCor @relation(fields: [racacor_id], references: [id_racacor])
 
   // Contato
-  telefone_fixo  String @db.VarChar(11)
-  telefone_movel String @db.VarChar(11)
-  email          String @db.VarChar(150)
+  contatos Contato[]
 
   // Endereço
   cep         String  @db.VarChar(8)
@@ -283,43 +383,32 @@ model Servidor {
   localizacao_diferenciada    LocalizacaoDiferenciada? @relation(fields: [localizacao_diferenciada_id], references: [id_localizacao_diferenciada])
 
   // Documentos
-  titulo_eleitor_id Int           @unique
-  titulo_eleitor    TituloEleitor @relation(fields: [titulo_eleitor_id], references: [id_titulo_eleitor])
-
-  ctps_id Int  @unique
-  ctps    CTPS @relation(fields: [ctps_id], references: [id_ctps])
-
-  cnh_id Int @unique
-  cnh    CNH @relation(fields: [cnh_id], references: [id_cnh])
+  certidao Certidao?
+  titulo_eleitor TituloEleitor?
+  ctps CTPS?
+  cnh CNH?
 
   // Saúde
-  cartao_sus   String        @db.VarChar(20)
+  cartao_sus   String?        @unique @db.VarChar(20)
   servidor_cid ServidorCid[]
 
   // Dados Funcionais
   admissao DateTime
 
-  cargo_id Int
-  cargo    Cargo @relation(fields: [cargo_id], references: [id_cargo])
-
-  funcao_id Int
-  funcao    Funcao @relation(fields: [funcao_id], references: [id_funcao])
-
-  departamento_id Int
-  departamento    Departamento @relation(fields: [departamento_id], references: [id_departamento])
-
-  tipo_vinculo_id Int
-  tipo_vinculo    TipoVinculo @relation(fields: [tipo_vinculo_id], references: [id_tipo_vinculo])
-
-  escolaridade_id Int
-  escolaridade    Escolaridade @relation(fields: [escolaridade_id], references: [id_escolaridade])
-
-  tipo_ensino_medio_cursado_id Int
-  tipo_ensino_medio_cursado    TipoEnsinoMedioCursado @relation(fields: [tipo_ensino_medio_cursado_id], references: [id_tipo_ensino_medio_cursado])
-
   situacao_id Int
   situacao    Situacao @relation(fields: [situacao_id], references: [id_situacao])
 
-  nivel_id Int
-  nivel    Nivel @relation(fields: [nivel_id], references: [id_nivel])
+  historicos_funcionais HistoricoFuncional[]
+
+  escolaridade_id Int?
+  escolaridade    Escolaridade? @relation(fields: [escolaridade_id], references: [id_escolaridade])
+
+  tipo_ensino_medio_cursado_id Int?
+  tipo_ensino_medio_cursado    TipoEnsinoMedioCursado? @relation(fields: [tipo_ensino_medio_cursado_id], references: [id_tipo_ensino_medio_cursado])
+
+  // Curso de Formação Continuada
+  cursos_formacao_continuada ServidorCursoFormacaoContinuada[]
+
+  // Outros
+  observacao String? @db.VarChar(500)
 }
