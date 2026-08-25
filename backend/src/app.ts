@@ -2,7 +2,7 @@ import express from "express"
 import router from "./routes/sexo.routes.js"
 
 const app = express()
-const port = 3000
+const port = Number(process.env.PORT) || 3000
 
 app.use(express.json())
 
