@@ -7,6 +7,8 @@ datasource db {
   provider = "postgresql"
 }
 
+
+// Tabelas de Dominio Simples
 model Sexo {
   id_sexo   Int    @id @default(autoincrement())
   descricao String @unique @db.VarChar(10)

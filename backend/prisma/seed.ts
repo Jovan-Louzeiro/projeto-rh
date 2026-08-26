@@ -135,6 +135,40 @@ async function main() {
             { descricao: "Rural" }
         ], skipDuplicates: true
     })
+
+    await prisma.tipoVinculo.createMany({
+        data: [
+            { descricao: "Efetivo" },
+            { descricao: "Contratado" },
+            { descricao: "Comissionado"}
+        ], skipDuplicates: true
+    })
+
+    await prisma.tipoEnsinoMedioCursado.createMany({
+        data: [
+            { descricao: "Regular" },
+            { descricao: "EJA" },
+            { descricao: "Técnico" }
+        ], skipDuplicates: true
+    })
+
+    await prisma.situacao.createMany({
+        data: [
+            { descricao: "Ativo" },
+            { descricao: "Inativo" },
+            { descricao: "Exonerado" },
+            { descricao: "Aposentado" },
+            { descricao: "Falecido" }
+    ], skipDuplicates: true
+    })
+
+    await prisma.nacionalidade.createMany({
+        data: [
+            { descricao: "Brasileira" },
+            { descricao: "Naturalizada" }
+        ], skipDuplicates: true
+    })
+    
 }
 
 
