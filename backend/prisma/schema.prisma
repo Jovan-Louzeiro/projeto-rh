@@ -7,6 +7,8 @@ datasource db {
   provider = "postgresql"
 }
 
+
+// Tabelas de Dominio Simples
 model Sexo {
   id_sexo   Int    @id @default(autoincrement())
   descricao String @unique @db.VarChar(10)
@@ -24,6 +26,13 @@ model Genero {
 model RacaCor {
   id_racacor Int    @id @default(autoincrement())
   descricao  String @unique @db.VarChar(10)
+
+  servidores Servidor[]
+}
+
+model ComunidadeIndigena {
+  id_comunidade_indigena Int    @id @default(autoincrement())
+  descricao              String @unique @db.VarChar(50)
 
   servidores Servidor[]
 }
@@ -389,6 +398,9 @@ model Servidor {
 
   racacor_id Int
   racacor    RacaCor @relation(fields: [racacor_id], references: [id_racacor])
+
+  comunidade_indigena_id Int?
+  comunidade_indigena    ComunidadeIndigena? @relation(fields: [comunidade_indigena_id], references: [id_comunidade_indigena])
 
   // Contato
   contatos Contato[]
