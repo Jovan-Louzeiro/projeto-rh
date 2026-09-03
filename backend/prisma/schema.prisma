@@ -117,6 +117,7 @@ model Funcao {
 model Departamento {
   id_departamento Int    @id @default(autoincrement())
   descricao       String @unique @db.VarChar(50)
+  inep String? @unique @db.VarChar(50)
 
   historicos_funcionais HistoricoFuncional[]
 }
@@ -293,6 +294,9 @@ model HistoricoFuncional{
   servidor_id Int
   servidor Servidor @relation(fields: [servidor_id], references: [id_servidor])
 
+  matricula_id Int
+  matricula Matricula @relation(fields: [matricula_id], references: [id_matricula])
+
   cargo_id Int
   cargo    Cargo @relation(fields: [cargo_id], references: [id_cargo])
 
@@ -313,12 +317,35 @@ model HistoricoFuncional{
 
 }
 
+model Matricula{
+  id_matricula Int @id @default(autoincrement())
+
+  numero String @unique @db.VarChar(50)
+  admissao DateTime
+
+  servidor_id Int
+  servidor Servidor @relation(fields: [servidor_id], references: [id_servidor])
+
+  historicos_funcionais HistoricoFuncional[]
+
+}
+
+model TiposLicenca{
+  id_tipos_licenca Int @id @default(autoincrement())
+
+  descricao String @db.VarChar(50)
+}
+
+model Requerimento{
+  id_requerimento Int @id @default(autoincrement())
+
+}
 
 model Servidor {
   id_servidor Int @id @default(autoincrement())
 
   // Identificação
-  matricula     String  @unique @db.VarChar(50)
+  matricula Matricula[]
   nome_completo String  @db.VarChar(150)
   nome_social   String? @db.VarChar(150)
   cpf           String  @unique @db.VarChar(11)
@@ -393,8 +420,6 @@ model Servidor {
   servidor_cid ServidorCid[]
 
   // Dados Funcionais
-  admissao DateTime
-
   situacao_id Int
   situacao    Situacao @relation(fields: [situacao_id], references: [id_situacao])
 
