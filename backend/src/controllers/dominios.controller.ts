@@ -1,12 +1,11 @@
 import type { Request, Response } from "express";
-import { listarSexos, adicionarSexo, procurarSexo, deletarSexo, atualizarSexo } from "../services/sexo.services.js";
+import { listarSexos, adicionarSexo, procurarSexo, deletarSexo, atualizarSexo } from "../services/dominios.services.js";
 import { RegistroJaExistenteError, RegistroNaoEncontradoError } from "../errors/dominos.errors.js";
-import { adicionarSexoSchema, atualizarSexoSchema } from "../schemas/sexo.schema.js";
+import { adicionarSexoSchema, atualizarSexoSchema } from "../schemas/dominios.schema.js";
 
 export async function adicionar(req:Request, res: Response) {
     
     try{
-
         const resultado = adicionarSexoSchema.safeParse(req.body)
 
         console.log(resultado)
@@ -45,6 +44,9 @@ export async function adicionar(req:Request, res: Response) {
 
 export async function listar(req: Request, res: Response) {
     try{
+
+        console.log(req.params)
+
         const sexos = await listarSexos();
 
         return res.json(sexos);

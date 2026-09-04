@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { adicionar, atualizar, deletar, listar, procurar } from "../controllers/sexo.controller.js";
+import { adicionar, atualizar, deletar, listar, procurar } from "../controllers/dominios.controller.js";
 import { Request, Response } from "express";
 
 const router = Router()
