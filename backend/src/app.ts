@@ -1,6 +1,7 @@
 import express from "express"
 import router from "./routes/sexo.routes.js"
 import cors from 'cors'
+import { errorHandler } from "./middlewares/erros.js"
 
 const app = express()
 const port = Number(process.env.PORT) || 3000
@@ -15,14 +16,6 @@ app.use(cors({
 
 app.use(express.json())
 
-app.get("/api/", (req, res) =>{
-
-    res.json({
-        mensagem: "testando"
-    })
-
-})
-
 app.use("/api/sexos", router)
 
 app.post("/api/servidor", (req, res) =>{
@@ -30,6 +23,8 @@ app.post("/api/servidor", (req, res) =>{
     console.log(req.body)
 
 })
+
+app.use(errorHandler)
 
 app.listen(port, ()=>{
     console.log("Servidor Rodando em: Servidor rodando em http://localhost:" + port)

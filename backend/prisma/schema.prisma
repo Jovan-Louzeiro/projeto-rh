@@ -12,6 +12,7 @@ datasource db {
 model Sexo {
   id_sexo   Int    @id @default(autoincrement())
   descricao String @unique @db.VarChar(10)
+  ativo Boolean @default(true)
 
   servidores Servidor[]
 }
@@ -19,6 +20,7 @@ model Sexo {
 model Genero {
   id_genero Int    @id @default(autoincrement())
   descricao String @unique
+  ativo Boolean @default(true)
 
   servidores Servidor[]
 }
@@ -26,6 +28,7 @@ model Genero {
 model RacaCor {
   id_racacor Int    @id @default(autoincrement())
   descricao  String @unique @db.VarChar(10)
+  ativo Boolean @default(true)
 
   servidores Servidor[]
 }
@@ -33,6 +36,7 @@ model RacaCor {
 model ComunidadeIndigena {
   id_comunidade_indigena Int    @id @default(autoincrement())
   descricao              String @unique @db.VarChar(50)
+  ativo Boolean @default(true)
 
   servidores Servidor[]
 }
@@ -40,6 +44,7 @@ model ComunidadeIndigena {
 model Escolaridade {
   id_escolaridade Int    @id @default(autoincrement())
   descricao       String @unique @db.VarChar(20)
+  ativo Boolean @default(true)
 
   servidores Servidor[]
 }
@@ -47,7 +52,7 @@ model Escolaridade {
 model Nivel {
   id_nivel  Int    @id @default(autoincrement())
   descricao String @unique @db.VarChar(10)
-
+  ativo Boolean @default(true)
 }
 
 model EstadoCivil {
@@ -98,6 +103,7 @@ model Municipio {
 model ZonaEndereco {
   id_zona_endereco Int    @id @default(autoincrement())
   descricao        String @unique @db.VarChar(10)
+  ativo Boolean @default(true)
 
   servidores_endereco Servidor[] @relation("ZonaEndereco")
 }
@@ -112,6 +118,7 @@ model LocalizacaoDiferenciada {
 model Cargo {
   id_cargo  Int    @id @default(autoincrement())
   descricao String @unique @db.VarChar(50)
+  ativo Boolean @default(true)
 
   historicos_funcionais HistoricoFuncional[]
 }
@@ -119,6 +126,7 @@ model Cargo {
 model Funcao {
   id_funcao Int    @id @default(autoincrement())
   descricao String @unique @db.VarChar(50)
+  ativo Boolean @default(true)
 
   historicos_funcionais HistoricoFuncional[]
 }
@@ -127,6 +135,7 @@ model Departamento {
   id_departamento Int    @id @default(autoincrement())
   descricao       String @unique @db.VarChar(50)
   inep String? @unique @db.VarChar(50)
+  ativo Boolean @default(true)
 
   historicos_funcionais HistoricoFuncional[]
 }

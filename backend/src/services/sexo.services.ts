@@ -1,8 +1,5 @@
-import { error } from "node:console";
 import { prisma } from "../lib/prisma.js";
-import { RegistroEmUso, RegistroJaExistenteError, RegistroNaoEncontradoError } from "../errors/dominos.errors.js";
-import { networkInterfaces } from "node:os";
-import { id } from "zod/locales";
+import { RegistroEmUso, RegistroJaExistenteError, RegistroNaoEncontradoError } from "../errors/dominios.errors.js";
 
 //  Pesquisar todos Sexos
 export async function listarSexos() {
@@ -27,11 +24,11 @@ export async function procurarSexo(id: number){
 }
 
 // Adicionar um Sexo
-export async function adicionarSexo(descricao: string) {
+export async function adicionarSexo(data:{ descricao: string, ativo?: boolean}) {
 
     const sexoExiste = await prisma.sexo.findUnique({
         where: {
-            descricao: descricao
+            descricao: data.descricao
         }
     })
     
@@ -41,7 +38,8 @@ export async function adicionarSexo(descricao: string) {
 
     return await prisma.sexo.create({
         data: {
-            descricao: descricao
+            descricao: data.descricao,
+            ativo: data.ativo ?? true
         }
     })
 
@@ -76,7 +74,7 @@ export async function deletarSexo(id:number) {
     })
 }
 
-export async function atualizarSexo(id: number, descricao: string) {
+export async function atualizarSexo(id: number, data: {descricao: string, ativo?:boolean}) {
 
     const sexoExiste = await prisma.sexo.findUnique({
         where:{
@@ -88,12 +86,26 @@ export async function atualizarSexo(id: number, descricao: string) {
         throw new RegistroNaoEncontradoError("Sexo")
     }
 
+    const descricaoExiste = await prisma.sexo.findFirst({
+        where: {
+            descricao: data.descricao,
+            NOT: {
+                id_sexo: id
+            }
+        }
+    })
+
+    if(descricaoExiste){
+        throw new RegistroJaExistenteError("Sexo")
+    }
+
     return await prisma.sexo.update({
         where: {
             id_sexo: id
         },
         data:{
-            descricao: descricao
+            descricao: data.descricao,
+            ativo: data.ativo ?? sexoExiste.ativo
         }
     })
 
