@@ -1,5 +1,6 @@
 import { PrismaClient } from "../generated/prisma/client.js";
 import { PrismaPg } from "@prisma/adapter-pg";
+import {gerarHash} from "../src/utils/senha.js"
 
 const adapter = new PrismaPg({
     connectionString: process.env.DATABASE_URL!
@@ -167,6 +168,13 @@ async function main() {
             { descricao: "Brasileira" },
             { descricao: "Naturalizada" }
         ], skipDuplicates: true
+    })
+
+    await prisma.usuario.createMany({
+        data: [
+            {nome: "Jovan Louzeiro", email: "jovan.louzeiro@gmail.com", senha: await gerarHash("2008"), ativo: true, permissao: "ADMIN"}
+        ],
+        skipDuplicates: true
     })
     
 }

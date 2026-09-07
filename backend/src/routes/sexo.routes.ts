@@ -1,19 +1,19 @@
 import { Router } from "express";
 import { adicionar, atualizar, deletar, listar, procurar } from "../controllers/sexo.controller.js";
-import { Request, Response } from "express";
 import { validate } from "../middlewares/validate.js";
 import { sexoSchema } from "../schemas/sexo.schema.js";
+import { autorizar } from "../middlewares/auth.js";
 
 const router = Router()
 
-router.get("/", listar);
+router.get("/", autorizar("RH", "ADMIN"), listar);
 
-router.get("/:id", procurar)
+router.get("/:id", autorizar("RH", "ADMIN"), procurar)
 
-router.post("/", validate(sexoSchema), adicionar)
+router.post("/", autorizar("ADMIN"), validate(sexoSchema), adicionar)
 
-router.delete("/:id", deletar)
+router.delete("/:id", autorizar("ADMIN"), deletar)
 
-router.put("/:id", validate(sexoSchema), atualizar)
+router.put("/:id", autorizar("ADMIN"), validate(sexoSchema), atualizar)
 
 export default router;

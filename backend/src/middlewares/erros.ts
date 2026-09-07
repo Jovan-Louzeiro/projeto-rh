@@ -5,6 +5,7 @@ import {
     RegistroJaExistenteError,
     RegistroNaoEncontradoError
 } from "../errors/dominios.errors.js";
+import { EmailOuSenhaInvalidos, TokenInvalidoOuExpirado, TokenNaoFornecido, UsuarioInativo } from "../errors/auth.erros.js";
 
 export function errorHandler(
     error: unknown,
@@ -16,21 +17,49 @@ export function errorHandler(
     console.error(error);
 
     if (error instanceof RegistroJaExistenteError) {
-        return res.status(409).json({
+        return res.status(error.status).json({
             erro: error.name,
             mensagem: error.message
         });
     }
 
     if (error instanceof RegistroNaoEncontradoError) {
-        return res.status(404).json({
+        return res.status(error.status).json({
             erro: error.name,
             mensagem: error.message
         });
     }
 
     if (error instanceof RegistroEmUso) {
-        return res.status(409).json({
+        return res.status(error.status).json({
+            erro: error.name,
+            mensagem: error.message
+        });
+    }
+
+    if (error instanceof EmailOuSenhaInvalidos){
+        return res.status(error.status).json({
+            erro: error.name,
+            mensagem: error.message
+        });
+    }
+
+    if (error instanceof TokenNaoFornecido){
+        return res.status(error.status).json({
+            erro: error.name,
+            mensagem: error.message
+        });
+    }
+
+    if (error instanceof TokenInvalidoOuExpirado){
+        return res.status(error.status).json({
+            erro: error.name,
+            mensagem: error.message
+        });
+    }
+
+    if (error instanceof UsuarioInativo){
+        return res.status(error.status).json({
             erro: error.name,
             mensagem: error.message
         });

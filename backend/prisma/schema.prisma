@@ -359,6 +359,25 @@ model Requerimento{
 
 }
 
+enum PermissaoUsuario{
+  ADMIN
+  RH
+}
+
+model Usuario{
+  id_usuario Int @id @default(autoincrement())
+  nome String @db.VarChar(50)
+  email String @unique @db.VarChar(50)
+  senha String
+
+  permissao PermissaoUsuario
+
+  ativo Boolean
+
+  servidor_id Int? @unique
+  servidor Servidor? @relation(fields: [servidor_id], references: [id_servidor])
+}
+
 model Servidor {
   id_servidor Int @id @default(autoincrement())
 
@@ -457,4 +476,5 @@ model Servidor {
 
   // Outros
   observacao String? @db.VarChar(500)
+  usuario Usuario?
 }
