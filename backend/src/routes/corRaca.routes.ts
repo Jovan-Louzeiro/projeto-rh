@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { adicionar, atualizar, deletar, listar, procurar } from "../controllers/racaCor.controller.js";
 
 const router = Router()
 
