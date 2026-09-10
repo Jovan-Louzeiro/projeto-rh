@@ -172,7 +172,8 @@ async function main() {
 
     await prisma.usuario.createMany({
         data: [
-            {nome: "Jovan Louzeiro", email: "jovan.louzeiro@gmail.com", senha: await gerarHash("2008"), ativo: true, permissao: "ADMIN"}
+            {nome: "Jovan Louzeiro", email: "jovan.louzeiro@gmail.com", senha: await gerarHash("2008"), ativo: true, permissao: "ADMIN"},
+            {nome: "Matheus Duarte", email: "matheus.jovan@gmail.com", senha: await gerarHash("2026"), ativo: true, permissao: "ADMIN"}
         ],
         skipDuplicates: true
     })

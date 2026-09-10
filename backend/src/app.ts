@@ -1,6 +1,6 @@
 import express from "express"
 import routerSexo from "./routes/sexo.routes.js"
-import routerCorRaca from "./routes/corRaca.routes.js"
+import routerUsuarios from "./routes/usuarios.routes.js"
 import cors from 'cors'
 import { errorHandler } from "./middlewares/erros.js"
 import dotenv from "dotenv"
@@ -27,6 +27,8 @@ app.use(express.json())
 app.post("/api/login", validate(loginSchema), login, errorHandler)
 
 app.use(autenticar)
+
+app.use("/api/usuarios", routerUsuarios)
 
 app.use("/api/sexos", routerSexo)
 
