@@ -1,0 +1,12 @@
+import { useEffect, useMemo, useState } from "react";
+import Icon from "../components/Icon";
+import Status from "../components/Status";
+import { listar } from "../services/api";
+type Props = { title: string; description: string; headers: string[]; fields: string[]; resource: string };
+export default function GenericTable({ title, description, headers, fields, resource }: Props) {
+  const [rows, setRows] = useState<Record<string, unknown>[]>([]); const [query, setQuery] = useState(""); const [loading, setLoading] = useState(true); const [error, setError] = useState("");
+  useEffect(() => { const controller = new AbortController(); listar<Record<string, unknown>>(resource, controller.signal).then(setRows).catch(() => setError("Não foi possível carregar os dados. Verifique a conexão com a API.")).finally(() => setLoading(false)); return () => controller.abort(); }, [resource]);
+  const filtered = useMemo(() => rows.filter(row => Object.values(row).join(" ").toLowerCase().includes(query.toLowerCase())), [rows, query]);
+  return <><div className="page-head"><div><h1>{title}</h1><p>{description}</p></div><button className="btn primary"><Icon name="add" /> Novo Registro</button></div><div className="card"><div className="filters"><div className="filter-search"><Icon name="search" /><input value={query} onChange={e => setQuery(e.target.value)} placeholder="Buscar..." /></div><select><option>Todos</option></select><button className="btn outline"><Icon name="filter" /> Filtros</button></div><div className="table-scroll"><table className="table"><thead><tr>{headers.map(h => <th key={h}>{h}</th>)}</tr></thead><tbody>{loading ? <Message columns={headers.length}>Carregando dados...</Message> : error ? <Message columns={headers.length}>{error}</Message> : filtered.length === 0 ? <Message columns={headers.length}>Nenhum registro encontrado. Os dados aparecerão aqui após a conexão com o banco de dados.</Message> : filtered.map((row, i) => <tr key={String(row.id ?? i)}>{fields.map((field, j) => { const value = String(row[field] ?? "—"); return <td key={field}>{j === fields.length - 1 ? <Status tone={value === "Ativo" || value === "Aprovada" ? "green" : value === "Pendente" || value === "Encerrado" ? "yellow" : "blue"}>{value}</Status> : value}</td>; })}</tr>)}</tbody></table></div></div></>;
+}
+function Message({ columns, children }: { columns: number; children: string }) { return <tr><td colSpan={columns} className="table-message">{children}</td></tr>; }

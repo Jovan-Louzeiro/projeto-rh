@@ -1,0 +1,6 @@
+import type { Documento } from "../types";
+const apiUrl = (import.meta.env.VITE_API_URL ?? "").replace(/\/$/, ""); const endpoint = `${apiUrl}/api/documentos`;
+type ApiListResponse = Documento[] | { data?: Documento[] };
+export async function listarDocumentos(signal?: AbortSignal): Promise<Documento[]> { const response = await fetch(endpoint, { headers: { Accept: "application/json" }, signal }); if (!response.ok) throw new Error("Não foi possível carregar documentos."); const body: ApiListResponse = await response.json(); return Array.isArray(body) ? body : body.data ?? []; }
+export async function salvarDocumento(dados: Omit<Documento, "id">, arquivo?: File, id?: string): Promise<Documento> { const form = new FormData(); form.append("dados", JSON.stringify(dados)); if (arquivo) form.append("arquivo", arquivo); const response = await fetch(id ? `${endpoint}/${id}` : endpoint, { method: id ? "PUT" : "POST", headers: { Accept: "application/json" }, body: form }); if (!response.ok) throw new Error("Não foi possível salvar o documento."); return response.json(); }
+export async function excluirDocumento(id: string): Promise<void> { const response = await fetch(`${endpoint}/${id}`, { method: "DELETE", headers: { Accept: "application/json" } }); if (!response.ok) throw new Error("Não foi possível excluir o documento."); }

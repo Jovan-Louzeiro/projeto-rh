@@ -1,0 +1,5 @@
+import type { Quinquenio } from "../types";
+const apiUrl = (import.meta.env.VITE_API_URL ?? "").replace(/\/$/, ""); const endpoint = `${apiUrl}/api/quinquenios`;
+type ApiListResponse = Quinquenio[] | { data?: Quinquenio[] };
+export async function listarQuinquenios(signal?: AbortSignal): Promise<Quinquenio[]> { const response = await fetch(endpoint, { headers: { Accept: "application/json" }, signal }); if (!response.ok) throw new Error("Não foi possível carregar quinquênios."); const body: ApiListResponse = await response.json(); return Array.isArray(body) ? body : body.data ?? []; }
+export async function cadastrarQuinquenio(dados: Omit<Quinquenio, "id">, documento?: File): Promise<Quinquenio> { const form = new FormData(); form.append("dados", JSON.stringify(dados)); if (documento) form.append("atoDocumento", documento); const response = await fetch(endpoint, { method: "POST", headers: { Accept: "application/json" }, body: form }); if (!response.ok) throw new Error("Não foi possível salvar o quinquênio."); return response.json(); }
