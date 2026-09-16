@@ -3,9 +3,7 @@ import { listarUsuarios, adicionarUsuario, procurarUsuario, deletarUsuario, atua
 
 export async function adicionar(req:Request, res: Response) {
 
-    const {email, senha, permissao, ativo} = req.body
-
-    const resposta = await adicionarUsuario({email, senha, permissao, ativo})
+    const resposta = await adicionarUsuario(req.body)
     
     return res.status(201).json({
         mensagem: "Cadastrado realizado com sucesso",
@@ -16,9 +14,9 @@ export async function adicionar(req:Request, res: Response) {
 
 export async function listar(req: Request, res: Response) {
 
-    const sexos = await listarUsuarios();
+    const usuarios = await listarUsuarios();
 
-    return res.json(sexos);
+    return res.json(usuarios);
 }
 
 
@@ -27,9 +25,9 @@ export async function procurar(req: Request, res: Response) {
         
     const id = Number(req.params.id)
 
-    const sexo = await procurarUsuario(id)
+    const usuario = await procurarUsuario(id)
 
-    return res.status(200).json(sexo)
+    return res.status(200).json(usuario)
 
 }
 
@@ -37,12 +35,10 @@ export async function atualizar(req:Request, res:Response) {
     
     const id = Number(req.params.id)
 
-    const {email, senha, permissao, ativo} = req.body
-
-    const resposta = await atualizarUsuario(id, {email, senha, permissao, ativo})
+    const resposta = await atualizarUsuario(id, req.body)
 
     return res.status(200).json({
-        mensagem: "Sexo atualizado com sucesso",
+        mensagem: "Usuario atualizado com sucesso",
         prisma: resposta
     })
 
@@ -56,7 +52,7 @@ export async function deletar(req:Request, res:Response) {
     const resultado = await deletarUsuario(id)
 
     return res.status(200).json({
-        mensagem: "Sexo excluido com sucesso",
+        mensagem: "Usuario excluido com sucesso",
         prisma: resultado
     })
 
