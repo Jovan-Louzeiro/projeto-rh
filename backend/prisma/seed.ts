@@ -1,6 +1,7 @@
 import { PrismaClient } from "../generated/prisma/client.js";
 import { PrismaPg } from "@prisma/adapter-pg";
 import {gerarHash} from "../src/utils/senha.js"
+import process from "process";
 
 const adapter = new PrismaPg({
     connectionString: process.env.DATABASE_URL!
@@ -170,10 +171,17 @@ async function main() {
         ], skipDuplicates: true
     })
 
+    const SENHA_JOVAN = process.env.SENHA_JOVAN
+    const SENHA_MATHEUS = process.env.SENHA_MATHEUS
+
+    if(!SENHA_JOVAN || !SENHA_MATHEUS){
+        throw new Error("Senhas não fornecidas")
+    }
+
     await prisma.usuario.createMany({
         data: [
-            {nome: "Jovan Louzeiro", email: "jovan.louzeiro@gmail.com", senha: await gerarHash("2008"), ativo: true, permissao: "ADMIN"},
-            {nome: "Matheus Duarte", email: "matheus.jovan@gmail.com", senha: await gerarHash("2026"), ativo: true, permissao: "ADMIN"}
+            {nome: "Jovan Louzeiro", email: "jovan.louzeiro@gmail.com", senha: await gerarHash(SENHA_JOVAN), ativo: true, permissao: "ADMIN"},
+            {nome: "Matheus Duarte", email: "matheus.jovan@gmail.com", senha: await gerarHash(SENHA_MATHEUS), ativo: true, permissao: "ADMIN"}
         ],
         skipDuplicates: true
     })
@@ -187,6 +195,6 @@ main()
 })
 .catch(async (e) => {
     console.log(e)
-    await prisma.$connect()
+    await prisma.$disconnect()
     process.exit(1)
 })
