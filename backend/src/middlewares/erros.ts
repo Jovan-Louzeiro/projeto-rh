@@ -5,7 +5,7 @@ import {
     RegistroJaExistenteError,
     RegistroNaoEncontradoError
 } from "../errors/dominios.errors.js";
-import { EmailOuSenhaInvalidos, TokenInvalidoOuExpirado, TokenNaoFornecido, UsuarioInativo } from "../errors/auth.erros.js";
+import { EmailOuSenhaInvalidos, NaoAutorizado, TokenInvalidoOuExpirado, TokenNaoFornecido, UsuarioInativo } from "../errors/auth.erros.js";
 
 export function errorHandler(
     error: unknown,
@@ -64,6 +64,13 @@ export function errorHandler(
             mensagem: error.message
         });
     }
+
+    if (error instanceof NaoAutorizado){
+        return res.status(error.status).json({
+            erro: error.name,
+            mensagem: error.message
+        })
+    };
 
     return res.status(500).json({
         erro: "ERRO_INTERNO",

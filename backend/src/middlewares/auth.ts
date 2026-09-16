@@ -10,7 +10,16 @@ declare global {
     }
 }
 
-export function autenticar(req: Request, res: Response, next: NextFunction) {
+export function autenticar(
+    req: Request,
+    res: Response,
+    next: NextFunction
+) {
+
+    // Bypass durante desenvolvimento
+    if (process.env.NODE_ENV === "development") {
+        return next()
+    }
 
     const authHeader = req.headers.authorization
 
@@ -20,35 +29,51 @@ export function autenticar(req: Request, res: Response, next: NextFunction) {
         throw new TokenNaoFornecido()
     }
 
-    const token = authHeader.split(' ')[1]
+    const token = authHeader.split(" ")[1]
 
     try {
-        const payload = Jwt.verify(token, process.env.JWT_SECRET!);
+        const payload = Jwt.verify(
+            token,
+            process.env.JWT_SECRET!
+        )
 
-        req.usuario = payload;
+        req.usuario = payload
 
-        next(); // libera passagem
+        next()
     } catch (erro) {
-        throw new TokenInvalidoOuExpirado();
+        throw new TokenInvalidoOuExpirado()
     }
 }
 
-export function autorizar(...permissoesPermitidas: any[]){
+export function autorizar(...permissoesPermitidas: string[]) {
 
-    return (req:Request, res:Response, next:NextFunction)=>{
+    return (
+        req: Request,
+        res: Response,
+        next: NextFunction
+    ) => {
+
+        // Bypass durante desenvolvimento
+        if (process.env.NODE_ENV === "development") {
+            return next()
+        }
+
         const usuario = req.usuario
 
-        if (!usuario || typeof usuario === "string" || !("permissao" in usuario)) {
+        if (
+            !usuario ||
+            typeof usuario === "string" ||
+            !("permissao" in usuario)
+        ) {
             throw new NaoAutorizado()
         }
 
         const { permissao } = usuario
 
-        if(!permissoesPermitidas.includes(permissao)){
+        if (!permissoesPermitidas.includes(permissao)) {
             throw new NaoAutorizado()
         }
 
         next()
     }
-
 }

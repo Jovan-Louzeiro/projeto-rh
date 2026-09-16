@@ -47,15 +47,7 @@ export async function adicionarSexo(data:{ descricao: string, ativo?: boolean}) 
 
 export async function deletarSexo(id:number) {
 
-    const existeId = await prisma.sexo.findUnique({
-        where: {
-            id_sexo: id
-        }
-    })
-
-    if(!existeId){
-        throw new RegistroNaoEncontradoError("Sexo")
-    }
+    await procurarSexo(id)
 
     const funcSexo = await prisma.servidor.count({
         where:{
@@ -76,15 +68,7 @@ export async function deletarSexo(id:number) {
 
 export async function atualizarSexo(id: number, data: {descricao: string, ativo?:boolean}) {
 
-    const sexoExiste = await prisma.sexo.findUnique({
-        where:{
-            id_sexo: id
-        }
-    })
-
-    if(!sexoExiste){
-        throw new RegistroNaoEncontradoError("Sexo")
-    }
+    const sexoExiste = await procurarSexo(id)
 
     const descricaoExiste = await prisma.sexo.findFirst({
         where: {
