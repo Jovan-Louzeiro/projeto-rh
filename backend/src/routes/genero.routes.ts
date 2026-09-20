@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { adicionar, atualizar, deletar, listar, procurar } from "../controllers/racaCor.controller.js";
+import { adicionar, atualizar, deletar, listar, procurar } from "../controllers/genero.controller.js";
 
 const router = Router()
 

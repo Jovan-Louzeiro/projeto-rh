@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { listarRacaCores, adicionarRacaCor, procurarRacaCor, deletarRacaCor, atualizarRacaCor } from "../services/racaCor.services.js";
+import { listarRacaCores, adicionarRacaCor, procurarRacaCor, deletarRacaCor, atualizarRacaCor } from "../services/racaCor.service.js";
 
 export async function adicionar(req:Request, res: Response) {
 

@@ -1,5 +1,5 @@
 import { prisma } from "../lib/prisma.js";
-import { Dominio } from "./dominios.services.js";
+import { Dominio } from "./dominios.service.js";
 
 const sexoServices = new Dominio(
     prisma.sexo,

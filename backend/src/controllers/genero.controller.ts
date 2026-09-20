@@ -1,9 +1,11 @@
 import type { Request, Response } from "express";
-import { listarUsuarios, adicionarUsuario, procurarUsuario, deletarUsuario, atualizarUsuario } from "../services/usuarios.service.js";
+import { listarGeneros, adicionarGenero, procurarGenero, deletarGenero, atualizarGenero } from "../services/genero.service.js";
 
 export async function adicionar(req:Request, res: Response) {
 
-    const resposta = await adicionarUsuario(req.body)
+    const {descricao, ativo} = req.body
+
+    const resposta = await adicionarGenero({descricao, ativo})
     
     return res.status(201).json({
         mensagem: "Cadastrado realizado com sucesso",
@@ -14,9 +16,9 @@ export async function adicionar(req:Request, res: Response) {
 
 export async function listar(req: Request, res: Response) {
 
-    const usuarios = await listarUsuarios();
+    const Generos = await listarGeneros();
 
-    return res.json(usuarios);
+    return res.json(Generos);
 }
 
 
@@ -25,9 +27,9 @@ export async function procurar(req: Request, res: Response) {
         
     const id = Number(req.params.id)
 
-    const usuario = await procurarUsuario(id)
+    const Genero = await procurarGenero(id)
 
-    return res.status(200).json(usuario)
+    return res.status(200).json(Genero)
 
 }
 
@@ -35,10 +37,10 @@ export async function atualizar(req:Request, res:Response) {
     
     const id = Number(req.params.id)
 
-    const resposta = await atualizarUsuario(id, req.body)
+    const resposta = await atualizarGenero(id, req.body)
 
     return res.status(200).json({
-        mensagem: "Usuario atualizado com sucesso",
+        mensagem: "Genero atualizado com sucesso",
         prisma: resposta
     })
 
@@ -49,10 +51,10 @@ export async function deletar(req:Request, res:Response) {
 
     const id = Number(req.params.id)
 
-    const resultado = await deletarUsuario(id)
+    const resultado = await deletarGenero(id)
 
     return res.status(200).json({
-        mensagem: "Usuario excluido com sucesso",
+        mensagem: "Genero excluido com sucesso",
         prisma: resultado
     })
 

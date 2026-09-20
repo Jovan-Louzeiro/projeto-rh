@@ -2,7 +2,10 @@ import express from "express"
 import routerSexo from "./routes/sexo.routes.js"
 import routerUsuarios from "./routes/usuarios.routes.js"
 import routerRacaCor from "./routes/racaCor.routes.js"
-import cors from 'cors'
+import routerGenero from "./routes/genero.routes.js"
+import { createRequire } from "module"
+const require = createRequire(import.meta.url)
+const cors = require("cors")
 import { errorHandler } from "./middlewares/erros.js"
 import dotenv from "dotenv"
 import { validate } from "./middlewares/validate.js"
@@ -33,6 +36,8 @@ app.use(autenticar)
 app.use("/api/usuarios", routerUsuarios)
 
 app.use("/api/sexos", routerSexo)
+
+app.use("/api/generos", routerGenero)
 
 app.use("/api/racaCor", routerRacaCor)
 

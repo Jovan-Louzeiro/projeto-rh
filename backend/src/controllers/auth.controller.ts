@@ -1,4 +1,4 @@
-import { loginService } from "../services/auth.services.js";
+import { loginService } from "../services/auth.service.js";
 import { Response, Request } from "express";
 
 

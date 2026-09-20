@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { listarSexos, adicionarSexo, procurarSexo, deletarSexo, atualizarSexo } from "../services/sexo.services.js";
+import { listarSexos, adicionarSexo, procurarSexo, deletarSexo, atualizarSexo } from "../services/sexo.service.js";
 
 export async function adicionar(req:Request, res: Response) {
 
