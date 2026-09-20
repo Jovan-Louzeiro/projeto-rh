@@ -8,6 +8,9 @@ export async function login(req:Request, res:Response) {
 
     const token = await loginService(email, senha)
 
-    res.status(200).json(token)
+    res.status(200).json({
+        mensagem: "Login Realizado com Sucesso",
+        token: token
+    })
 
 }

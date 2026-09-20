@@ -1,6 +1,7 @@
 import express from "express"
 import routerSexo from "./routes/sexo.routes.js"
 import routerUsuarios from "./routes/usuarios.routes.js"
+import routerRacaCor from "./routes/racaCor.routes.js"
 import cors from 'cors'
 import { errorHandler } from "./middlewares/erros.js"
 import dotenv from "dotenv"
@@ -8,6 +9,7 @@ import { validate } from "./middlewares/validate.js"
 import { loginSchema } from "./schemas/usuario.schema.js"
 import { login } from "./controllers/auth.controller.js"
 import { autenticar } from "./middlewares/auth.js"
+
 
 dotenv.config()
 
@@ -32,7 +34,7 @@ app.use("/api/usuarios", routerUsuarios)
 
 app.use("/api/sexos", routerSexo)
 
-//app.use("/api/corRaca", routerCorRaca)
+app.use("/api/racaCor", routerRacaCor)
 
 app.use(errorHandler)
 

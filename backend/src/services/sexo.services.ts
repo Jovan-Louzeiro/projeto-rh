@@ -1,96 +1,35 @@
 import { prisma } from "../lib/prisma.js";
-import { RegistroEmUso, RegistroJaExistenteError, RegistroNaoEncontradoError } from "../errors/dominios.errors.js";
+import { Dominio } from "./dominios.services.js";
 
-//  Pesquisar todos Sexos
+const sexoServices = new Dominio(
+    prisma.sexo,
+    {
+        nome: "Sexo",
+        idField: "id_sexo",
+        verificacoesUso: []
+    }    
+)
+
+//  Pesquisar todos Sexoes
 export async function listarSexos() {
-    return await prisma.sexo.findMany()
+    return sexoServices.listar()
 }
 
-// Procurar um sexo
+// Procurar um Sexo
 
-export async function procurarSexo(id: number){
-    
-    const resultado = await prisma.sexo.findUnique({
-        where: {
-            id_sexo: id
-        }
-    })
-
-    if(!resultado){
-        throw new RegistroNaoEncontradoError("Sexo")
-    }
-
-    return resultado
+export async function procurarSexo(id: number) {
+    return sexoServices.procurar(id)
 }
 
-// Adicionar um Sexo
-export async function adicionarSexo(data:{ descricao: string, ativo?: boolean}) {
-
-    const sexoExiste = await prisma.sexo.findUnique({
-        where: {
-            descricao: data.descricao
-        }
-    })
-    
-    if(sexoExiste){
-        throw new RegistroJaExistenteError("Sexo")
-    }
-
-    return await prisma.sexo.create({
-        data: {
-            descricao: data.descricao,
-            ativo: data.ativo ?? true
-        }
-    })
-
+// Adicionar uma Raca/Cor
+export async function adicionarSexo(data: { descricao: string, ativo?: boolean }) {
+    return sexoServices.adicionar(data)
 }
 
-export async function deletarSexo(id:number) {
-
-    await procurarSexo(id)
-
-    const funcSexo = await prisma.servidor.count({
-        where:{
-            sexo_id: id
-        }
-    })
-    
-    if(funcSexo > 0){
-        throw new RegistroEmUso("Sexo", funcSexo)
-    }
-
-    return await prisma.sexo.delete({
-        where: {
-            id_sexo: id
-        }
-    })
+export async function atualizarSexo(id: number, data: { descricao?: string, ativo?: boolean }) {
+    return sexoServices.atualizar(id, data)
 }
 
-export async function atualizarSexo(id: number, data: {descricao: string, ativo?:boolean}) {
-
-    const sexoExiste = await procurarSexo(id)
-
-    const descricaoExiste = await prisma.sexo.findFirst({
-        where: {
-            descricao: data.descricao,
-            NOT: {
-                id_sexo: id
-            }
-        }
-    })
-
-    if(descricaoExiste){
-        throw new RegistroJaExistenteError("Sexo")
-    }
-
-    return await prisma.sexo.update({
-        where: {
-            id_sexo: id
-        },
-        data:{
-            descricao: data.descricao,
-            ativo: data.ativo ?? sexoExiste.ativo
-        }
-    })
-
+export async function deletarSexo(id: number) {
+    return sexoServices.deletar(id)
 }

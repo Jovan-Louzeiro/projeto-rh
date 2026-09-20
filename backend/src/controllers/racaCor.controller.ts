@@ -37,9 +37,7 @@ export async function atualizar(req:Request, res:Response) {
     
     const id = Number(req.params.id)
 
-    const {descricao, ativo} = req.body
-
-    const resposta = await atualizarRacaCor(id, {descricao, ativo})
+    const resposta = await atualizarRacaCor(id, req.body)
 
     return res.status(200).json({
         mensagem: "RacaCor atualizado com sucesso",
