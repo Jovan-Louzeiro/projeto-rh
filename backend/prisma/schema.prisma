@@ -19,7 +19,7 @@ model Sexo {
 
 model Genero {
   id_genero Int    @id @default(autoincrement())
-  descricao String @unique
+  descricao String @unique @db.VarChar(20)
   ativo Boolean @default(true)
 
   servidores Servidor[]
