@@ -1,19 +1,19 @@
 import { Router } from "express";
-import { adicionar, atualizar, deletar, listar, procurar } from "../controllers/sexo.controller.js";
+import { sexoController } from "../controllers/dominios.controller.js";
 import { validate } from "../middlewares/validate.js";
 import { adicionarSexoSchema, atualizarSexoSchema } from "../schemas/sexo.schema.js";
 import { autorizar } from "../middlewares/auth.js";
 
 const router = Router()
 
-router.get("/", autorizar("RH", "ADMIN"), listar);
+router.get("/", autorizar("RH", "ADMIN"), sexoController.listar);
 
-router.get("/:id", autorizar("RH", "ADMIN"), procurar)
+router.get("/:id", autorizar("RH", "ADMIN"), sexoController.procurar)
 
-router.post("/", autorizar("ADMIN"), validate(adicionarSexoSchema), adicionar)
+router.post("/", autorizar("ADMIN"), validate(adicionarSexoSchema), sexoController.adicionar)
 
-router.delete("/:id", autorizar("ADMIN"), deletar)
+router.delete("/:id", autorizar("ADMIN"), sexoController.deletar)
 
-router.patch("/:id", autorizar("ADMIN"), validate(atualizarSexoSchema), atualizar)
+router.patch("/:id", autorizar("ADMIN"), validate(atualizarSexoSchema), sexoController.atualizar)
 
 export default router;

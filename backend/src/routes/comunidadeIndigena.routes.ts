@@ -1,19 +1,19 @@
 import { Router } from "express";
-import { adicionar, atualizar, deletar, listar, procurar } from "../controllers/comunidadeIndigena.controller.js";
+import { comunidadeIndigenaController } from "../controllers/dominios.controller.js";
 import { autorizar } from "../middlewares/auth.js";
 import { validate } from "../middlewares/validate.js";
 import { adicionarComunidadeIndigenaSchema, atualizarComunidadeIndigenaSchema } from "../schemas/comunidadeIndigena.schema.js";
 
 const router = Router()
 
-router.get("/", autorizar("RH", "ADMIN"), listar);
+router.get("/", autorizar("RH", "ADMIN"), comunidadeIndigenaController.listar);
 
-router.get("/:id", autorizar("RH", "ADMIN"), procurar)
+router.get("/:id", autorizar("RH", "ADMIN"), comunidadeIndigenaController.procurar)
 
-router.post("/", autorizar("ADMIN"), validate(adicionarComunidadeIndigenaSchema), adicionar)
+router.post("/", autorizar("ADMIN"), validate(adicionarComunidadeIndigenaSchema), comunidadeIndigenaController.adicionar)
 
-router.delete("/:id", autorizar("ADMIN"), deletar)
+router.delete("/:id", autorizar("ADMIN"), comunidadeIndigenaController.deletar)
 
-router.patch("/:id", autorizar("ADMIN"), validate(atualizarComunidadeIndigenaSchema), atualizar)
+router.patch("/:id", autorizar("ADMIN"), validate(atualizarComunidadeIndigenaSchema), comunidadeIndigenaController.atualizar)
 
 export default router

@@ -1,5 +1,6 @@
 import { prisma } from "../lib/prisma.js";
 import { RegistroEmUso, RegistroJaExistenteError, RegistroNaoEncontradoError } from "../errors/dominios.errors.js";
+import { omit } from "zod/mini";
 
 type prismaModel = {
     findMany: Function;
@@ -21,15 +22,23 @@ type opcoesDominio ={
     verificacoesUso : verificacoesUso[]
 }
 
-export class Dominio {
+export class DominioServices {
 
     constructor(
         private readonly prismaModel: prismaModel,
         private readonly opcoes: opcoesDominio
     ) {}
 
-    async listar() {
-        return await this.prismaModel.findMany()
+    async listar(mostrarTudo?: boolean) {
+        if(mostrarTudo){
+            return await this.prismaModel.findMany()
+        }
+
+        return await this.prismaModel.findMany({
+            where: {
+                ativo: true
+            }
+        })
     }
 
     async procurar(id: number) {
@@ -132,3 +141,48 @@ export class Dominio {
 
     
 }
+
+export const ComunidadeIndigenaServices = new DominioServices(
+    prisma.comunidadeIndigena,
+    {
+        nome: "Comunidade Indígena",
+        idField: "id_comunidade_indigena",
+        verificacoesUso: []
+    }
+)
+
+export const escolaridadeServices = new DominioServices(
+    prisma.escolaridade,
+    {
+        nome: "Escolaridade",
+        idField: "id_escolaridade",
+        verificacoesUso: []
+    }
+)
+
+export const generoServices = new DominioServices(
+    prisma.genero,
+    {
+        nome: "Gênero",
+        idField: "id_genero",
+        verificacoesUso: []
+    }
+)
+
+export const racaCorServices = new DominioServices(
+    prisma.racaCor,
+    {
+        nome: "Raça/Cor",
+        idField: "id_racacor",
+        verificacoesUso: []
+    }    
+)
+
+export const sexoServices = new DominioServices(
+    prisma.sexo,
+    {
+        nome: "Sexo",
+        idField: "id_sexo",
+        verificacoesUso: []
+    }    
+)

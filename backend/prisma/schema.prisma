@@ -43,7 +43,7 @@ model ComunidadeIndigena {
 
 model Escolaridade {
   id_escolaridade Int    @id @default(autoincrement())
-  descricao       String @unique @db.VarChar(20)
+  descricao       String @unique @db.VarChar(50)
   ativo Boolean @default(true)
 
   servidores Servidor[]

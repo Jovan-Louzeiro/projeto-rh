@@ -4,6 +4,7 @@ import routerUsuarios from "./routes/usuarios.routes.js"
 import routerRacaCor from "./routes/racaCor.routes.js"
 import routerGenero from "./routes/genero.routes.js"
 import routerComunidadeIndigena from "./routes/comunidadeIndigena.routes.js"
+import routerEscolaridade from "./routes/escolaridade.routes.js"
 import { createRequire } from "module"
 const require = createRequire(import.meta.url)
 const cors = require("cors")
@@ -43,6 +44,8 @@ app.use("/api/generos", routerGenero)
 app.use("/api/racaCor", routerRacaCor)
 
 app.use("/api/comunidadesindigenas", routerComunidadeIndigena)
+
+app.use("/api/escolaridade", routerEscolaridade)
 
 app.use(errorHandler)
 
