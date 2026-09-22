@@ -1,10 +1,5 @@
 import express from "express"
-import routerSexo from "./routes/sexo.routes.js"
-import routerUsuarios from "./routes/usuarios.routes.js"
-import routerRacaCor from "./routes/racaCor.routes.js"
-import routerGenero from "./routes/genero.routes.js"
-import routerComunidadeIndigena from "./routes/comunidadeIndigena.routes.js"
-import routerEscolaridade from "./routes/escolaridade.routes.js"
+import router from "./routes/usuarios.routes.js"
 import { createRequire } from "module"
 const require = createRequire(import.meta.url)
 const cors = require("cors")
@@ -14,6 +9,8 @@ import { validate } from "./middlewares/validate.js"
 import { loginSchema } from "./schemas/usuario.schema.js"
 import { login } from "./controllers/auth.controller.js"
 import { autenticar } from "./middlewares/auth.js"
+import { dominiosConfig } from "./config/dominios.config.js"
+import { dominios } from "./factories/dominios.factory.js"
 
 
 dotenv.config()
@@ -35,17 +32,20 @@ app.post("/api/login", validate(loginSchema), login, errorHandler)
 
 app.use(autenticar)
 
-app.use("/api/usuarios", routerUsuarios)
+// Rotas de Dominios
+for (const [chave, config] of Object.entries(dominiosConfig)) {
+    app.use(
+        `/api/${config.rota}`,
+        dominios[chave].router
+    );
+}
 
-app.use("/api/sexos", routerSexo)
+export default router;
 
-app.use("/api/generos", routerGenero)
 
-app.use("/api/racaCor", routerRacaCor)
 
-app.use("/api/comunidadesindigenas", routerComunidadeIndigena)
+app.use("/api/usuarios", router)
 
-app.use("/api/escolaridade", routerEscolaridade)
 
 app.use(errorHandler)
 

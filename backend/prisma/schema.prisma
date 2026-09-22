@@ -58,6 +58,7 @@ model Nivel {
 model EstadoCivil {
   id_estado_civil Int    @id @default(autoincrement())
   descricao       String @unique @db.VarChar(15)
+  ativo Boolean @default(true)
 
   servidores Servidor[]
 }
@@ -111,6 +112,7 @@ model ZonaEndereco {
 model LocalizacaoDiferenciada {
   id_localizacao_diferenciada Int    @id @default(autoincrement())
   descricao                   String @unique @db.VarChar(50)
+  ativo Boolean @default(true)
 
   servidores Servidor[]
 }
@@ -143,6 +145,7 @@ model Departamento {
 model TipoVinculo {
   id_tipo_vinculo Int    @id @default(autoincrement())
   descricao       String @unique @db.VarChar(50)
+  ativo Boolean @default(true)
 
   historicos_funcionais HistoricoFuncional[]
 }
@@ -150,6 +153,7 @@ model TipoVinculo {
 model TipoEnsinoMedioCursado {
   id_tipo_ensino_medio_cursado Int    @id @default(autoincrement())
   descricao                    String @unique @db.VarChar(50)
+  ativo Boolean @default(true)
 
   servidores Servidor[]
 }
@@ -157,6 +161,7 @@ model TipoEnsinoMedioCursado {
 model Situacao {
   id_situacao Int    @id @default(autoincrement())
   descricao   String @unique @db.VarChar(30)
+  ativo Boolean @default(true)
 
   historico_funcional HistoricoFuncional[]
   servidor Servidor[]

@@ -1,6 +1,5 @@
 import { prisma } from "../lib/prisma.js";
 import { RegistroEmUso, RegistroJaExistenteError, RegistroNaoEncontradoError } from "../errors/dominios.errors.js";
-import { omit } from "zod/mini";
 
 type prismaModel = {
     findMany: Function;
@@ -16,7 +15,7 @@ type verificacoesUso ={
     verificar: (id: number) => Promise<number>
 }
 
-type opcoesDominio ={
+type configDominio ={
     nome: string,
     idField: string,
     verificacoesUso : verificacoesUso[]
@@ -26,7 +25,12 @@ export class DominioServices {
 
     constructor(
         private readonly prismaModel: prismaModel,
-        private readonly opcoes: opcoesDominio
+        private readonly config: {
+            nome: string,
+            idField: string,
+            limiteDescricao: number,
+            verificacoesUso: any[]
+        }
     ) {}
 
     async listar(mostrarTudo?: boolean) {
@@ -44,12 +48,12 @@ export class DominioServices {
     async procurar(id: number) {
         const resultado = await this.prismaModel.findUnique({
             where: {
-                [this.opcoes.idField]: id
+                [this.config.idField]: id
             }
         })
 
         if (!resultado) {
-            throw new RegistroNaoEncontradoError(this.opcoes.nome)
+            throw new RegistroNaoEncontradoError(this.config.nome)
         }
 
         return resultado
@@ -63,7 +67,7 @@ export class DominioServices {
         })
 
         if (dominioExiste) {
-            throw new RegistroJaExistenteError(this.opcoes.nome)
+            throw new RegistroJaExistenteError(this.config.nome)
         }
 
         return await this.prismaModel.create({
@@ -83,19 +87,19 @@ export class DominioServices {
                 where: {
                     descricao: data.descricao,
                     NOT: {
-                        [this.opcoes.idField]: id
+                        [this.config.idField]: id
                     }
                 }
             })
 
             if (descricaoExiste) {
-                throw new RegistroJaExistenteError(this.opcoes.nome)
+                throw new RegistroJaExistenteError(this.config.nome)
             }
         }
 
         return this.prismaModel.update({
             where: {
-                [this.opcoes.idField]: id
+                [this.config.idField]: id
             },
             data: {
                 descricao: data.descricao ?? dominio.descricao,
@@ -108,10 +112,10 @@ export class DominioServices {
     async deletar(id: number) {
         await this.procurar(id)
 
-        if (this.opcoes.verificacoesUso?.length){
+        if (this.config.verificacoesUso?.length){
 
             const usos = await Promise.all(
-                this.opcoes.verificacoesUso.map(
+                this.config.verificacoesUso.map(
                     async (verificacao) => ({
                         nome: verificacao.nome,
                         quantidade:
@@ -127,62 +131,17 @@ export class DominioServices {
             if (usosEncontrados.length > 0){
                 const total = usosEncontrados.reduce( (soma, uso) => soma + uso.quantidade, 0 );
 
-                throw new RegistroEmUso( this.opcoes.nome, total );
+                throw new RegistroEmUso( this.config.nome, total );
             }
         }
 
 
         return await this.prismaModel.delete({
             where: {
-                [this.opcoes.idField]: id
+                [this.config.idField]: id
             }
         })
     }
 
     
 }
-
-export const ComunidadeIndigenaServices = new DominioServices(
-    prisma.comunidadeIndigena,
-    {
-        nome: "Comunidade Indígena",
-        idField: "id_comunidade_indigena",
-        verificacoesUso: []
-    }
-)
-
-export const escolaridadeServices = new DominioServices(
-    prisma.escolaridade,
-    {
-        nome: "Escolaridade",
-        idField: "id_escolaridade",
-        verificacoesUso: []
-    }
-)
-
-export const generoServices = new DominioServices(
-    prisma.genero,
-    {
-        nome: "Gênero",
-        idField: "id_genero",
-        verificacoesUso: []
-    }
-)
-
-export const racaCorServices = new DominioServices(
-    prisma.racaCor,
-    {
-        nome: "Raça/Cor",
-        idField: "id_racacor",
-        verificacoesUso: []
-    }    
-)
-
-export const sexoServices = new DominioServices(
-    prisma.sexo,
-    {
-        nome: "Sexo",
-        idField: "id_sexo",
-        verificacoesUso: []
-    }    
-)

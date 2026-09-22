@@ -1,9 +1,10 @@
 import type { Request, Response } from "express";
-import { ComunidadeIndigenaServices, escolaridadeServices, generoServices, racaCorServices, sexoServices, type DominioServices } from "../services/dominios.service.js";
+import type { DominioServices } from "../services/dominios.service.js";
 
 export class DominioController {
     constructor(
-        private readonly service: DominioServices
+        private readonly service: DominioServices,
+        private readonly nome: string
     ) {}
 
     adicionar = async (req: Request, res: Response) => {
@@ -15,7 +16,7 @@ export class DominioController {
         });
 
         return res.status(201).json({
-            mensagem: "Cadastro realizado com sucesso",
+            mensagem: `${this.nome} cadastrado com sucesso`,
             dados: resposta
         });
     }
@@ -45,7 +46,7 @@ export class DominioController {
         );
 
         return res.json({
-            mensagem: "Atualizado com sucesso",
+            mensagem: `${this.nome} atualizado com sucesso`,
             dados: resposta
         });
     }
@@ -56,18 +57,8 @@ export class DominioController {
         const resposta = await this.service.deletar(id);
 
         return res.json({
-            mensagem: "Excluído com sucesso",
+            mensagem: `${this.nome} Excluído com sucesso`,
             dados: resposta
         });
     }
 }
-
-export const comunidadeIndigenaController = new DominioController(ComunidadeIndigenaServices)
-
-export const escolaridadeController = new DominioController(escolaridadeServices)
-
-export const generoController = new DominioController(generoServices)
-
-export const racaCorController = new DominioController(racaCorServices)
-
-export const sexoController = new DominioController(sexoServices)
