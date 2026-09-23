@@ -9,8 +9,6 @@ import { validate } from "./middlewares/validate.js"
 import { loginSchema } from "./schemas/usuario.schema.js"
 import { login } from "./controllers/auth.controller.js"
 import { autenticar } from "./middlewares/auth.js"
-import { dominiosConfig } from "./config/dominios.config.js"
-import { dominios } from "./factories/dominios.factory.js"
 import routerDominios from "./factories/dominiosRouters.factory.js"
 
 

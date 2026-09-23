@@ -2,14 +2,6 @@ import { PermissaoUsuario } from "../../generated/prisma/enums.js";
 import { prisma } from "../lib/prisma.js";
 import { AutorizacoesDominio } from "../types/dominio.types.js";
 
-const autorizacoesPadrao: AutorizacoesDominio = {
-    listar: [PermissaoUsuario.ADMIN, PermissaoUsuario.RH],
-    procurar: [PermissaoUsuario.ADMIN, PermissaoUsuario.RH],
-    adicionar: [PermissaoUsuario.ADMIN],
-    atualizar: [PermissaoUsuario.ADMIN],
-    deletar: [PermissaoUsuario.ADMIN]
-};
-
 export const dominiosConfig = {
     comunidadeIndigena: {
         prismaModel: prisma.comunidadeIndigena,
@@ -63,7 +55,7 @@ export const dominiosConfig = {
         prismaModel: prisma.estadoCivil,
         nome: "Estado Civíl",
         rota: "estadoCivil",
-        idField: "id_nivel",
+        idField: "id_estado_civil",
         verificacoesUso: [],
         limiteDescricao: 15
     },
@@ -111,13 +103,13 @@ export const dominiosConfig = {
         prismaModel: prisma.tipoVinculo,
         nome: "Tipo de Vínculo",
         rota: "tipoVinculo",
-        idField: "id_funcao",
+        idField: "id_tipo_vinculo",
         verificacoesUso: [],
         limiteDescricao: 50
     },
     tipoEnsinoMedioCursado: {
         prismaModel: prisma.tipoEnsinoMedioCursado,
-        nome: "Funcao",
+        nome: "Tipo de Ensino Médio Cursado",
         rota: "tipoEnsinoMedioCursado",
         idField: "id_tipo_ensino_medio_cursado",
         verificacoesUso: [],
