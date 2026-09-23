@@ -1,22 +1,13 @@
 import { PermissaoUsuario } from "../../generated/prisma/enums.js";
 import { prisma } from "../lib/prisma.js";
-import { DominioServices } from "../services/dominios.service.js";
+import { AutorizacoesDominio } from "../types/dominio.types.js";
 
-export type AutorizacoesDominio = {
-    listar: PermissaoUsuario[];
-    procurar: PermissaoUsuario[];
-    adicionar: PermissaoUsuario[];
-    atualizar: PermissaoUsuario[];
-    deletar: PermissaoUsuario[];
-};
-
-export type DominioConfig = {
-    prismaModel: ConstructorParameters<typeof DominioServices>[0];
-    nome: string;
-    idField: string;
-    verificacoesUso: any[];
-    limiteDescricao: number;
-    autorizacoes: AutorizacoesDominio;
+const autorizacoesPadrao: AutorizacoesDominio = {
+    listar: [PermissaoUsuario.ADMIN, PermissaoUsuario.RH],
+    procurar: [PermissaoUsuario.ADMIN, PermissaoUsuario.RH],
+    adicionar: [PermissaoUsuario.ADMIN],
+    atualizar: [PermissaoUsuario.ADMIN],
+    deletar: [PermissaoUsuario.ADMIN]
 };
 
 export const dominiosConfig = {

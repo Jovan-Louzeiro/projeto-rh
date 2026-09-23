@@ -2,13 +2,13 @@ import { Router } from "express";
 import { dominios } from "./dominios.factory.js";
 import { dominiosConfig } from "../config/dominios.config.js";
 
-const router = Router();
+const routerDominios = Router();
 
 for (const [chave, config] of Object.entries(dominiosConfig)) {
-    router.use(
+    routerDominios.use(
         `/api/${config.rota}`,
         dominios[chave].router
     );
 }
 
-export default router;
+export default routerDominios;

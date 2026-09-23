@@ -5,14 +5,15 @@ import { autorizar } from "../middlewares/auth.js";
 import { validate } from "../middlewares/validate.js";
 import { DominioSchemas } from "../schemas/dominosSchema.js";
 import type { DominioServices } from "../services/dominios.service.js";
-import { AutorizacoesDominio, dominiosConfig } from "../config/dominios.config.js";
+import { AutorizacoesDominio } from "../types/dominio.types.js";
+import { PermissaoUsuario } from "../../generated/prisma/enums.js";
 
 const autorizacoesPadrao: AutorizacoesDominio = {
-    listar: ["RH", "ADMIN"],
-    procurar: ["RH", "ADMIN"],
-    adicionar: ["ADMIN"],
-    atualizar: ["ADMIN"],
-    deletar: ["ADMIN"]
+    listar: [PermissaoUsuario.RH, PermissaoUsuario.ADMIN],
+    procurar: [PermissaoUsuario.RH, PermissaoUsuario.ADMIN],
+    adicionar: [PermissaoUsuario.ADMIN],
+    atualizar: [PermissaoUsuario.ADMIN],
+    deletar: [PermissaoUsuario.ADMIN],
 };
 
 
@@ -26,7 +27,7 @@ export class DominiosRoutes {
         private readonly services: DominioServices,
         private readonly schema: DominioSchemas,
         private readonly nome: string,
-        autorizacoes: Partial<AutorizacoesDominio> = {}
+        autorizacoes?: Partial<AutorizacoesDominio>
     ) {
         this.autorizacoes = {
             ...autorizacoesPadrao,

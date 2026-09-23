@@ -11,6 +11,7 @@ import { login } from "./controllers/auth.controller.js"
 import { autenticar } from "./middlewares/auth.js"
 import { dominiosConfig } from "./config/dominios.config.js"
 import { dominios } from "./factories/dominios.factory.js"
+import routerDominios from "./factories/dominiosRouters.factory.js"
 
 
 dotenv.config()
@@ -33,15 +34,7 @@ app.post("/api/login", validate(loginSchema), login, errorHandler)
 app.use(autenticar)
 
 // Rotas de Dominios
-for (const [chave, config] of Object.entries(dominiosConfig)) {
-    app.use(
-        `/api/${config.rota}`,
-        dominios[chave].router
-    );
-}
-
-export default router;
-
+app.use(routerDominios)
 
 
 app.use("/api/usuarios", router)
@@ -52,3 +45,5 @@ app.use(errorHandler)
 app.listen(port, ()=>{
     console.log("Servidor Rodando em: Servidor rodando em http://localhost:" + port)
 })
+
+export default app;

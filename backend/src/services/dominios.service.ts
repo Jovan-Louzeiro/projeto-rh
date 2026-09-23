@@ -1,25 +1,5 @@
-import { prisma } from "../lib/prisma.js";
+import { prismaModel, VerificacaoUso } from "../types/dominio.types.js";
 import { RegistroEmUso, RegistroJaExistenteError, RegistroNaoEncontradoError } from "../errors/dominios.errors.js";
-
-type prismaModel = {
-    findMany: Function;
-    findUnique: Function;
-    findFirst: Function;
-    create: Function;
-    update: Function;
-    delete: Function;
-}
-
-type verificacoesUso ={
-    nome: string,
-    verificar: (id: number) => Promise<number>
-}
-
-type configDominio ={
-    nome: string,
-    idField: string,
-    verificacoesUso : verificacoesUso[]
-}
 
 export class DominioServices {
 
@@ -29,7 +9,7 @@ export class DominioServices {
             nome: string,
             idField: string,
             limiteDescricao: number,
-            verificacoesUso: any[]
+            verificacoesUso: VerificacaoUso[]
         }
     ) {}
 

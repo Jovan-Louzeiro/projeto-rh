@@ -1,4 +1,4 @@
-import { DominioConfig} from "../config/dominios.config.js";
+import { DominioConfig } from "../types/dominio.types.js";
 import { DominiosRoutes } from "../routes/dominios.routes.js";
 import { DominioSchemas } from "../schemas/dominosSchema.js"
 import { DominioServices } from "../services/dominios.service.js";

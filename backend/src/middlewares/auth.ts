@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import Jwt from "jsonwebtoken";
 import { NaoAutorizado, TokenInvalidoOuExpirado, TokenNaoFornecido } from "../errors/auth.erros.js";
+import { PermissaoUsuario } from "../../generated/prisma/enums.js";
 
 declare global {
     namespace Express {
@@ -15,11 +16,6 @@ export function autenticar(
     res: Response,
     next: NextFunction
 ) {
-
-    // Bypass durante desenvolvimento
-    if (process.env.NODE_ENV === "development") {
-        return next()
-    }
 
     const authHeader = req.headers.authorization
 
@@ -43,7 +39,7 @@ export function autenticar(
     }
 }
 
-export function autorizar(...permissoesPermitidas: string[]) {
+export function autorizar(...permissoesPermitidas: PermissaoUsuario[]) {
 
     return (
         req: Request,
