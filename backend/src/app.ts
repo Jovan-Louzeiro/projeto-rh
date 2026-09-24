@@ -10,6 +10,7 @@ import { loginSchema } from "./schemas/usuario.schema.js"
 import { login } from "./controllers/auth.controller.js"
 import { autenticar } from "./middlewares/auth.js"
 import routerDominios from "./factories/dominiosRouters.factory.js"
+import { DominiosRoutes } from "./routes/dominios/dominios.routes.js"
 
 
 dotenv.config()
@@ -33,7 +34,6 @@ app.use(autenticar)
 
 // Rotas de Dominios
 app.use(routerDominios)
-
 
 app.use("/api/usuarios", router)
 

@@ -1,12 +1,12 @@
 import { Router } from "express";
 
-import { DominioController } from "../controllers/dominios.controller.js";
-import { autorizar } from "../middlewares/auth.js";
-import { validate } from "../middlewares/validate.js";
-import { DominioSchemas } from "../schemas/dominosSchema.js";
-import type { DominioServices } from "../services/dominios.service.js";
-import { AutorizacoesDominio } from "../types/dominio.types.js";
-import { PermissaoUsuario } from "../../generated/prisma/enums.js";
+import { DominioController } from "../../controllers/dominios/dominios.controller.js";
+import { autorizar } from "../../middlewares/auth.js";
+import { validate } from "../../middlewares/validate.js";
+import { DominioSchemas } from "../../schemas/dominosSchema.js";
+import type { DominioServices } from "../../services/dominios/dominios.service.js";
+import { AutorizacoesDominio } from "../../types/dominio.types.js";
+import { PermissaoUsuario } from "../../../generated/prisma/enums.js";
 
 const autorizacoesPadrao: AutorizacoesDominio = {
     listar: [PermissaoUsuario.RH, PermissaoUsuario.ADMIN],

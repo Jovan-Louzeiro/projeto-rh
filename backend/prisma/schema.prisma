@@ -59,7 +59,6 @@ model EstadoCivil {
   id_estado_civil Int    @id @default(autoincrement())
   descricao       String @unique @db.VarChar(15)
   ativo Boolean @default(true)
-
   servidores Servidor[]
 }
 
@@ -68,6 +67,7 @@ model Pais {
   nome       String @unique @db.VarChar(100)
   gentilico  String @db.VarChar(100)
   codigo_iso String @unique @db.Char(2)
+  ativo Boolean @default(true)
 
   estados Estado[]
 
@@ -78,6 +78,7 @@ model Estado {
   id_estado Int    @id @default(autoincrement())
   nome      String @unique @db.VarChar(100)
   uf        String @unique @db.Char(2)
+  ativo Boolean @default(true)
 
   pais_id Int
   pais    Pais @relation(fields: [pais_id], references: [id_pais])
@@ -90,6 +91,7 @@ model Estado {
 model Municipio {
   id_municipio Int    @id @default(autoincrement())
   nome         String @db.VarChar(100)
+  ativo Boolean @default(true)
 
   estado_id Int
   estado    Estado @relation(fields: [estado_id], references: [id_estado])
@@ -155,6 +157,7 @@ model TipoEnsinoMedioCursado {
   descricao                    String @unique @db.VarChar(50)
   ativo Boolean @default(true)
 
+
   servidores Servidor[]
 }
 
@@ -171,6 +174,7 @@ model RG {
   id_rg            Int    @id @default(autoincrement())
   rg               String @db.VarChar(30)
   rg_orgao_emissor String @db.VarChar(30)
+  ativo Boolean @default(true)
 
   rg_uf_id Int
   rg_uf    Estado @relation("RgUf", fields: [rg_uf_id], references: [id_estado])
@@ -188,6 +192,7 @@ model TituloEleitor {
   numero            String @unique @db.VarChar(20)
   zona              String @db.VarChar(10)
   secao             String @db.VarChar(10)
+  ativo Boolean @default(true)
 
   servidor_id Int @unique
   servidor Servidor @relation(fields: [servidor_id], references: [id_servidor])
@@ -203,6 +208,7 @@ model CTPS {
   tipo_ctps TipoCTPS
   numero  String? @db.VarChar(15)
   serie   String? @db.VarChar(5)
+  ativo Boolean @default(true)
 
   uf_ctps_id Int?
   uf_ctps    Estado? @relation("CtpsUf", fields: [uf_ctps_id], references: [id_estado])
@@ -221,6 +227,7 @@ model CNH {
   categoria     String   @db.VarChar(15)
   data_emissao  DateTime
   data_validade DateTime
+  ativo Boolean @default(true)
 
   servidor_id Int @unique
   servidor Servidor @relation(fields: [servidor_id], references: [id_servidor])
@@ -229,12 +236,14 @@ model CNH {
 model CID {
   id_cid Int    @id @default(autoincrement())
   codigo String @unique @db.VarChar(10)
+  ativo Boolean @default(true)
 
   servidor_cid ServidorCid[]
 }
 
 model ServidorCid {
   id_servidor_cid Int @id @default(autoincrement())
+  ativo Boolean @default(true)
 
   servidor_id Int
   servidor    Servidor @relation(fields: [servidor_id], references: [id_servidor])
@@ -248,6 +257,7 @@ model ServidorCid {
 model Nacionalidade {
   id_nacionalidade Int @id @default(autoincrement())
   descricao String @unique @db.VarChar(15)
+  ativo Boolean @default(true)
 
   servidores Servidor[]
 }
@@ -262,6 +272,7 @@ model Certidao{
   nova_certidao Boolean
   matricula String @db.VarChar(50)
   tipo_certidao TipoCertidao
+  ativo Boolean @default(true)
 
   termo String? @db.VarChar(5)
   folha String? @db.VarChar(5)
@@ -277,12 +288,14 @@ model Certidao{
 model CursoFormacaoContinuada {
   id_curso_formacao_continuada Int @id @default(autoincrement())
   descricao String @unique @db.VarChar(50)
+  ativo Boolean @default(true)
 
   servidores ServidorCursoFormacaoContinuada[]
 }
 
 model ServidorCursoFormacaoContinuada {
   id_servidor_curso_formacao_continuada Int @id @default(autoincrement())
+  ativo Boolean @default(true)
 
   servidor_id Int
   servidor Servidor @relation(fields: [servidor_id], references: [id_servidor])
@@ -305,6 +318,7 @@ model Contato{
   tipo_contato TipoContato
   contato String @db.VarChar(150)
   principal    Boolean     @default(false)
+  ativo Boolean @default(true)
 
   servidor_id Int
   servidor Servidor @relation(fields: [servidor_id], references: [id_servidor])
@@ -342,6 +356,7 @@ model HistoricoFuncional{
 
 model Matricula{
   id_matricula Int @id @default(autoincrement())
+  ativo Boolean @default(true)
 
   numero String @unique @db.VarChar(50)
   admissao DateTime
@@ -355,6 +370,7 @@ model Matricula{
 
 model TiposLicenca{
   id_tipos_licenca Int @id @default(autoincrement())
+  ativo Boolean @default(true)
 
   descricao String @db.VarChar(50)
 }
@@ -377,7 +393,7 @@ model Usuario{
 
   permissao PermissaoUsuario
 
-  ativo Boolean
+  ativo Boolean @default(true)
 
   servidor_id Int? @unique
   servidor Servidor? @relation(fields: [servidor_id], references: [id_servidor])
@@ -385,6 +401,7 @@ model Usuario{
 
 model Servidor {
   id_servidor Int @id @default(autoincrement())
+  ativo Boolean @default(true)
 
   // Identificação
   matricula Matricula[]

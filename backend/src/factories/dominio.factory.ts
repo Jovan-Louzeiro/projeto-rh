@@ -1,7 +1,7 @@
 import { DominioConfig } from "../types/dominio.types.js";
-import { DominiosRoutes } from "../routes/dominios.routes.js";
+import { DominiosRoutes } from "../routes/dominios/dominios.routes.js";
 import { DominioSchemas } from "../schemas/dominosSchema.js"
-import { DominioServices } from "../services/dominios.service.js";
+import { DominioServices } from "../services/dominios/dominios.service.js";
 
 export function criarDominio(
     dominioConfig: DominioConfig) {

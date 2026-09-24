@@ -3,6 +3,12 @@ import Jwt from "jsonwebtoken";
 import { NaoAutorizado, TokenInvalidoOuExpirado, TokenNaoFornecido } from "../errors/auth.erros.js";
 import { PermissaoUsuario } from "../../generated/prisma/enums.js";
 
+
+type JwtUsuarioPayload = Jwt.JwtPayload & {
+    id: number;
+    permissao: PermissaoUsuario;
+};
+
 declare global {
     namespace Express {
         interface Request {

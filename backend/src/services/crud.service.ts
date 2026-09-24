@@ -1,15 +1,14 @@
 import { prismaModel, VerificacaoUso } from "../types/dominio.types.js";
 import { RegistroEmUso, RegistroJaExistenteError, RegistroNaoEncontradoError } from "../errors/dominios.errors.js";
 
-export class DominioServices {
+export class CRUDServices {
 
     constructor(
         private readonly prismaModel: prismaModel,
         private readonly config: {
             nome: string,
             idField: string,
-            limiteDescricao: number,
-            verificacoesUso: VerificacaoUso[]
+            verificacoesUso?: VerificacaoUso[]
         }
     ) {}
 
@@ -40,15 +39,6 @@ export class DominioServices {
     }
 
     async adicionar(data: { descricao: string, ativo?: boolean }) {
-        const dominioExiste = await this.prismaModel.findUnique({
-            where: {
-                descricao: data.descricao
-            }
-        })
-
-        if (dominioExiste) {
-            throw new RegistroJaExistenteError(this.config.nome)
-        }
 
         return await this.prismaModel.create({
             data: {
@@ -61,21 +51,6 @@ export class DominioServices {
     async atualizar(id: number, data: { descricao?: string, ativo?: boolean }) {
 
         const dominio = await this.procurar(id)
-
-        if (data.descricao) {
-            const descricaoExiste = await this.prismaModel.findFirst({
-                where: {
-                    descricao: data.descricao,
-                    NOT: {
-                        [this.config.idField]: id
-                    }
-                }
-            })
-
-            if (descricaoExiste) {
-                throw new RegistroJaExistenteError(this.config.nome)
-            }
-        }
 
         return this.prismaModel.update({
             where: {

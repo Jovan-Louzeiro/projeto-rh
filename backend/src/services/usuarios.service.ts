@@ -9,27 +9,29 @@ import { PermissaoUsuario } from "../../generated/prisma/enums.js"
 
 const prismaModel = prisma.usuario
 
-export async function listarUsuarios() {
+export async function listarUsuarios(mostrarTudo?: boolean) {
+
+    if (mostrarTudo) {
+        return await prismaModel.findMany({
+            omit: {
+                senha: true
+            }
+        })
+    }
+
     return await prismaModel.findMany({
-        omit:{
+        where: {
+            ativo: true
+        },
+        omit: {
             senha: true
         }
     })
 }
 
-export async function adicionarUsuario(objeto: {nome:string, email:string, senha:string, permissao:PermissaoUsuario, ativo:boolean}) {
-    
-    const usuarioExiste = await prismaModel.findUnique({
-        where: {
-            email: objeto.email
-        }
-    })
+export async function adicionarUsuario(objeto: { nome: string, email: string, senha: string, permissao: PermissaoUsuario, ativo: boolean }) {
 
-    if(usuarioExiste){
-        throw new RegistroJaExistenteError("Usuário")
-    }
-
-    return prismaModel.create({
+    return await prismaModel.create({
         data: {
             nome: objeto.nome,
             email: objeto.email,
@@ -39,63 +41,44 @@ export async function adicionarUsuario(objeto: {nome:string, email:string, senha
         }
     })
 
-
-
 }
 
-export async function procurarUsuario(id:number) {
+export async function procurarUsuario(id: number) {
     const resultado = await prismaModel.findUnique({
         where: {
             id_usuario: id
         }
     })
 
-    if(!resultado){
+    if (!resultado) {
         throw new RegistroNaoEncontradoError("Usuario")
     }
 
     return resultado
 }
 
-export async function deletarUsuario(id:number) {
+export async function deletarUsuario(id: number) {
 
     await procurarUsuario(id)
 
     // Adicionar Ifs de verificação de uso
 
     return await prismaModel.delete({
-        where:{
+        where: {
             id_usuario: id
         }
     })
 }
 
-export async function atualizarUsuario(id:number, data: {nome:string, email:string, senha:string, permissao:PermissaoUsuario, ativo:boolean}) {
-    
+export async function atualizarUsuario(id: number, data: { nome: string, email: string, senha: string, permissao: PermissaoUsuario, ativo: boolean }) {
+
     const usuarioExiste = await procurarUsuario(id)
 
-    //Verificar se o email ja esta sendo usado
-
-    if(data.email){
-        const emailExiste = await prismaModel.count({
-            where: {
-                email: data.email,
-                NOT: {
-                    id_usuario: id
-                }
-            }
-        })
-
-        if(emailExiste > 0){
-            throw new RegistroJaExistenteError("Usuario")
-        }
-    }
-
     return await prismaModel.update({
-        where:{
+        where: {
             id_usuario: id
         },
-        data:{
+        data: {
             nome: data.nome ?? usuarioExiste.nome,
             email: data.email ?? usuarioExiste.email,
             senha: data.senha ? await gerarHash(data.senha) : usuarioExiste.senha,

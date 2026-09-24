@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import type { DominioServices } from "../services/dominios.service.js";
+import type { DominioServices } from "../../services/dominios/dominios.service.js";
 
 export class DominioController {
     constructor(

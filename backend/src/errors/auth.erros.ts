@@ -1,44 +1,31 @@
-export class EmailOuSenhaInvalidos extends Error{
-    public readonly status: number
+import { AppError } from "./app.errors.js"
+
+export class EmailOuSenhaInvalidos extends AppError{
     constructor(){
-        super("Email ou Senha Inválidos")
-        this.name = "EMAIL_OU_SENHA_INVALIDOS_ERRO"
-        this.status = 401
+        super(401, "Email ou Senha Inválidos")
     }
 }
 
-export class UsuarioInativo extends Error{
-    public readonly status: number
+export class UsuarioInativo extends AppError{
     constructor(){
-        super("O usuário não está ativo")
-        this.name = "USUARIO_INATIVO_ERRO"
-        this.status = 403
+        super(403, "O usuário não está ativo")
     }
 }
 
-export class TokenNaoFornecido extends Error{
-    public readonly status: number
+export class TokenNaoFornecido extends AppError{
     constructor(){
-        super("Token não fornecido")
-        this.name = "TOKEN_NAO_FORNECIDO_ERRO"
-        this.status = 401
+        super(401, "Token não fornecido")
     }
 }
 
-export class TokenInvalidoOuExpirado extends Error{
-    public readonly status: number
+export class TokenInvalidoOuExpirado extends AppError{
     constructor(){
-        super("Token invalido ou expirado")
-        this.name = "TOKEN_INVALIDO_OU_EXPIRADO_ERRO"
-        this.status = 401
+        super(401, "Token invalido ou expirado")
     }
 }
 
-export class NaoAutorizado extends Error{
-    public readonly status: number
+export class NaoAutorizado extends AppError{
     constructor(){
-        super("Você não tem permissão para esta ação")
-        this.name = "NAO_AUTORIZADO_ERRO"
-        this.status = 403
+        super(403, "Você não tem permissão para esta ação")
     }
 }
