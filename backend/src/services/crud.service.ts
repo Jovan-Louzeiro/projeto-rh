@@ -7,7 +7,6 @@ export class CRUDServices {
         private readonly prismaModel: prismaModel,
         public readonly nome: string,
         private readonly idField: string,
-        private readonly verificacoesUso?: VerificacaoUso[]
     ) {
     }
 

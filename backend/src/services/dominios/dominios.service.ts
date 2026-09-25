@@ -6,8 +6,7 @@ export class DominioServices extends CRUDServices {
         prismaModel: prismaModel,
         nome: string,
         idField: string,
-        verificacoesUso?: VerificacaoUso[]
     ) {
-        super(prismaModel, nome, idField, verificacoesUso);
+        super(prismaModel, nome, idField);
     }
 }
