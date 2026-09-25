@@ -5,15 +5,14 @@ export class CRUDServices {
 
     constructor(
         private readonly prismaModel: prismaModel,
-        private readonly config: {
-            nome: string,
-            idField: string,
-            verificacoesUso?: VerificacaoUso[]
-        }
-    ) {}
+        public readonly nome: string,
+        private readonly idField: string,
+        private readonly verificacoesUso?: VerificacaoUso[]
+    ) {
+    }
 
     async listar(mostrarTudo?: boolean) {
-        if(mostrarTudo){
+        if (mostrarTudo) {
             return await this.prismaModel.findMany()
         }
 
@@ -27,12 +26,12 @@ export class CRUDServices {
     async procurar(id: number) {
         const resultado = await this.prismaModel.findUnique({
             where: {
-                [this.config.idField]: id
+                [this.idField]: id
             }
         })
 
         if (!resultado) {
-            throw new RegistroNaoEncontradoError(this.config.nome)
+            throw new RegistroNaoEncontradoError(this.nome)
         }
 
         return resultado
@@ -47,14 +46,14 @@ export class CRUDServices {
             }
         })
     }
-    
+
     async atualizar(id: number, data: { descricao?: string, ativo?: boolean }) {
 
         const dominio = await this.procurar(id)
 
         return this.prismaModel.update({
             where: {
-                [this.config.idField]: id
+                [this.idField]: id
             },
             data: {
                 descricao: data.descricao ?? dominio.descricao,
@@ -67,36 +66,12 @@ export class CRUDServices {
     async deletar(id: number) {
         await this.procurar(id)
 
-        if (this.config.verificacoesUso?.length){
-
-            const usos = await Promise.all(
-                this.config.verificacoesUso.map(
-                    async (verificacao) => ({
-                        nome: verificacao.nome,
-                        quantidade:
-                            await verificacao.verificar(id)
-                    })
-                )
-            );
-            
-            const usosEncontrados = usos.filter(
-                (uso) => uso.quantidade > 0
-            );
-            
-            if (usosEncontrados.length > 0){
-                const total = usosEncontrados.reduce( (soma, uso) => soma + uso.quantidade, 0 );
-
-                throw new RegistroEmUso( this.config.nome, total );
-            }
-        }
-
-
         return await this.prismaModel.delete({
             where: {
-                [this.config.idField]: id
+                [this.idField]: id
             }
         })
     }
 
-    
+
 }

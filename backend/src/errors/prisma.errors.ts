@@ -1,6 +1,7 @@
 import { Prisma } from "../../generated/prisma/client.js";
 
 import {
+    RegistroEmUso,
     RegistroJaExistenteError,
     RegistroNaoEncontradoError
 } from "./dominios.errors.js";
@@ -30,6 +31,10 @@ export function tratarErroPrisma(error: unknown): never {
 
             case "P2025":
                 throw new RegistroNaoEncontradoError("Registro");
+
+
+            case "P2003":
+                throw new RegistroEmUso("Registro")
 
             default:
                 throw error;

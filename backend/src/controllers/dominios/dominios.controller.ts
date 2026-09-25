@@ -2,18 +2,19 @@ import type { Request, Response } from "express";
 import type { DominioServices } from "../../services/dominios/dominios.service.js";
 
 export class DominioController {
+
+    nome: string
+
     constructor(
         private readonly service: DominioServices,
-        private readonly nome: string
-    ) {}
+    ) {
+        this.nome = service.nome
+    }
 
     adicionar = async (req: Request, res: Response) => {
         const { descricao, ativo } = req.body;
 
-        const resposta = await this.service.adicionar({
-            descricao,
-            ativo
-        });
+        const resposta = await this.service.adicionar({ descricao, ativo});
 
         return res.status(201).json({
             mensagem: `${this.nome} cadastrado com sucesso`,
@@ -40,10 +41,7 @@ export class DominioController {
     atualizar = async(req: Request, res: Response) => {
         const id = Number(req.params.id);
 
-        const resposta = await this.service.atualizar(
-            id,
-            req.body
-        );
+        const resposta = await this.service.atualizar( id, req.body);
 
         return res.json({
             mensagem: `${this.nome} atualizado com sucesso`,

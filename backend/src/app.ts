@@ -9,8 +9,8 @@ import { validate } from "./middlewares/validate.js"
 import { loginSchema } from "./schemas/usuario.schema.js"
 import { login } from "./controllers/auth.controller.js"
 import { autenticar } from "./middlewares/auth.js"
-import routerDominios from "./factories/dominiosRouters.factory.js"
-import { DominiosRoutes } from "./routes/dominios/dominios.routes.js"
+import { DominiosRoutes } from "./routes/dominios/dominio-base.routes.js"
+import dominiosRoutes from "./routes/dominios/dominios.routes.js"
 
 
 dotenv.config()
@@ -32,11 +32,9 @@ app.post("/api/login", validate(loginSchema), login, errorHandler)
 
 app.use(autenticar)
 
-// Rotas de Dominios
-app.use(routerDominios)
-
 app.use("/api/usuarios", router)
 
+app.use("/api/", dominiosRoutes)
 
 app.use(errorHandler)
 

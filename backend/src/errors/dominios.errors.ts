@@ -12,8 +12,11 @@ export class RegistroNaoEncontradoError extends AppError {
     }
 }
 
-export class RegistroEmUso extends AppError{
-    constructor(entidade: string, quantidade: number){
-        super(409, `${entidade} não pode ser deletado, pois existem ${quantidade} dependencias.`)
+export class RegistroEmUso extends AppError {
+    constructor(entidade: string) {
+        super(
+            409,
+            `${entidade} não pode ser deletado, pois está sendo utilizado.`
+        )
     }
 }

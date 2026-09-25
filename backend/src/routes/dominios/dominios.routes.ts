@@ -1,77 +1,51 @@
 import { Router } from "express";
+import { comunidadeIndigenaRoutes } from "./comunidadesIndigenas.routes.js";
+import { EscolaridadeRouter } from "./escolaridade.routes.js";
+import { domainToUnicode } from "node:url";
+import { GeneroRouter } from "./genero.routes.js";
+import { RacaCorRouter } from "./racaCor.routes.js";
+import { SexoRouter } from "./sexo.routes.js";
+import { NivelRouter } from "./nivel.routes.js";
+import { EstadoCivilRouter } from "./estadoCivil.routes.js";
+import { ZonaEnderecoRouter } from "./zonaEndereco.routes.js";
+import { LocalizacaoDiferenciadaRouter } from "./localizacaoDiferenciada.routes.js";
+import { CargoRouter } from "./cargo.routes.js";
+import { FuncaoRouter } from "./funcao.routes.js";
+import { DepartamentoRouter } from "./departamento.routes.js";
+import { TipoVinculoRouter } from "./tipoVinculo.routes.js";
+import { TipoEnsinoMedioCursadoRouter } from "./tipoEnsinoMedio.routes.js";
+import { SituacaoRouter } from "./situacao.routes.js";
 
-import { DominioController } from "../../controllers/dominios/dominios.controller.js";
-import { autorizar } from "../../middlewares/auth.js";
-import { validate } from "../../middlewares/validate.js";
-import { DominioSchemas } from "../../schemas/dominosSchema.js";
-import type { DominioServices } from "../../services/dominios/dominios.service.js";
-import { AutorizacoesDominio } from "../../types/dominio.types.js";
-import { PermissaoUsuario } from "../../../generated/prisma/enums.js";
+const dominiosRoutes = Router()
 
-const autorizacoesPadrao: AutorizacoesDominio = {
-    listar: [PermissaoUsuario.RH, PermissaoUsuario.ADMIN],
-    procurar: [PermissaoUsuario.RH, PermissaoUsuario.ADMIN],
-    adicionar: [PermissaoUsuario.ADMIN],
-    atualizar: [PermissaoUsuario.ADMIN],
-    deletar: [PermissaoUsuario.ADMIN],
-};
+dominiosRoutes.use("/comunidadesIndigenas", new comunidadeIndigenaRoutes().router)
 
+dominiosRoutes.use("/escolaridade", new EscolaridadeRouter().router)
 
-export class DominiosRoutes {
+dominiosRoutes.use("/generos", new GeneroRouter().router)
 
-    public readonly router: Router;
-    private readonly controller: DominioController;
-    private readonly autorizacoes: AutorizacoesDominio;
+dominiosRoutes.use("/racacor", new RacaCorRouter().router)
 
-    constructor(
-        private readonly services: DominioServices,
-        private readonly schema: DominioSchemas,
-        private readonly nome: string,
-        autorizacoes?: Partial<AutorizacoesDominio>
-    ) {
-        this.autorizacoes = {
-            ...autorizacoesPadrao,
-            ...autorizacoes
-        }
+dominiosRoutes.use("/sexos", new SexoRouter().router)
 
-        this.router = Router();
-        this.controller = new DominioController(this.services, this.nome);
+dominiosRoutes.use("/nivel", new NivelRouter().router)
 
-        this.registrar();
-    }
+dominiosRoutes.use("/estadoCivil", new EstadoCivilRouter().router)
 
-    private registrar(): void {
+dominiosRoutes.use("/zonaEndereco", new ZonaEnderecoRouter().router)
 
-        this.router.get(
-            "/",
-            autorizar(...this.autorizacoes.listar),
-            this.controller.listar
-        );
+dominiosRoutes.use("/localizacaoDiferenciada", new LocalizacaoDiferenciadaRouter().router)
 
-        this.router.get(
-            "/:id",
-            autorizar(...this.autorizacoes.procurar),
-            this.controller.procurar
-        );
+dominiosRoutes.use("/cargo", new CargoRouter().router)
 
-        this.router.post(
-            "/",
-            autorizar(...this.autorizacoes.adicionar),
-            validate(this.schema.adicionar),
-            this.controller.adicionar
-        );
+dominiosRoutes.use("/funcao", new FuncaoRouter().router)
 
-        this.router.patch(
-            "/:id",
-            autorizar(...this.autorizacoes.atualizar),
-            validate(this.schema.atualizar),
-            this.controller.atualizar
-        );
+dominiosRoutes.use("/departamento", new DepartamentoRouter().router)
 
-        this.router.delete(
-            "/:id",
-            autorizar(...this.autorizacoes.deletar),
-            this.controller.deletar
-        );
-    }
-}
+dominiosRoutes.use("/tipoVinculo", new TipoVinculoRouter().router)
+
+dominiosRoutes.use("/tipoEnsinoMedioCursado", new TipoEnsinoMedioCursadoRouter().router)
+
+dominiosRoutes.use("/situacao", new SituacaoRouter().router)
+
+export default dominiosRoutes
