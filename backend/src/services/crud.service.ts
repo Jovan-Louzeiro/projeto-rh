@@ -1,7 +1,7 @@
-import { prismaModel, VerificacaoUso } from "../types/dominio.types.js";
-import { RegistroEmUso, RegistroJaExistenteError, RegistroNaoEncontradoError } from "../errors/dominios.errors.js";
+import { prismaModel } from "../types/crud.types.js";
+import { RegistroNaoEncontradoError } from "../errors/dominios.errors.js";
 
-export class CRUDServices {
+export class CRUDServices<TCreate, TUpdate> {
 
     constructor(
         private readonly prismaModel: prismaModel,
@@ -36,28 +36,22 @@ export class CRUDServices {
         return resultado
     }
 
-    async adicionar(data: { descricao: string, ativo?: boolean }) {
+    async adicionar(data: TCreate) {
 
         return await this.prismaModel.create({
-            data: {
-                descricao: data.descricao,
-                ativo: data.ativo ?? true
-            }
+            data: data
         })
     }
 
-    async atualizar(id: number, data: { descricao?: string, ativo?: boolean }) {
+    async atualizar(id: number, data: TUpdate) {
 
-        const dominio = await this.procurar(id)
+        await this.procurar(id)
 
         return this.prismaModel.update({
             where: {
                 [this.idField]: id
             },
-            data: {
-                descricao: data.descricao ?? dominio.descricao,
-                ativo: data.ativo ?? dominio.ativo
-            }
+            data: data
         })
 
     }

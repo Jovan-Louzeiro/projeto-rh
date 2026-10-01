@@ -1,7 +1,8 @@
-import { prismaModel, VerificacaoUso } from "../../types/dominio.types.js";
+import { prismaModel } from "../../types/dominio.types.js";
 import { CRUDServices } from "../crud.service.js";
 
-export class DominioServices extends CRUDServices {
+export class DominioServices<TCreate, TUpdate> extends CRUDServices<TCreate, TUpdate> {
+
     constructor(
         prismaModel: prismaModel,
         nome: string,

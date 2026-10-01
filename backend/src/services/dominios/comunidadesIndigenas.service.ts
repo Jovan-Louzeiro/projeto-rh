@@ -1,7 +1,7 @@
 import { prisma } from "../../lib/prisma.js";
 import { DominioServices } from "./dominios.service.js";
 
-export class ComunidadeIndigenaService extends DominioServices {
+export class ComunidadeIndigenaService<TCreate, TUpdate> extends DominioServices<TCreate, TUpdate> {
     constructor(){
         super(
             prisma.comunidadeIndigena,
