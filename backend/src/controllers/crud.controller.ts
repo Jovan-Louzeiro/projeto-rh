@@ -12,9 +12,8 @@ export class CrudController {
     }
 
     adicionar = async (req: Request, res: Response) => {
-        const { descricao, ativo } = req.body;
 
-        const resposta = await this.service.adicionar({ descricao, ativo});
+        const resposta = await this.service.adicionar(req.body);
 
         return res.status(201).json({
             mensagem: `${this.nome} cadastrado com sucesso`,
