@@ -1,4 +1,11 @@
 import { PermissaoUsuario } from "../../generated/prisma/enums.js";
+import { ZodType } from "zod";
+
+export interface CrudSchema {
+    params: ZodType;
+    adicionar: ZodType;
+    atualizar: ZodType;
+}
 
 export type Autorizacoes = {
     listar: PermissaoUsuario[];

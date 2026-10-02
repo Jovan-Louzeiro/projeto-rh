@@ -4,7 +4,7 @@ import { RegistroNaoEncontradoError } from "../errors/dominios.errors.js";
 export class CRUDServices<TCreate, TUpdate> {
 
     constructor(
-        private readonly prismaModel: prismaModel,
+        protected readonly prismaModel: prismaModel,
         public readonly nome: string,
         private readonly idField: string,
     ) {

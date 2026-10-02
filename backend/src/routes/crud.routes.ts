@@ -1,9 +1,11 @@
 import { Router } from "express";
-import { Autorizacoes } from "../types/crud.types.js";
+import { Autorizacoes, CrudSchema } from "../types/crud.types.js";
 import { DominioController } from "../controllers/dominios/dominios.controller.js";
 import { PermissaoUsuario } from "../../generated/prisma/enums.js";
 import { autorizar } from "../middlewares/auth.js";
 import { validate } from "../middlewares/validate.js";
+import { CrudController } from "../controllers/crud.controller.js";
+import { CrudSchemas } from "../schemas/crud.schemas.js";
 
 const autorizacoesPadrao: Autorizacoes = {
     listar: [PermissaoUsuario.RH, PermissaoUsuario.ADMIN],
@@ -13,14 +15,14 @@ const autorizacoesPadrao: Autorizacoes = {
     deletar: [PermissaoUsuario.ADMIN],
 };
 
-export class CurdRoutes {
+export class CrudRoutes<TSchema extends CrudSchema> {
 
     public readonly router: Router;
     private readonly autorizacoes: Autorizacoes;
 
     constructor(
-        private readonly controller: DominioController,
-        private readonly schema: any,
+        protected controller: CrudController,
+        private readonly schema: TSchema,
         autorizacoes?: Partial<Autorizacoes>
     ) {
         this.autorizacoes = {
@@ -31,40 +33,43 @@ export class CurdRoutes {
         this.router = Router();
 
         this.registrar();
-    }
+    } 
 
     private registrar(): void {
 
-        this.router.get(
-            "/",
-            autorizar(...this.autorizacoes.listar),
-            this.controller.listar
-        );
+    this.router.get(
+        "/",
+        autorizar(...this.autorizacoes.listar),
+        this.controller.listar
+    );
 
-        this.router.get(
-            "/:id",
-            autorizar(...this.autorizacoes.procurar),
-            this.controller.procurar
-        );
+    this.router.get(
+        "/:id",
+        autorizar(...this.autorizacoes.procurar),
+        validate(this.schema.params, "params"),
+        this.controller.procurar
+    );
 
-        this.router.post(
-            "/",
-            autorizar(...this.autorizacoes.adicionar),
-            validate(this.schema.adicionar),
-            this.controller.adicionar
-        );
+    this.router.post(
+        "/",
+        autorizar(...this.autorizacoes.adicionar),
+        validate(this.schema.adicionar, "body"),
+        this.controller.adicionar
+    );
 
-        this.router.patch(
-            "/:id",
-            autorizar(...this.autorizacoes.atualizar),
-            validate(this.schema.atualizar),
-            this.controller.atualizar
-        );
+    this.router.patch(
+        "/:id",
+        autorizar(...this.autorizacoes.atualizar),
+        validate(this.schema.params, "params"),
+        validate(this.schema.atualizar, "body"),
+        this.controller.atualizar
+    );
 
-        this.router.delete(
-            "/:id",
-            autorizar(...this.autorizacoes.deletar),
-            this.controller.deletar
-        );
-    }
+    this.router.delete(
+        "/:id",
+        autorizar(...this.autorizacoes.deletar),
+        validate(this.schema.params, "params"),
+        this.controller.deletar
+    );
+}
 }

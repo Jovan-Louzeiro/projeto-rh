@@ -1,3 +1,4 @@
+import { includes } from "zod";
 import { RegistroEmUso, RegistroJaExistenteError, RegistroNaoEncontradoError } from "../errors/dominios.errors.js";
 import { prisma } from "../lib/prisma.js";
 import { CRUDServices } from "./crud.service.js";

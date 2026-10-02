@@ -1,14 +1,22 @@
 import { PaisController } from "../controllers/pais.controller.js";
+import { autorizar } from "../middlewares/auth.js";
 import { PaisSchemas } from "../schemas/pais.Schema.js";
-import { CurdRoutes } from "./crud.routes.js";
+import { CrudRoutes } from "./crud.routes.js";
 
-export class PaisRoutes extends CurdRoutes{
+export class PaisRoutes extends CrudRoutes<PaisSchemas>{
+
+    private paisController: PaisController
+    
 
     constructor(){
+
+        const controller = new PaisController()
+
         super(
-            new PaisController(),
+            controller,
             new PaisSchemas()
         )
-    }
 
+        this.paisController = controller
+    }
 }

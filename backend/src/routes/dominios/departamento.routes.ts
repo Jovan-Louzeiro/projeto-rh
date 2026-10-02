@@ -1,5 +1,5 @@
 import { DepartamentoController } from "../../controllers/dominios/departamento.controller.js";
-import { DominioSchemas } from "../../schemas/dominosSchema.js";
+import { DominioSchemas } from "../../schemas/dominos.schema.js";
 import { DominiosRoutes } from "./dominio-base.routes.js";
 
 export class DepartamentoRouter extends DominiosRoutes{

@@ -1,14 +1,17 @@
 import type { Request, Response } from "express";
 import type { DominioServices } from "../services/dominios/dominios.service.js";
+import { CrudSchemas } from "../schemas/crud.schemas.js";
 
 export class CrudController {
 
     nome: string
+    schema: CrudSchemas
 
     constructor(
         private readonly service: DominioServices<any, any>,
     ) {
         this.nome = service.nome
+        this.schema = new CrudSchemas()
     }
 
     adicionar = async (req: Request, res: Response) => {
@@ -30,7 +33,8 @@ export class CrudController {
     }
 
     procurar = async (req: Request, res: Response) => {
-        const id = Number(req.params.id);
+
+        const { id } = this.schema.params.parse(req.params)
 
         const resposta = await this.service.procurar(id);
 
@@ -38,7 +42,8 @@ export class CrudController {
     }
 
     atualizar = async(req: Request, res: Response) => {
-        const id = Number(req.params.id);
+        
+        const { id } = this.schema.params.parse(req.params)
 
         const resposta = await this.service.atualizar( id, req.body);
 
@@ -49,7 +54,8 @@ export class CrudController {
     }
 
     deletar = async(req: Request, res: Response) => {
-        const id = Number(req.params.id);
+        
+        const { id } = this.schema.params.parse(req.params)
 
         const resposta = await this.service.deletar(id);
 

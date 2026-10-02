@@ -12,6 +12,7 @@ import { autenticar } from "./middlewares/auth.js"
 import { DominiosRoutes } from "./routes/dominios/dominio-base.routes.js"
 import dominiosRoutes from "./routes/dominios/dominios.routes.js"
 import { PaisRoutes } from "./routes/pais.routes.js"
+import { EstadoRouter } from "./routes/estado.routes.js"
 
 
 dotenv.config()
@@ -38,6 +39,8 @@ app.use("/api/usuarios", router)
 app.use("/api/", dominiosRoutes)
 
 app.use("/api/pais", new PaisRoutes().router)
+
+app.use("/api/estados", new EstadoRouter().router)
 
 app.use(errorHandler)
 
