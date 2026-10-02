@@ -1,6 +1,7 @@
 import z from "zod";
 
 export class CrudSchemas {
+
     public readonly params;
 
     constructor() {

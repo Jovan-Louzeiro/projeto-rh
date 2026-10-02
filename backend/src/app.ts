@@ -1,18 +1,19 @@
 import express from "express"
-import router from "./routes/usuarios.routes.js"
 import { createRequire } from "module"
 const require = createRequire(import.meta.url)
 const cors = require("cors")
 import { errorHandler } from "./middlewares/erros.js"
 import dotenv from "dotenv"
 import { validate } from "./middlewares/validate.js"
-import { loginSchema } from "./schemas/usuario.schema.js"
 import { login } from "./controllers/auth.controller.js"
 import { autenticar } from "./middlewares/auth.js"
 import { DominiosRoutes } from "./routes/dominios/dominio-base.routes.js"
 import dominiosRoutes from "./routes/dominios/dominios.routes.js"
 import { PaisRoutes } from "./routes/pais.routes.js"
 import { EstadoRouter } from "./routes/estado.routes.js"
+import { UsuariosSchemas } from "./schemas/usuario.schema.js"
+import { UsuariosRouter } from "./routes/usuarios.routes.js"
+import { MunicipioRouter } from "./routes/municipio.routes.js"
 
 
 dotenv.config()
@@ -30,17 +31,19 @@ app.use(cors({
 
 app.use(express.json())
 
-app.post("/api/login", validate(loginSchema), login, errorHandler)
+app.post("/api/login", validate(new UsuariosSchemas().loginSchema, "body"), login, errorHandler)
 
 app.use(autenticar)
 
-app.use("/api/usuarios", router)
+app.use("/api/usuarios", new UsuariosRouter().router)
 
 app.use("/api/", dominiosRoutes)
 
 app.use("/api/pais", new PaisRoutes().router)
 
 app.use("/api/estados", new EstadoRouter().router)
+
+app.use("/api/municipios", new MunicipioRouter().router)
 
 app.use(errorHandler)
 
