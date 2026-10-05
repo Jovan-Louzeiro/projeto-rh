@@ -9,101 +9,100 @@ datasource db {
 
 // ENUM
 
-enum TipoCTPS{
+enum TipoCTPS {
   ANTIGO
   NOVO
 }
 
-enum TipoContato{
+enum TipoContato {
   TELEFONE_FIXO
   TELEFONE_MOVEL
   EMAIL
 }
 
-enum TipoCertidao{
+enum TipoCertidao {
   NASCIMENTO
   CASAMENTO
 }
 
-enum PermissaoUsuario{
+enum PermissaoUsuario {
   ADMIN
   RH
 }
 
 // Tabelas de Dominio Simples
 model Sexo {
-  id_sexo   Int    @id @default(autoincrement())
-  descricao String @unique @db.VarChar(10)
-  ativo Boolean @default(true)
+  id_sexo   Int     @id @default(autoincrement())
+  descricao String  @unique @db.VarChar(10)
+  ativo     Boolean @default(true)
 
   servidores Servidor[]
 }
 
 model Genero {
-  id_genero Int    @id @default(autoincrement())
-  descricao String @unique @db.VarChar(20)
-  ativo Boolean @default(true)
+  id_genero Int     @id @default(autoincrement())
+  descricao String  @unique @db.VarChar(20)
+  ativo     Boolean @default(true)
 
   servidores Servidor[]
 }
 
 model RacaCor {
-  id_racacor Int    @id @default(autoincrement())
-  descricao  String @unique @db.VarChar(10)
-  ativo Boolean @default(true)
+  id_racacor Int     @id @default(autoincrement())
+  descricao  String  @unique @db.VarChar(10)
+  ativo      Boolean @default(true)
 
   servidores Servidor[]
 }
 
 model ComunidadeIndigena {
-  id_comunidade_indigena Int    @id @default(autoincrement())
-  descricao              String @unique @db.VarChar(50)
-  ativo Boolean @default(true)
+  id_comunidade_indigena Int     @id @default(autoincrement())
+  descricao              String  @unique @db.VarChar(50)
+  ativo                  Boolean @default(true)
 
   servidores Servidor[]
 }
 
 model Escolaridade {
-  id_escolaridade Int    @id @default(autoincrement())
-  descricao       String @unique @db.VarChar(50)
-  ativo Boolean @default(true)
+  id_escolaridade Int     @id @default(autoincrement())
+  descricao       String  @unique @db.VarChar(50)
+  ativo           Boolean @default(true)
 
   servidores Servidor[]
 }
 
 model Nivel {
-  id_nivel  Int    @id @default(autoincrement())
-  descricao String @unique @db.VarChar(10)
-  ativo Boolean @default(true)
+  id_nivel  Int     @id @default(autoincrement())
+  descricao String  @unique @db.VarChar(10)
+  ativo     Boolean @default(true)
 }
 
 model EstadoCivil {
-  id_estado_civil Int    @id @default(autoincrement())
-  descricao       String @unique @db.VarChar(15)
-  ativo Boolean @default(true)
-  servidores Servidor[]
+  id_estado_civil Int        @id @default(autoincrement())
+  descricao       String     @unique @db.VarChar(15)
+  ativo           Boolean    @default(true)
+  servidores      Servidor[]
 }
 
 // Localização
 model Pais {
-  id_pais    Int    @id @default(autoincrement())
-  nome       String @unique @db.VarChar(100)
-  gentilico  String @db.VarChar(100)
-  codigo_iso String @unique @db.Char(2)
-  ativo Boolean @default(true)
+  id_pais    Int     @id @default(autoincrement())
+  nome       String  @unique @db.VarChar(100)
+  gentilico  String  @db.VarChar(100)
+  codigo_iso String  @unique @db.Char(2)
+  ativo      Boolean @default(true)
 
   estados Estado[]
 
   servidores_nascimento    Servidor[] @relation("PaisOrigem")
   servidores_nacionalidade Servidor[] @relation("Nacionalidade")
-
 }
 
 model Estado {
-  id_estado Int    @id @default(autoincrement())
-  nome      String @unique @db.VarChar(100)
-  uf        String @unique @db.Char(2)
-  ativo Boolean @default(true)
+  id_estado Int     @id @default(autoincrement())
+  nome      String  @unique @db.VarChar(100)
+  uf        String  @unique @db.Char(2)
+  ativo     Boolean @default(true)
 
   pais_id Int
   pais    Pais @relation(fields: [pais_id], references: [id_pais])
@@ -114,9 +113,9 @@ model Estado {
 }
 
 model Municipio {
-  id_municipio Int    @id @default(autoincrement())
-  nome         String @db.VarChar(100)
-  ativo Boolean @default(true)
+  id_municipio Int     @id @default(autoincrement())
+  nome         String  @db.VarChar(100)
+  ativo        Boolean @default(true)
 
   estado_id Int
   estado    Estado @relation(fields: [estado_id], references: [id_estado])
@@ -129,107 +128,108 @@ model Municipio {
 }
 
 model ZonaEndereco {
-  id_zona_endereco Int    @id @default(autoincrement())
-  descricao        String @unique @db.VarChar(10)
-  ativo Boolean @default(true)
+  id_zona_endereco Int     @id @default(autoincrement())
+  descricao        String  @unique @db.VarChar(10)
+  ativo            Boolean @default(true)
 
   servidores_endereco Servidor[] @relation("ZonaEndereco")
 }
 
 model LocalizacaoDiferenciada {
-  id_localizacao_diferenciada Int    @id @default(autoincrement())
-  descricao                   String @unique @db.VarChar(50)
-  ativo Boolean @default(true)
+  id_localizacao_diferenciada Int     @id @default(autoincrement())
+  descricao                   String  @unique @db.VarChar(50)
+  ativo                       Boolean @default(true)
 
   servidores Servidor[]
 }
 
 // Dados Funcionais
 model Cargo {
-  id_cargo  Int    @id @default(autoincrement())
-  descricao String @unique @db.VarChar(50)
-  ativo Boolean @default(true)
+  id_cargo  Int     @id @default(autoincrement())
+  descricao String  @unique @db.VarChar(50)
+  ativo     Boolean @default(true)
 
   historicos_funcionais HistoricoFuncional[]
 }
 
 model Funcao {
-  id_funcao Int    @id @default(autoincrement())
-  descricao String @unique @db.VarChar(50)
-  ativo Boolean @default(true)
+  id_funcao Int     @id @default(autoincrement())
+  descricao String  @unique @db.VarChar(50)
+  ativo     Boolean @default(true)
 
   historicos_funcionais HistoricoFuncional[]
 }
 
 model Departamento {
-  id_departamento Int    @id @default(autoincrement())
-  descricao       String @unique @db.VarChar(150)
-  inep String? @unique @db.VarChar(50)
-  ativo Boolean @default(true)
+  id_departamento Int     @id @default(autoincrement())
+  descricao       String  @unique @db.VarChar(150)
+  inep            String? @unique @db.VarChar(50)
+  ativo           Boolean @default(true)
 
   historicos_funcionais HistoricoFuncional[]
 }
 
 model TipoVinculo {
-  id_tipo_vinculo Int    @id @default(autoincrement())
-  descricao       String @unique @db.VarChar(50)
-  ativo Boolean @default(true)
+  id_tipo_vinculo Int     @id @default(autoincrement())
+  descricao       String  @unique @db.VarChar(50)
+  ativo           Boolean @default(true)
 
   historicos_funcionais HistoricoFuncional[]
 }
 
 model TipoEnsinoMedioCursado {
-  id_tipo_ensino_medio_cursado Int    @id @default(autoincrement())
-  descricao                    String @unique @db.VarChar(50)
-  ativo Boolean @default(true)
-
+  id_tipo_ensino_medio_cursado Int     @id @default(autoincrement())
+  descricao                    String  @unique @db.VarChar(50)
+  ativo                        Boolean @default(true)
 
   servidores Servidor[]
 }
 
 model Situacao {
-  id_situacao Int    @id @default(autoincrement())
-  descricao   String @unique @db.VarChar(30)
-  ativo Boolean @default(true)
+  id_situacao Int     @id @default(autoincrement())
+  descricao   String  @unique @db.VarChar(30)
+  ativo       Boolean @default(true)
 
   historico_funcional HistoricoFuncional[]
-  servidor Servidor[]
+  servidor            Servidor[]
 }
 
 // Documentos
 model RG {
-  id_rg            Int    @id @default(autoincrement())
-  rg               String @db.VarChar(30)
-  rg_orgao_emissor String @db.VarChar(30)
-  ativo Boolean @default(true)
+  id_rg            Int     @id @default(autoincrement())
+  rg               String  @db.VarChar(30)
+  rg_orgao_emissor String  @db.VarChar(30)
+  ativo            Boolean @default(true)
 
   rg_uf_id Int
   rg_uf    Estado @relation("RgUf", fields: [rg_uf_id], references: [id_estado])
 
   rg_data_emissao DateTime
 
-  servidor_id Int @unique
-  servidor Servidor @relation(fields: [servidor_id], references: [id_servidor])
+  servidor_id Int      @unique
+  servidor    Servidor @relation(fields: [servidor_id], references: [id_servidor])
 
   @@unique([rg, rg_orgao_emissor, rg_uf_id])
 }
 
 model TituloEleitor {
-  id_titulo_eleitor Int    @id @default(autoincrement())
-  numero            String @unique @db.VarChar(12)
-  zona              String @db.VarChar(4)
-  secao             String @db.VarChar(4)
-  ativo Boolean @default(true)
+  id_titulo_eleitor Int     @id @default(autoincrement())
+  numero            String  @unique @db.VarChar(12)
+  zona              String  @db.VarChar(4)
+  secao             String  @db.VarChar(4)
+  ativo             Boolean @default(true)
 
-  servidor_id Int @unique
-  servidor Servidor @relation(fields: [servidor_id], references: [id_servidor])
+  servidor_id Int      @unique
+  servidor    Servidor @relation(fields: [servidor_id], references: [id_servidor])
 }
 
 model CTPS {
   id_ctps Int @id @default(autoincrement())
 
+  tipo_ctps TipoCTPS
+
   numero String? @db.VarChar(15)
-  serie String? @db.VarChar(5)
+  serie  String? @db.VarChar(5)
 
   ativo Boolean @default(true)
 
@@ -238,8 +238,8 @@ model CTPS {
 
   data_emissao DateTime
 
-  servidor_id Int @unique
-  servidor Servidor @relation(fields: [servidor_id], references: [id_servidor])
+  servidor_id Int           @unique
+  servidor Servidor @relation(fields: [servidor_id], references:  [id_servidor])
 
   @@unique([numero, serie, uf_ctps_id])
 }
@@ -250,18 +250,20 @@ model CNH {
   categoria     String   @db.VarChar(15)
   data_emissao  DateTime
   data_validade DateTime
-  ativo Boolean @default(true)
+  ativo         Boolean  @default(true)
 
-  servidor_id Int @unique
-  servidor Servidor @relation(fields: [servidor_id], references: [id_servidor])
+  servidor_id Int      @unique
+  servidor    Servidor @relation(fields: [servidor_id], references: [id_servidor])
 }
 
-model Certidao{
-  id_certidao Int @id @default(autoincrement())
+model Certidao {
+  id_certidao   Int          @id @default(autoincrement())
+  
   nova_certidao Boolean
-  matricula String @db.VarChar(50)
+
+  matricula     String       @db.VarChar(50)
   tipo_certidao TipoCertidao
-  ativo Boolean @default(true)
+  ativo         Boolean      @default(true)
 
   termo String? @db.VarChar(5)
   folha String? @db.VarChar(5)
@@ -269,22 +271,21 @@ model Certidao{
 
   data_emissao DateTime
 
-  servidor_id Int @unique
-  servidor Servidor @relation(fields: [servidor_id], references: [id_servidor])
-
+  servidor_id Int      @unique
+  servidor    Servidor @relation(fields: [servidor_id], references: [id_servidor])
 }
 
 model CID {
-  id_cid Int    @id @default(autoincrement())
-  codigo String @unique @db.VarChar(10)
-  ativo Boolean @default(true)
+  id_cid Int     @id @default(autoincrement())
+  codigo String  @unique @db.VarChar(10)
+  ativo  Boolean @default(true)
 
   servidor_cid ServidorCid[]
 }
 
 model ServidorCid {
-  id_servidor_cid Int @id @default(autoincrement())
-  ativo Boolean @default(true)
+  id_servidor_cid Int     @id @default(autoincrement())
+  ativo           Boolean @default(true)
 
   servidor_id Int
   servidor    Servidor @relation(fields: [servidor_id], references: [id_servidor])
@@ -296,47 +297,45 @@ model ServidorCid {
 }
 
 model CursoFormacaoContinuada {
-  id_curso_formacao_continuada Int @id @default(autoincrement())
-  descricao String @unique @db.VarChar(50)
-  ativo Boolean @default(true)
+  id_curso_formacao_continuada Int     @id @default(autoincrement())
+  descricao                    String  @unique @db.VarChar(50)
+  ativo                        Boolean @default(true)
 
   servidores ServidorCursoFormacaoContinuada[]
 }
 
 model ServidorCursoFormacaoContinuada {
-  id_servidor_curso_formacao_continuada Int @id @default(autoincrement())
-  ativo Boolean @default(true)
+  id_servidor_curso_formacao_continuada Int     @id @default(autoincrement())
+  ativo                                 Boolean @default(true)
 
   servidor_id Int
-  servidor Servidor @relation(fields: [servidor_id], references: [id_servidor])
+  servidor    Servidor @relation(fields: [servidor_id], references: [id_servidor])
 
   curso_formacao_continuada_id Int
-  curso_formacao_continuada CursoFormacaoContinuada @relation(fields: [curso_formacao_continuada_id], references: [id_curso_formacao_continuada])
+  curso_formacao_continuada    CursoFormacaoContinuada @relation(fields: [curso_formacao_continuada_id], references: [id_curso_formacao_continuada])
 
   @@unique([servidor_id, curso_formacao_continuada_id])
-
 }
 
-model Contato{
-  id_contato Int @id @default(autoincrement())
+model Contato {
+  id_contato   Int         @id @default(autoincrement())
   tipo_contato TipoContato
-  contato String @db.VarChar(150)
+  contato      String      @db.VarChar(150)
   principal    Boolean     @default(false)
-  ativo Boolean @default(true)
+  ativo        Boolean     @default(true)
 
   servidor_id Int
-  servidor Servidor @relation(fields: [servidor_id], references: [id_servidor])
-
+  servidor    Servidor @relation(fields: [servidor_id], references: [id_servidor])
 }
 
-model HistoricoFuncional{
+model HistoricoFuncional {
   id_historico_funcional Int @id @default(autoincrement())
 
   servidor_id Int
-  servidor Servidor @relation(fields: [servidor_id], references: [id_servidor])
+  servidor    Servidor @relation(fields: [servidor_id], references: [id_servidor])
 
   matricula_id Int
-  matricula Matricula @relation(fields: [matricula_id], references: [id_matricula])
+  matricula    Matricula @relation(fields: [matricula_id], references: [id_matricula])
 
   cargo_id Int
   cargo    Cargo @relation(fields: [cargo_id], references: [id_cargo])
@@ -354,59 +353,56 @@ model HistoricoFuncional{
   situacao    Situacao @relation(fields: [situacao_id], references: [id_situacao])
 
   data_inicio DateTime
-  data_fim DateTime?
-
+  data_fim    DateTime?
 }
 
-model Matricula{
-  id_matricula Int @id @default(autoincrement())
-  ativo Boolean @default(true)
+model Matricula {
+  id_matricula Int     @id @default(autoincrement())
+  ativo        Boolean @default(true)
 
-  numero String @unique @db.VarChar(50)
+  numero   String   @unique @db.VarChar(50)
   admissao DateTime
 
   servidor_id Int
-  servidor Servidor @relation(fields: [servidor_id], references: [id_servidor])
+  servidor    Servidor @relation(fields: [servidor_id], references: [id_servidor])
 
   historicos_funcionais HistoricoFuncional[]
-
 }
 
-model TiposLicenca{
-  id_tipos_licenca Int @id @default(autoincrement())
-  ativo Boolean @default(true)
+model TiposLicenca {
+  id_tipos_licenca Int     @id @default(autoincrement())
+  ativo            Boolean @default(true)
 
   descricao String @db.VarChar(50)
 }
 
-model Requerimento{
+model Requerimento {
   id_requerimento Int @id @default(autoincrement())
-
 }
 
-model Usuario{
-  id_usuario Int @id @default(autoincrement())
-  nome String @db.VarChar(50)
-  email String @unique @db.VarChar(50)
-  senha String
+model Usuario {
+  id_usuario Int    @id @default(autoincrement())
+  nome       String @db.VarChar(50)
+  email      String @unique @db.VarChar(50)
+  senha      String
 
   permissao PermissaoUsuario
 
   ativo Boolean @default(true)
 
-  servidor_id Int? @unique
-  servidor Servidor? @relation(fields: [servidor_id], references: [id_servidor])
+  servidor_id Int?      @unique
+  servidor    Servidor? @relation(fields: [servidor_id], references: [id_servidor])
 }
 
 model Servidor {
-  id_servidor Int @id @default(autoincrement())
-  ativo Boolean @default(true)
+  id_servidor Int     @id @default(autoincrement())
+  ativo       Boolean @default(true)
 
   // Identificação
-  matricula Matricula[]
-  nome_completo String  @db.VarChar(150)
-  nome_social   String? @db.VarChar(150)
-  cpf           String  @unique @db.VarChar(11)
+  matricula     Matricula[]
+  nome_completo String      @db.VarChar(150)
+  nome_social   String?     @db.VarChar(150)
+  cpf           String      @unique @db.VarChar(11)
 
   rg RG?
 
@@ -416,7 +412,7 @@ model Servidor {
   data_nascimento DateTime
 
   nacionalidade_id Int
-  nacionalidade Pais @relation("Nacionalidade",fields: [nacionalidade_id], references: [id_pais])
+  nacionalidade    Pais @relation("Nacionalidade", fields: [nacionalidade_id], references: [id_pais])
 
   pais_origem_id Int?
   pais_origem    Pais? @relation("PaisOrigem", fields: [pais_origem_id], references: [id_pais])
@@ -471,16 +467,14 @@ model Servidor {
   localizacao_diferenciada    LocalizacaoDiferenciada? @relation(fields: [localizacao_diferenciada_id], references: [id_localizacao_diferenciada])
 
   // Documentos
-  certidao Certidao?
+  certidao       Certidao?
   titulo_eleitor TituloEleitor?
-
-  tipo_ctps TipoCTPS?
-  ctps CTPS?
+  ctps      CTPS?
 
   cnh CNH?
 
   // Saúde
-  cartao_sus   String?        @unique @db.VarChar(15)
+  cartao_sus   String?       @unique @db.VarChar(15)
   servidor_cid ServidorCid[]
 
   // Dados Funcionais
@@ -499,6 +493,6 @@ model Servidor {
   cursos_formacao_continuada ServidorCursoFormacaoContinuada[]
 
   // Outros
-  observacao String? @db.VarChar(500)
-  usuario Usuario?
+  observacao String?  @db.VarChar(500)
+  usuario    Usuario?
 }
