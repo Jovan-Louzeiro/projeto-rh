@@ -11,10 +11,10 @@ export class PaisSchemas extends CrudSchemas{
         super()
 
         const baseSchema = z.strictObject({
-            nome: z.string("O nome deve ser uma String").min(1, "O nome não pode ser vazia").max(100, `A descrição não pode conter mais de ${100} caracteres`),
-            gentilico: z.string("O gentílico deve ser uma string").min(1, "O campo não pode estar vazio").max(100, "Máximo de caracteres: 100"),
-            codigo_iso: z.string("O Codigo Iso deve ser uma string").min(1, "O campo não pode estar vazio").max(2, "O codigo tem no maximo 2 digitos"),
-            ativo: z.boolean("O valor deve ser um boolean").optional()
+            nome: this.stringSchema("Nome", 1, 100),
+            gentilico: this.stringSchema("Gentílico", 1, 100),
+            codigo_iso: this.stringSchema("Código Iso", 1, 2),
+            ativo: this.ativoSchema()
         });
 
         this.adicionar = baseSchema;

@@ -10,21 +10,11 @@ export class MunicipioSchema extends CrudSchemas {
         super()
 
         const baseSchema = z.strictObject({
-            nome: z
-                .string("O nome deve ser uma String")
-                .min(1, "O nome não pode ser vazia")
-                .max(
-                    100,
-                    `O nome não pode conter mais de ${100} caracteres`
-                ),
 
-            estado_id: z
-            .int("O id do pais deve ser informado")
-            .positive("O id deve ser positivo"),
-
-            ativo: z
-                .boolean("O valor deve ser um boolean")
-                .optional()
+            nome: this.stringSchema("Nome", 1, 100),
+            estado_id: this.idExternoSchema("Estado"),
+            ativo: this.ativoSchema()
+            
         });
 
         this.adicionar = baseSchema;

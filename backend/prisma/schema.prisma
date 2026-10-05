@@ -72,6 +72,8 @@ model Pais {
   estados Estado[]
 
   servidores_nascimento    Servidor[] @relation("PaisOrigem")
+  servidores_nacionalidade Servidor[] @relation("Nacionalidade")
+
 }
 
 model Estado {
@@ -254,14 +256,6 @@ model ServidorCid {
   @@unique([servidor_id, cid_id])
 }
 
-model Nacionalidade {
-  id_nacionalidade Int @id @default(autoincrement())
-  descricao String @unique @db.VarChar(15)
-  ativo Boolean @default(true)
-
-  servidores Servidor[]
-}
-
 enum TipoCertidao{
   NASCIMENTO
   CASAMENTO
@@ -417,7 +411,7 @@ model Servidor {
   data_nascimento DateTime
 
   nacionalidade_id Int
-  nacionalidade Nacionalidade @relation(fields: [nacionalidade_id], references: [id_nacionalidade])
+  nacionalidade Pais @relation("Nacionalidade",fields: [nacionalidade_id], references: [id_pais])
 
   pais_origem_id Int?
   pais_origem    Pais? @relation("PaisOrigem", fields: [pais_origem_id], references: [id_pais])
@@ -478,7 +472,7 @@ model Servidor {
   cnh CNH?
 
   // Saúde
-  cartao_sus   String?        @unique @db.VarChar(20)
+  cartao_sus   String?        @unique @db.VarChar(15)
   servidor_cid ServidorCid[]
 
   // Dados Funcionais

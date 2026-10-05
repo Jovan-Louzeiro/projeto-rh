@@ -11,10 +11,12 @@ export class EstadoSchemas extends CrudSchemas{
         super()
 
         const baseSchema = z.strictObject({
-            nome: z.string("O nome deve ser uma String").min(1, "O nome não pode ser vazia").max(100, `A descrição não pode conter mais de ${100} caracteres`),
-            uf: z.string("O Codigo Iso deve ser uma string").min(1, "O campo não pode estar vazio").max(2, "O codigo tem no maximo 2 digitos"),
-            pais_id: z.int("O id do pais deve ser informado").positive("O id deve ser positivo"),
-            ativo: z.boolean("O valor deve ser um boolean").optional(),
+
+            nome: this.stringSchema("Nome", 1, 100),
+            uf: this.stringSchema("Código iso", 1, 2),
+            pais_id: this.idExternoSchema("País"),
+            ativo: this.ativoSchema(),
+            
         });
 
         this.adicionar = baseSchema;
