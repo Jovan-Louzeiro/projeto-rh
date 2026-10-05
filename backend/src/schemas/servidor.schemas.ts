@@ -71,7 +71,7 @@ export class ServidorSchemas extends CrudSchemas {
 
             logradouro: this.stringSchema("Logradouro", 1, 100),
 
-            numero: this.stringSchema("Número", 1, 10, true),
+            numero: this.stringSchema("Número", 0, 10, true),
 
             complemento: this.stringSchema("Complemento", undefined, 100, true),
 
@@ -85,10 +85,7 @@ export class ServidorSchemas extends CrudSchemas {
 
 
             // Saúde
-            cartao_sus: z
-                .string("O Cartão do SUS deve ser uma String")
-                .regex(/^\d{15}$/, "O Cartão do SUS deve conter 15 números")
-                .optional(),
+            cartao_sus: this.numeroSchema("Cartão do Sus", 15).optional(),
 
             // Dados Funcionais
 
@@ -100,7 +97,7 @@ export class ServidorSchemas extends CrudSchemas {
 
             // Curso de formação continuada
 
-            observacao: this.stringSchema("Observação", 1, 500, true)
+            observacao: this.stringSchema("Observação", 0, 500, true)
         })
 
         this.adicionar = baseSchema

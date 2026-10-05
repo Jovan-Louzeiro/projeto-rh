@@ -7,6 +7,28 @@ datasource db {
   provider = "postgresql"
 }
 
+// ENUM
+
+enum TipoCTPS{
+  ANTIGO
+  NOVO
+}
+
+enum TipoContato{
+  TELEFONE_FIXO
+  TELEFONE_MOVEL
+  EMAIL
+}
+
+enum TipoCertidao{
+  NASCIMENTO
+  CASAMENTO
+}
+
+enum PermissaoUsuario{
+  ADMIN
+  RH
+}
 
 // Tabelas de Dominio Simples
 model Sexo {
@@ -62,6 +84,7 @@ model EstadoCivil {
   servidores Servidor[]
 }
 
+// Localização
 model Pais {
   id_pais    Int    @id @default(autoincrement())
   nome       String @unique @db.VarChar(100)
@@ -121,6 +144,7 @@ model LocalizacaoDiferenciada {
   servidores Servidor[]
 }
 
+// Dados Funcionais
 model Cargo {
   id_cargo  Int    @id @default(autoincrement())
   descricao String @unique @db.VarChar(50)
@@ -139,7 +163,7 @@ model Funcao {
 
 model Departamento {
   id_departamento Int    @id @default(autoincrement())
-  descricao       String @unique @db.VarChar(50)
+  descricao       String @unique @db.VarChar(150)
   inep String? @unique @db.VarChar(50)
   ativo Boolean @default(true)
 
@@ -172,6 +196,7 @@ model Situacao {
   servidor Servidor[]
 }
 
+// Documentos
 model RG {
   id_rg            Int    @id @default(autoincrement())
   rg               String @db.VarChar(30)
@@ -191,31 +216,27 @@ model RG {
 
 model TituloEleitor {
   id_titulo_eleitor Int    @id @default(autoincrement())
-  numero            String @unique @db.VarChar(20)
-  zona              String @db.VarChar(10)
-  secao             String @db.VarChar(10)
+  numero            String @unique @db.VarChar(12)
+  zona              String @db.VarChar(4)
+  secao             String @db.VarChar(4)
   ativo Boolean @default(true)
 
   servidor_id Int @unique
   servidor Servidor @relation(fields: [servidor_id], references: [id_servidor])
 }
 
-enum TipoCTPS{
-  ANTIGO
-  NOVO
-}
-
 model CTPS {
-  id_ctps Int    @id @default(autoincrement())
-  tipo_ctps TipoCTPS
-  numero  String? @db.VarChar(15)
-  serie   String? @db.VarChar(5)
+  id_ctps Int @id @default(autoincrement())
+
+  numero String? @db.VarChar(15)
+  serie String? @db.VarChar(5)
+
   ativo Boolean @default(true)
 
   uf_ctps_id Int?
-  uf_ctps    Estado? @relation("CtpsUf", fields: [uf_ctps_id], references: [id_estado])
+  uf_ctps Estado? @relation("CtpsUf", fields: [uf_ctps_id], references: [id_estado])
 
-  data_emissao DateTime?
+  data_emissao DateTime
 
   servidor_id Int @unique
   servidor Servidor @relation(fields: [servidor_id], references: [id_servidor])
@@ -233,6 +254,24 @@ model CNH {
 
   servidor_id Int @unique
   servidor Servidor @relation(fields: [servidor_id], references: [id_servidor])
+}
+
+model Certidao{
+  id_certidao Int @id @default(autoincrement())
+  nova_certidao Boolean
+  matricula String @db.VarChar(50)
+  tipo_certidao TipoCertidao
+  ativo Boolean @default(true)
+
+  termo String? @db.VarChar(5)
+  folha String? @db.VarChar(5)
+  livro String? @db.VarChar(5)
+
+  data_emissao DateTime
+
+  servidor_id Int @unique
+  servidor Servidor @relation(fields: [servidor_id], references: [id_servidor])
+
 }
 
 model CID {
@@ -256,29 +295,6 @@ model ServidorCid {
   @@unique([servidor_id, cid_id])
 }
 
-enum TipoCertidao{
-  NASCIMENTO
-  CASAMENTO
-}
-
-model Certidao{
-  id_certidao Int @id @default(autoincrement())
-  nova_certidao Boolean
-  matricula String @db.VarChar(50)
-  tipo_certidao TipoCertidao
-  ativo Boolean @default(true)
-
-  termo String? @db.VarChar(5)
-  folha String? @db.VarChar(5)
-  livro String? @db.VarChar(5)
-
-  data_emissao DateTime
-
-  servidor_id Int @unique
-  servidor Servidor @relation(fields: [servidor_id], references: [id_servidor])
-
-}
-
 model CursoFormacaoContinuada {
   id_curso_formacao_continuada Int @id @default(autoincrement())
   descricao String @unique @db.VarChar(50)
@@ -299,12 +315,6 @@ model ServidorCursoFormacaoContinuada {
 
   @@unique([servidor_id, curso_formacao_continuada_id])
 
-}
-
-enum TipoContato{
-  TELEFONE_FIXO
-  TELEFONE_MOVEL
-  EMAIL
 }
 
 model Contato{
@@ -372,11 +382,6 @@ model TiposLicenca{
 model Requerimento{
   id_requerimento Int @id @default(autoincrement())
 
-}
-
-enum PermissaoUsuario{
-  ADMIN
-  RH
 }
 
 model Usuario{
@@ -468,7 +473,10 @@ model Servidor {
   // Documentos
   certidao Certidao?
   titulo_eleitor TituloEleitor?
+
+  tipo_ctps TipoCTPS?
   ctps CTPS?
+
   cnh CNH?
 
   // Saúde

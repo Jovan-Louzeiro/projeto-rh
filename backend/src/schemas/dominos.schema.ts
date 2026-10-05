@@ -4,24 +4,25 @@ import { CrudSchemas } from "./crud.schemas.js";
 
 export class DominioSchemas extends CrudSchemas {
 
-    public readonly adicionar;
-    public readonly atualizar;
+    public adicionar;
+    public atualizar;
+    public baseSchema;
 
     constructor(
         private readonly limiteDescricao: number,
     ) {
         super();
 
-        const baseSchema = z.strictObject({
+        this.baseSchema = z.strictObject({
 
             descricao: this.stringSchema("Descrição", 1, limiteDescricao),
             ativo: this.ativoSchema()
             
         });
 
-        this.adicionar = baseSchema;
+        this.adicionar = this.baseSchema;
 
-        this.atualizar = baseSchema
+        this.atualizar = this.baseSchema
             .partial()
             .refine(
                 data => Object.keys(data).length > 0,
