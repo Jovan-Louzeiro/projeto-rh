@@ -1,0 +1,154 @@
+type: collection.insomnia.rest/5.0
+schema_version: "5.1"
+name: Zona de Endereço
+meta:
+  id: wrk_3f3ad884c87c4d28b42ccfd912b9b928
+  created: 1789973058495
+  modified: 1789973058495
+  description: ""
+collection:
+  - url: "{{ _.base_url }}/api/zonaEndereco"
+    name: /zonaEndereco
+    meta:
+      id: req_6f33a8ce41684b66a443cae3772c71a9
+      created: 1789935291958
+      modified: 1789935471711
+      isPrivate: false
+      description: ""
+      sortKey: -1789935291958
+    method: GET
+    headers:
+      - name: Authorization
+        value: "{{ _.token_access }}"
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/zonaEndereco/1"
+    name: /zonaEndereco/:id
+    meta:
+      id: req_4623a16d36ab469c9f93b6113d74737a
+      created: 1789935448260
+      modified: 1789935660957
+      isPrivate: false
+      description: ""
+      sortKey: -1789935448260
+    method: GET
+    headers:
+      - name: Authorization
+        value: "{{ _.token_access }}"
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/zonaEndereco"
+    name: /zonaEndereco
+    meta:
+      id: req_c5bdfdcdce544c7eb6237ef9ec2493fa
+      created: 1789935524814
+      modified: 1789941527018
+      isPrivate: false
+      description: ""
+      sortKey: -1789935524814
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+        	"descricao": "Azul",
+        	"ativo": true
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: Authorization
+        value: "{{ _.token_access }}"
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/zonaEndereco/11"
+    name: /zonaEndereco/:id
+    meta:
+      id: req_c9cf870c457b476a82fb62ca2e899474
+      created: 1789935645622
+      modified: 1789935743676
+      isPrivate: false
+      description: ""
+      sortKey: -1789935645622
+    method: PATCH
+    body:
+      mimeType: application/json
+      text: |-
+        {
+        	"descricao": "Rosa"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: Authorization
+        value: "{{ _.token_access }}"
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/zonaEndereco/11"
+    name: /zonaEndereco/:id
+    meta:
+      id: req_98ef1a94dc904fa9a3e7835237aed472
+      created: 1789941550502
+      modified: 1789941619433
+      isPrivate: false
+      description: ""
+      sortKey: -1789941550502
+    method: DELETE
+    headers:
+      - name: Authorization
+        value: "{{ _.token_access }}"
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+cookieJar:
+  name: Default Jar
+  meta:
+    id: jar_386f71d84672462bbae7eab823e8bcba
+    created: 1789935276627
+    modified: 1789935276627
+environments:
+  name: Base Environment
+  meta:
+    id: env_3806952eeddd4dca8baf1a1e92f7b918
+    created: 1789935276623
+    modified: 1789935276623
+    isPrivate: false

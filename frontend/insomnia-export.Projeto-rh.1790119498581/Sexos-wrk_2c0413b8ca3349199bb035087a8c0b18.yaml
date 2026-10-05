@@ -1,0 +1,159 @@
+type: collection.insomnia.rest/5.0
+schema_version: "5.1"
+name: Sexos
+meta:
+  id: wrk_2c0413b8ca3349199bb035087a8c0b18
+  created: 1787662720562
+  modified: 1788269068811
+  description: ""
+collection:
+  - url: "{{base_url}}/api/sexos?mostrarTudo=true"
+    name: /sexos
+    meta:
+      id: req_39cced62452f49a39231a63a5b5ba54f
+      created: 1787662720612
+      modified: 1789972591414
+      isPrivate: false
+      description: ""
+      sortKey: -1788358570289.75
+    method: GET
+    body:
+      mimeType: application/json
+      text: ""
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: Authorization
+        value: "{{ _.token_access }}"
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{base_url}}/api/sexos/"
+    name: /sexos
+    meta:
+      id: req_194a190cf0454d4791a14f75bbfad8c7
+      created: 1787840766207
+      modified: 1789941869873
+      isPrivate: false
+      description: ""
+      sortKey: -1788358247755.0625
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+        	"descricao": "Digitaro"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+        disabled: false
+      - name: Authorization
+        value: "{{ _.token_access }}"
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{base_url}}/api/sexos/3"
+    name: /sexos/:id
+    meta:
+      id: req_d87567d38cea41aa82734eeaec349319
+      created: 1788273963129
+      modified: 1789412157973
+      isPrivate: false
+      description: ""
+      sortKey: -1788358355266.625
+    method: GET
+    headers:
+      - name: Authorization
+        value: "{{ _.token_access }}"
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{base_url}}/api/sexos/8"
+    name: /sexos/:id
+    meta:
+      id: req_0ae42e44bf97432b81234020194e81ab
+      created: 1788357280151
+      modified: 1789941882684
+      isPrivate: false
+      description: ""
+      sortKey: -1788357280151
+    method: DELETE
+    headers:
+      - name: Authorization
+        value: "{{ _.token_access }}"
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ base_url }}/api/sexos/1"
+    name: /sexos/:id
+    meta:
+      id: req_730fadd8b2ee4b3a97ed7ca4a8019add
+      created: 1788360720421
+      modified: 1789952175970
+      isPrivate: false
+      description: ""
+      sortKey: -1788358140243.5
+    method: PATCH
+    body:
+      mimeType: application/json
+      text: |-
+        {
+        	"ativo": true
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: Authorization
+        value: "{{ _.token_access }}"
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+cookieJar:
+  name: Default Jar
+  meta:
+    id: jar_26f7b3b9cb06aafc8221f354f5ad9d0374205c20
+    created: 1787662720565
+    modified: 1787662720565
+environments:
+  name: Base Environment
+  meta:
+    id: env_26f7b3b9cb06aafc8221f354f5ad9d0374205c20
+    created: 1787662720564
+    modified: 1789412363872
+    isPrivate: false

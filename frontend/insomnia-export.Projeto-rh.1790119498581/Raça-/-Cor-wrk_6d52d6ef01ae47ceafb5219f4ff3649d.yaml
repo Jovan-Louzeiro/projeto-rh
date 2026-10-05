@@ -1,0 +1,154 @@
+type: collection.insomnia.rest/5.0
+schema_version: "5.1"
+name: Raça / Cor
+meta:
+  id: wrk_6d52d6ef01ae47ceafb5219f4ff3649d
+  created: 1789973048886
+  modified: 1789973048886
+  description: ""
+collection:
+  - url: "{{ _.base_url }}/api/racaCor"
+    name: /racaCor
+    meta:
+      id: req_691c9c23c7874a9aaff176c9f50c19e2
+      created: 1789935291958
+      modified: 1789935471711
+      isPrivate: false
+      description: ""
+      sortKey: -1789935291958
+    method: GET
+    headers:
+      - name: Authorization
+        value: "{{ _.token_access }}"
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/racaCor/1"
+    name: /racaCor/:id
+    meta:
+      id: req_fa713b7efcc24d5187c7cd7eb73b193b
+      created: 1789935448260
+      modified: 1789935660957
+      isPrivate: false
+      description: ""
+      sortKey: -1789935448260
+    method: GET
+    headers:
+      - name: Authorization
+        value: "{{ _.token_access }}"
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/racaCor"
+    name: /racaCor
+    meta:
+      id: req_d0f36c6308bf4157951dc47326a57b6b
+      created: 1789935524814
+      modified: 1789941527018
+      isPrivate: false
+      description: ""
+      sortKey: -1789935524814
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+        	"descricao": "Azul",
+        	"ativo": true
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: Authorization
+        value: "{{ _.token_access }}"
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/racaCor/11"
+    name: /racaCor/:id
+    meta:
+      id: req_f2576430bc31442387d15e3a00903e78
+      created: 1789935645622
+      modified: 1789935743676
+      isPrivate: false
+      description: ""
+      sortKey: -1789935645622
+    method: PATCH
+    body:
+      mimeType: application/json
+      text: |-
+        {
+        	"descricao": "Rosa"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: Authorization
+        value: "{{ _.token_access }}"
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/racaCor/11"
+    name: /racaCor/:id
+    meta:
+      id: req_d726f37f837e4234ae720bcec321b0bd
+      created: 1789941550502
+      modified: 1789941619433
+      isPrivate: false
+      description: ""
+      sortKey: -1789941550502
+    method: DELETE
+    headers:
+      - name: Authorization
+        value: "{{ _.token_access }}"
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+cookieJar:
+  name: Default Jar
+  meta:
+    id: jar_b9ac9e3e3e974286aef3153ee963914f
+    created: 1789935276627
+    modified: 1789935276627
+environments:
+  name: Base Environment
+  meta:
+    id: env_2b19dd1c54d44ee4996aca71eb618296
+    created: 1789935276623
+    modified: 1789935276623
+    isPrivate: false

@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Servidor } from "../types";
 import { listarServidores } from "../services/servidores";
-import { listarSexos } from "../services/sexos";
-import type { Sexo } from "../services/sexos";
 import Icon from "../components/Icon";
 import MetricCard from "../components/MetricCard";
 import Status from "../components/Status";
@@ -15,7 +13,6 @@ type Props = {
 export default function Servidores({ onProfile, onNew }: Props) {
   const [query, setQuery] = useState("");
   const [servidores, setServidores] = useState<Servidor[]>([]);
-  const [sexosList, setSexosList] = useState<Sexo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -39,23 +36,6 @@ export default function Servidores({ onProfile, onNew }: Props) {
     return () => controller.abort();
   }, []);
 
-  // Carregar sexos
-  useEffect(() => {
-    const controller = new AbortController();
-
-    listarSexos(controller.signal)
-      .then((data) => {
-        setSexosList(data);
-      })
-      .catch((error: unknown) => {
-        if (!(error instanceof DOMException && error.name === "AbortError")) {
-          console.error("Erro ao buscar sexos:", error);
-        }
-      });
-
-    return () => controller.abort();
-  }, []);
-
   const filtered = useMemo(
     () =>
       servidores.filter((s) =>
@@ -68,8 +48,6 @@ export default function Servidores({ onProfile, onNew }: Props) {
 
   const quantidade = (status: Servidor["status"]) =>
     servidores.filter((s) => s.status === status).length;
-
-  console.log("Sexos carregados:", sexosList);
 
   return (
     <>

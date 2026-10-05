@@ -1,0 +1,161 @@
+type: collection.insomnia.rest/5.0
+schema_version: "5.1"
+name: Escolaridade
+meta:
+  id: wrk_a82c8b79c3984f08833212d90de4208e
+  created: 1789953027131
+  modified: 1789953034619
+  description: ""
+collection:
+  - url: "{{base_url}}/api/TipoEnsinoMedioCursado"
+    name: /sexos
+    meta:
+      id: req_87500e80a1a94669b5670b9b5cd76f69
+      created: 1787662720612
+      modified: 1789972218716
+      isPrivate: false
+      description: ""
+      sortKey: -1788358570289.75
+    method: GET
+    body:
+      mimeType: application/json
+      text: ""
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: Authorization
+        value: "{{ _.token_access }}"
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{base_url}}/api/escolaridade/"
+    name: /escolaridade
+    meta:
+      id: req_aabc1fdd67854dda9d32790d1b39e650
+      created: 1787840766207
+      modified: 1789953133448
+      isPrivate: false
+      description: ""
+      sortKey: -1788358247755.0625
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+        	"descricao": "Digitar Escolaridade",
+        	"ativo": false
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+        disabled: false
+      - name: Authorization
+        value: "{{ _.token_access }}"
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{base_url}}/api/escolaridade/11"
+    name: /escolaridade/:id
+    meta:
+      id: req_8e55db1f79df4fa7916d10f39ca1ca8c
+      created: 1788273963129
+      modified: 1789953163615
+      isPrivate: false
+      description: ""
+      sortKey: -1788358355266.625
+    method: GET
+    headers:
+      - name: Authorization
+        value: "{{ _.token_access }}"
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{base_url}}/api/sexos/7"
+    name: /escolaridade/:id
+    meta:
+      id: req_97872fede1a147dc96d3bf24c86b98a9
+      created: 1788357280151
+      modified: 1789953101998
+      isPrivate: false
+      description: ""
+      sortKey: -1788357280151
+    method: DELETE
+    headers:
+      - name: Authorization
+        value: "{{ _.token_access }}"
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ base_url }}/api/escolaridade/11"
+    name: /escolaridade/:id
+    meta:
+      id: req_7c122ae2569c42f89a25819c8fc6383c
+      created: 1788360720421
+      modified: 1789953171889
+      isPrivate: false
+      description: ""
+      sortKey: -1788358140243.5
+    method: PATCH
+    body:
+      mimeType: application/json
+      text: |-
+        {
+        	"descricao": "M",
+        	"ativo": true
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: Authorization
+        value: "{{ _.token_access }}"
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+cookieJar:
+  name: Default Jar
+  meta:
+    id: jar_8b3bb279414c4a3899d1d275e5169757
+    created: 1787662720565
+    modified: 1787662720565
+environments:
+  name: Base Environment
+  meta:
+    id: env_d109ec71ea9f47698727a48c2a78c868
+    created: 1787662720564
+    modified: 1789412363872
+    isPrivate: false

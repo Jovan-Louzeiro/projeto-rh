@@ -1,0 +1,154 @@
+type: collection.insomnia.rest/5.0
+schema_version: "5.1"
+name: Escolaridade
+meta:
+  id: wrk_51473f3527344c1f936e9c755c7ef16c
+  created: 1789973037469
+  modified: 1789973037469
+  description: ""
+collection:
+  - url: "{{ _.base_url }}/api/escolaridade"
+    name: /escolaridade
+    meta:
+      id: req_e6042436fd93448daa05c4278289a31f
+      created: 1789935291958
+      modified: 1789935471711
+      isPrivate: false
+      description: ""
+      sortKey: -1789935291958
+    method: GET
+    headers:
+      - name: Authorization
+        value: "{{ _.token_access }}"
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/escolaridade/1"
+    name: /escolaridade/:id
+    meta:
+      id: req_a9ac7354c4924a0e89a552d1e77d2019
+      created: 1789935448260
+      modified: 1789935660957
+      isPrivate: false
+      description: ""
+      sortKey: -1789935448260
+    method: GET
+    headers:
+      - name: Authorization
+        value: "{{ _.token_access }}"
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/escolaridade"
+    name: /escolaridade
+    meta:
+      id: req_96a21e4f8ba940de986162552b212538
+      created: 1789935524814
+      modified: 1789941527018
+      isPrivate: false
+      description: ""
+      sortKey: -1789935524814
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+        	"descricao": "Azul",
+        	"ativo": true
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: Authorization
+        value: "{{ _.token_access }}"
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/escolaridade/11"
+    name: /escolaridade/:id
+    meta:
+      id: req_0f0b7810d01a4ebf979348af05ce6a69
+      created: 1789935645622
+      modified: 1789935743676
+      isPrivate: false
+      description: ""
+      sortKey: -1789935645622
+    method: PATCH
+    body:
+      mimeType: application/json
+      text: |-
+        {
+        	"descricao": "Rosa"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: Authorization
+        value: "{{ _.token_access }}"
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/escolaridade/11"
+    name: /escolaridade/:id
+    meta:
+      id: req_19f5ee2765fb490eaf430361a3135516
+      created: 1789941550502
+      modified: 1789941619433
+      isPrivate: false
+      description: ""
+      sortKey: -1789941550502
+    method: DELETE
+    headers:
+      - name: Authorization
+        value: "{{ _.token_access }}"
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+cookieJar:
+  name: Default Jar
+  meta:
+    id: jar_12030e051adf46ed9f70df04980d0aef
+    created: 1789935276627
+    modified: 1789935276627
+environments:
+  name: Base Environment
+  meta:
+    id: env_9b829b592ef34d00a89a4ffcc901b5aa
+    created: 1789935276623
+    modified: 1789935276623
+    isPrivate: false

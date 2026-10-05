@@ -25,7 +25,11 @@ export async function realizarLogin(
 
   const data = await response.json();
 
-  console.log("Login bem-sucedido:", data);
+  const token =
+    data.token ?? data.accessToken ?? data.access_token ?? data.token_access;
+  if (typeof token === "string" && token.length > 0) {
+    localStorage.setItem("rh_access_token", token);
+  }
 
   return data;
 }

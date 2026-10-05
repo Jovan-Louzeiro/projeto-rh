@@ -1,0 +1,19 @@
+type: environment.insomnia.rest/5.0
+schema_version: "5.1"
+name: Variaveis Globais
+meta:
+  id: wrk_13b219e7452c4766b4021c355e66a69e
+  created: 1789411499731
+  modified: 1789411499731
+  description: ""
+environments:
+  name: Base Environment
+  meta:
+    id: env_92f808adf5a2b42fd3be3074247742a881ce4c5a
+    created: 1789411499734
+    modified: 1790106261316
+    isPrivate: false
+  data:
+    base_url: http://localhost:3000
+    token_access: Barear
+      eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicGVybWlzc2FvIjoiQURNSU4iLCJpYXQiOjE3OTAxMDYyNDYsImV4cCI6MTc5MDEzNTA0Nn0.FNCiL1haUd2PGSBQWMZ0jMLPZuQHSszN_7no_ua1gv8

@@ -1,0 +1,154 @@
+type: collection.insomnia.rest/5.0
+schema_version: "5.1"
+name: Sexo
+meta:
+  id: wrk_b949db037c5a4b47921a2f324a1d50e3
+  created: 1789973050810
+  modified: 1789973050810
+  description: ""
+collection:
+  - url: "{{ _.base_url }}/api/sexos"
+    name: /sexos
+    meta:
+      id: req_d6f87f3fa3934579a8c755bb1037d175
+      created: 1789935291958
+      modified: 1789935471711
+      isPrivate: false
+      description: ""
+      sortKey: -1789935291958
+    method: GET
+    headers:
+      - name: Authorization
+        value: "{{ _.token_access }}"
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/sexos/1"
+    name: /sexos/:id
+    meta:
+      id: req_bdb44100ac924b02b53546f4dc57f379
+      created: 1789935448260
+      modified: 1789935660957
+      isPrivate: false
+      description: ""
+      sortKey: -1789935448260
+    method: GET
+    headers:
+      - name: Authorization
+        value: "{{ _.token_access }}"
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/sexos"
+    name: /sexos
+    meta:
+      id: req_926930414af243adabd19bb8261545d2
+      created: 1789935524814
+      modified: 1789941527018
+      isPrivate: false
+      description: ""
+      sortKey: -1789935524814
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+        	"descricao": "Azul",
+        	"ativo": true
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: Authorization
+        value: "{{ _.token_access }}"
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/sexos/11"
+    name: /sexos/:id
+    meta:
+      id: req_a6922c54ab264a368c35b005a62ca095
+      created: 1789935645622
+      modified: 1789935743676
+      isPrivate: false
+      description: ""
+      sortKey: -1789935645622
+    method: PATCH
+    body:
+      mimeType: application/json
+      text: |-
+        {
+        	"descricao": "Rosa"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: Authorization
+        value: "{{ _.token_access }}"
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/sexos/11"
+    name: /sexos/:id
+    meta:
+      id: req_f60b30dd70ca4fb9800d29ecdb418ffa
+      created: 1789941550502
+      modified: 1789941619433
+      isPrivate: false
+      description: ""
+      sortKey: -1789941550502
+    method: DELETE
+    headers:
+      - name: Authorization
+        value: "{{ _.token_access }}"
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+cookieJar:
+  name: Default Jar
+  meta:
+    id: jar_50f176824bb9471caa4ea247a27625c4
+    created: 1789935276627
+    modified: 1789935276627
+environments:
+  name: Base Environment
+  meta:
+    id: env_637fab2128e84a8d85198d2c81d76f2f
+    created: 1789935276623
+    modified: 1789935276623
+    isPrivate: false

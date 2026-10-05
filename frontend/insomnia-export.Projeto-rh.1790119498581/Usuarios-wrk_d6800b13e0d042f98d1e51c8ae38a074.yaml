@@ -1,0 +1,156 @@
+type: collection.insomnia.rest/5.0
+schema_version: "5.1"
+name: Usuarios
+meta:
+  id: wrk_d6800b13e0d042f98d1e51c8ae38a074
+  created: 1788756412066
+  modified: 1789411298506
+  description: ""
+collection:
+  - url: "{{ _.base_url }}/api/usuarios"
+    name: /usuarios
+    meta:
+      id: req_6f1860c08cf14c3da87fe08bf441c39d
+      created: 1789411309052
+      modified: 1789532497663
+      isPrivate: false
+      description: ""
+      sortKey: -1789411309052
+    method: GET
+    headers:
+      - name: Authorization
+        value: "{{ _.token_access }}"
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/usuarios/5"
+    name: /usuarios/:id
+    meta:
+      id: req_67f3222cce624bb798e7903f05897117
+      created: 1789531667297
+      modified: 1789534182576
+      isPrivate: false
+      description: ""
+      sortKey: -1789531667297
+    method: GET
+    headers:
+      - name: Authorization
+        value: "{{ _.token_access }}"
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/usuarios"
+    name: /usuarios
+    meta:
+      id: req_0d1e920d70f64f8e80345d2f8b2c7263
+      created: 1789531736874
+      modified: 1789532276233
+      isPrivate: false
+      description: ""
+      sortKey: -1789531736874
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+        	"nome": "teste",
+        	"email": "teste.jovan@gmail.com",
+        	"senha": "123",
+        	"permissao": "RH"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: Authorization
+        value: "{{ _.token_access }}"
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/usuarios/1"
+    name: /usuarios/:id
+    meta:
+      id: req_fd75fa78582d4dcc8529a5bb019bb924
+      created: 1789532928398
+      modified: 1789934968046
+      isPrivate: false
+      description: ""
+      sortKey: -1789532928398
+    method: PATCH
+    body:
+      mimeType: application/json
+      text: |-
+        {
+        	"ativo": true
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: Authorization
+        value: "{{ _.token_access }}"
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/usuarios/5"
+    name: /usuarios/:id
+    meta:
+      id: req_b0b3398b037b433085da81cd0b0bb64b
+      created: 1789533089195
+      modified: 1789534400298
+      isPrivate: false
+      description: ""
+      sortKey: -1789533089195
+    method: DELETE
+    headers:
+      - name: Authorization
+        value: "{{ _.token_access }}"
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+cookieJar:
+  name: Default Jar
+  meta:
+    id: jar_3ef6337f42679fa7145b98f3e22fb803c8f5de18
+    created: 1788756412070
+    modified: 1788756412070
+environments:
+  name: Base Environment
+  meta:
+    id: env_3ef6337f42679fa7145b98f3e22fb803c8f5de18
+    created: 1788756412069
+    modified: 1789412220716
+    isPrivate: false

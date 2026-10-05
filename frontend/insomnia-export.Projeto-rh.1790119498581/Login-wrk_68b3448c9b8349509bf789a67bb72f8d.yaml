@@ -1,0 +1,50 @@
+type: collection.insomnia.rest/5.0
+schema_version: "5.1"
+name: Login
+meta:
+  id: wrk_68b3448c9b8349509bf789a67bb72f8d
+  created: 1789411790243
+  modified: 1789411790243
+  description: ""
+collection:
+  - url: "{{ _.base_url }}/api/login"
+    name: /login
+    meta:
+      id: req_d256643704ed4ddd8c50d0f46d650eac
+      created: 1788756423670
+      modified: 1789934516304
+      isPrivate: false
+      description: ""
+      sortKey: -1789411811875
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+        	"email": "jovan.louzeiro@gmail.com",
+        	"senha": "1221"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+cookieJar:
+  name: Default Jar
+  meta:
+    id: jar_b0bdca89d0f5e3803dedf64b7243ef59cb28b3f1
+    created: 1789411790248
+    modified: 1789411790248
+environments:
+  name: Base Environment
+  meta:
+    id: env_b0bdca89d0f5e3803dedf64b7243ef59cb28b3f1
+    created: 1789411790245
+    modified: 1789411790245
+    isPrivate: false

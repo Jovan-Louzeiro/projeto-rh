@@ -1,0 +1,154 @@
+type: collection.insomnia.rest/5.0
+schema_version: "5.1"
+name: Função
+meta:
+  id: wrk_a9758c9932db4ddba8d60ceccde1050b
+  created: 1789973041269
+  modified: 1789973041269
+  description: ""
+collection:
+  - url: "{{ _.base_url }}/api/funcao"
+    name: /funcao
+    meta:
+      id: req_61b6d6241ef9448d94b1b34d0bada79f
+      created: 1789935291958
+      modified: 1789935471711
+      isPrivate: false
+      description: ""
+      sortKey: -1789935291958
+    method: GET
+    headers:
+      - name: Authorization
+        value: "{{ _.token_access }}"
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/funcao/1"
+    name: /funcao/:id
+    meta:
+      id: req_5337553d597a47fc95664a346f1be51d
+      created: 1789935448260
+      modified: 1789935660957
+      isPrivate: false
+      description: ""
+      sortKey: -1789935448260
+    method: GET
+    headers:
+      - name: Authorization
+        value: "{{ _.token_access }}"
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/funcao"
+    name: /funcao
+    meta:
+      id: req_0d3c9b76dd744bbb9d74c457b8005cd4
+      created: 1789935524814
+      modified: 1789941527018
+      isPrivate: false
+      description: ""
+      sortKey: -1789935524814
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+        	"descricao": "Azul",
+        	"ativo": true
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: Authorization
+        value: "{{ _.token_access }}"
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/funcao/11"
+    name: /funcao/:id
+    meta:
+      id: req_2aa5ac28e1bd4ba19b50707d9808bcef
+      created: 1789935645622
+      modified: 1789935743676
+      isPrivate: false
+      description: ""
+      sortKey: -1789935645622
+    method: PATCH
+    body:
+      mimeType: application/json
+      text: |-
+        {
+        	"descricao": "Rosa"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: Authorization
+        value: "{{ _.token_access }}"
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/funcao/11"
+    name: /funcao/:id
+    meta:
+      id: req_eee6d6973e2a481a867a92792f3abe89
+      created: 1789941550502
+      modified: 1789941619433
+      isPrivate: false
+      description: ""
+      sortKey: -1789941550502
+    method: DELETE
+    headers:
+      - name: Authorization
+        value: "{{ _.token_access }}"
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+cookieJar:
+  name: Default Jar
+  meta:
+    id: jar_e38c5299797e4527af02a4e96c44c179
+    created: 1789935276627
+    modified: 1789935276627
+environments:
+  name: Base Environment
+  meta:
+    id: env_b0fd006f81b0431ab0518e77a15a62a0
+    created: 1789935276623
+    modified: 1789935276623
+    isPrivate: false

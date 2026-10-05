@@ -1,0 +1,154 @@
+type: collection.insomnia.rest/5.0
+schema_version: "5.1"
+name: Comunidades Indígenas
+meta:
+  id: wrk_7048f8924a594cb5be8d543a9ebc842d
+  created: 1789973033575
+  modified: 1789973033575
+  description: ""
+collection:
+  - url: "{{ _.base_url }}/api/comunidadesindigenas"
+    name: /comunidadesindigenas
+    meta:
+      id: req_4290c34c64d14ebe88c41b2a8783573c
+      created: 1789935291958
+      modified: 1790106360692
+      isPrivate: false
+      description: ""
+      sortKey: -1789935291958
+    method: GET
+    headers:
+      - name: Authorization
+        value: "{{ _.token_access }}"
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/comunidadesindigenas/1"
+    name: /comunidadesindigenas/:id
+    meta:
+      id: req_4d534ccb142a436e9b171da97e91aeee
+      created: 1789935448260
+      modified: 1789973080986
+      isPrivate: false
+      description: ""
+      sortKey: -1789935448260
+    method: GET
+    headers:
+      - name: Authorization
+        value: "{{ _.token_access }}"
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/comunidadesindigenas"
+    name: /comunidadesindigenas
+    meta:
+      id: req_9c00a205921f4f2eba5a6c5bc7a0822b
+      created: 1789935524814
+      modified: 1789941527018
+      isPrivate: false
+      description: ""
+      sortKey: -1789935524814
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+        	"descricao": "Azul",
+        	"ativo": true
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: Authorization
+        value: "{{ _.token_access }}"
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/comunidadesindigenas/11"
+    name: /comunidadesindigenas/:id
+    meta:
+      id: req_a374a107aeba49d39a39c92dbb7ffaf0
+      created: 1789935645622
+      modified: 1789935743676
+      isPrivate: false
+      description: ""
+      sortKey: -1789935645622
+    method: PATCH
+    body:
+      mimeType: application/json
+      text: |-
+        {
+        	"descricao": "Rosa"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: Authorization
+        value: "{{ _.token_access }}"
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/comunidadesindigenas/11"
+    name: /comunidadesindigenas/:id
+    meta:
+      id: req_d1f8d023cf2140c18ff861de5f1d93c8
+      created: 1789941550502
+      modified: 1789941619433
+      isPrivate: false
+      description: ""
+      sortKey: -1789941550502
+    method: DELETE
+    headers:
+      - name: Authorization
+        value: "{{ _.token_access }}"
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+cookieJar:
+  name: Default Jar
+  meta:
+    id: jar_9aae587b465f4b138315d0290ab16964
+    created: 1789935276627
+    modified: 1789935276627
+environments:
+  name: Base Environment
+  meta:
+    id: env_1ab89c2bec1d433da5533c085fd99f8f
+    created: 1789935276623
+    modified: 1789935276623
+    isPrivate: false

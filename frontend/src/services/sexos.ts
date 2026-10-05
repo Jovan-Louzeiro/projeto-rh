@@ -1,16 +1,51 @@
-export async function listarSexos(token: string) {
-  return fetch("https://projeto-rh-sj48.onrender.com/api/sexos", {
-    method: "GET",
-    headers: {
-      authorization: "Bearer " + token
-    }
-  }).then (response => {
-    if (!response.ok) {
-      throw new Error(`Erro na requisição: ${response.status}`);
-    }
-    return response.json();
-  });
-} 
+export type Sexo = {
+  id: string | number;
+  descricao: string;
+  ativo: boolean;
+};
 
+const API_URL = (
+  import.meta.env.VITE_API_URL ??
+  "https://projeto-rh-sj48.onrender.com"
+).replace(/\/$/, "");
 
-console.log( await listarSexos("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MywicGVybWlzc2FvIjoiQURNSU4iLCJpYXQiOjE3ODkwNDgyNjAsImV4cCI6MTc4OTA3NzA2MH0.sc3WdTQo0iHzbPT5TQtflBbdbMwCuYMYZajRtn0WWfE"));
+export async function listarSexos(
+  signal?: AbortSignal
+): Promise<Sexo[]> {
+  const token = localStorage.getItem("rh_access_token");
+  const response = await fetch(
+    `${API_URL}/api/sexos?mostrarTudo=true`,
+    {
+      method: "GET",
+
+      headers: {
+        Accept: "application/json",
+        ...(token
+          ? { Authorization: token.startsWith("Bearer ") ? token : `Bearer ${token}` }
+          : {}),
+      },
+
+      signal,
+    }
+  );
+
+  if (!response.ok) {
+    const mensagem = await response.text();
+
+    throw new Error(
+      `Erro ao buscar sexos: ${response.status} ${mensagem}`
+    );
+  }
+
+  const body = await response.json();
+
+  if (Array.isArray(body)) {
+    return body;
+  }
+
+  if (Array.isArray(body.data)) {
+    return body.data;
+  }
+
+  return [];
+}

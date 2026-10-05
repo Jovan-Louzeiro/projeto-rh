@@ -1,5 +1,6 @@
 import type { Servidor } from "../types";
 
+
 // Configure VITE_API_URL no .env. Sem ela, usa /api/servidores no mesmo domínio.
 const apiUrl = (import.meta.env.VITE_API_URL ?? "").replace(/\/$/, "");
 const endpoint = `${apiUrl}/api/servidores`;

@@ -1,0 +1,160 @@
+type: collection.insomnia.rest/5.0
+schema_version: "5.1"
+name: Gênero
+meta:
+  id: wrk_ffe4b8278a25409a922e5d7ee899e86a
+  created: 1789945182882
+  modified: 1789945196646
+  description: ""
+collection:
+  - url: "{{base_url}}/api/generos"
+    name: /generos
+    meta:
+      id: req_d69446be205f470fb3cf7bb2a737946b
+      created: 1787662720612
+      modified: 1789945223765
+      isPrivate: false
+      description: ""
+      sortKey: -1788358570289.75
+    method: GET
+    body:
+      mimeType: application/json
+      text: ""
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: Authorization
+        value: "{{ _.token_access }}"
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{base_url}}/api/generos"
+    name: /generos
+    meta:
+      id: req_6eec61ac1d54462cb8a0d7916e769bf6
+      created: 1787840766207
+      modified: 1789945269612
+      isPrivate: false
+      description: ""
+      sortKey: -1788358247755.0625
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+        	"descricao": "Digitro"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+        disabled: false
+      - name: Authorization
+        value: "{{ _.token_access }}"
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{base_url}}/api/generos/11"
+    name: /generos/:id
+    meta:
+      id: req_aa788460c1f44a61b1363cf11cb60fa8
+      created: 1788273963129
+      modified: 1789945291093
+      isPrivate: false
+      description: ""
+      sortKey: -1788358355266.625
+    method: GET
+    headers:
+      - name: Authorization
+        value: "{{ _.token_access }}"
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{base_url}}/api/generos/11"
+    name: /generos/:id
+    meta:
+      id: req_29db3c48e0e64f57b7eed9ecade0e420
+      created: 1788357280151
+      modified: 1789945305790
+      isPrivate: false
+      description: ""
+      sortKey: -1788357280151
+    method: DELETE
+    headers:
+      - name: Authorization
+        value: "{{ _.token_access }}"
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ base_url }}/api/generos/11"
+    name: /generos/:id
+    meta:
+      id: req_d857a392f47f4f54bcee98ade0608e69
+      created: 1788360720421
+      modified: 1789945284023
+      isPrivate: false
+      description: ""
+      sortKey: -1788358140243.5
+    method: PATCH
+    body:
+      mimeType: application/json
+      text: |-
+        {
+        	"descricao": "M",
+        	"ativo": true
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: Authorization
+        value: "{{ _.token_access }}"
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+cookieJar:
+  name: Default Jar
+  meta:
+    id: jar_673f310f040a4febb65396c05e0add02
+    created: 1787662720565
+    modified: 1787662720565
+environments:
+  name: Base Environment
+  meta:
+    id: env_d51388b2b8764809babedec039e07aa5
+    created: 1787662720564
+    modified: 1789412363872
+    isPrivate: false
