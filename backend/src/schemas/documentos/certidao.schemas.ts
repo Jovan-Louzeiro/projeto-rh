@@ -1,4 +1,5 @@
 import z from "zod";
+
 import { DocumentosSchema } from "./documentos.schemas.js";
 
 export class CertidaoSchemas extends DocumentosSchema {
@@ -7,28 +8,33 @@ export class CertidaoSchemas extends DocumentosSchema {
     public readonly atualizar;
 
     constructor() {
-
         super();
 
         const baseSchema = z.strictObject({
-
             nova_certidao: this.booleanSchema("Nova Certidão"),
 
             matricula: this.numeroSchema("Matrícula", 32),
 
-            tipo_certidao: z.enum(["NASCIMENTO", "CASAMENTO"], "O tipo da certidão deve ser NASCIMENTO ou CASAMENTO"),
+            tipo_certidao: z.enum(
+                ["NASCIMENTO", "CASAMENTO"],
+                "O tipo da certidão deve ser NASCIMENTO ou CASAMENTO"
+            ),
 
-            termo: this.numeroSchema("Termo", 5).optional(),
+            termo: this.numeroSchema("Termo", 5).nullish(),
 
-            folha: this.numeroSchema("Folha", 5).optional(),
+            folha: this.numeroSchema("Folha", 5).nullish(),
 
-            livro: this.numeroSchema("Livro", 5).optional(),
+            livro: this.numeroSchema("Livro", 5).nullish(),
 
-            data_emissao: this.dataSchema("data de emissão")
+            data_emissao: this.dataSchema("Data de emissão")
         });
 
-        this.adicionar = baseSchema.superRefine((data, ctx) => {
+        const validarCertidao = (
+            data: z.infer<typeof baseSchema>,
+            ctx: z.RefinementCtx
+        ) => {
 
+            // CERTIDÃO NOVA
             if (data.nova_certidao) {
 
                 if (data.termo !== undefined) {
@@ -58,6 +64,7 @@ export class CertidaoSchemas extends DocumentosSchema {
                     });
                 }
 
+                // CERTIDÃO ANTIGA
             } else {
 
                 if (data.termo === undefined) {
@@ -87,16 +94,25 @@ export class CertidaoSchemas extends DocumentosSchema {
                     });
                 }
             }
-        });
+        };
 
-        this.atualizar = baseSchema
-            .partial()
-            .refine(
-                data => Object.keys(data).length > 0,
-                {
-                    message:
-                        "É necessário informar pelo menos um campo para atualizar"
-                }
-            );
+        /*
+         * POST
+         */
+        this.adicionar = baseSchema.superRefine(validarCertidao);
+
+        /*
+         * PUT
+         */
+        this.atualizar = baseSchema.superRefine(validarCertidao);
     }
+
+
 }
+
+export type CertidaoUpdate = z.infer<
+    CertidaoSchemas["atualizar"]
+>;
+export type CertidaoCreate = z.infer<
+    CertidaoSchemas["adicionar"]
+>;

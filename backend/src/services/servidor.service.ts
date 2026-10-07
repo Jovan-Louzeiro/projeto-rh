@@ -1,7 +1,8 @@
-import z from "zod";
+import z, { includes } from "zod";
 import { prisma } from "../lib/prisma.js";
 import { DocumentosServices } from "./documentos/documentos.service.js";
 import { ServidorSchemas } from "../schemas/servidor.schemas.js";
+import { RegistroNaoEncontradoError } from "../errors/dominios.errors.js";
 
 type ServidorAdicionar = z.infer<ServidorSchemas["adicionar"]>;
 
@@ -15,6 +16,27 @@ export class ServidorService extends DocumentosServices<ServidorAdicionar, Servi
             "Servidor",
             "id_servidor"
         )
+    }
+
+    async detalhar(id: number){
+        const resultado = await this.prismaModel.findUnique({
+                    where: {
+                        [this.idField]: id
+                    },
+                    include: {
+                        certidao: true,
+                        cnh: true,
+                        ctps: true,
+                        identidade: true,
+                        titulo_eleitor: true
+                    }
+                })
+        
+                if (!resultado) {
+                    throw new RegistroNaoEncontradoError(this.nome)
+                }
+        
+                return resultado
     }
 
     async adicionar(data: ServidorAdicionar){

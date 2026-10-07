@@ -252,9 +252,9 @@ model CTPS {
 model Identidade {
   id_identidade    Int     @id @default(autoincrement())
 
-  tipo TipoIdentidade
+  tipo_identidade TipoIdentidade
 
-  numero               String  @db.VarChar(30)
+  numero               String?  @db.VarChar(30)
   orgao_emissor String  @db.VarChar(30)
 
   rg_uf_id Int

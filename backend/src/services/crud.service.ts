@@ -6,7 +6,7 @@ export class CRUDServices<TCreate, TUpdate> {
     constructor(
         protected readonly prismaModel: prismaModel,
         public readonly nome: string,
-        private readonly idField: string,
+        protected readonly idField: string,
     ) {
     }
 

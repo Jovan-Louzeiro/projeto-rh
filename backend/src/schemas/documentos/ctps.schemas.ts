@@ -1,9 +1,11 @@
 import z from "zod";
+
 import { DocumentosSchema } from "./documentos.schemas.js";
 
 export class CtpsSchemas extends DocumentosSchema {
 
     public readonly adicionar;
+
     public readonly atualizar;
 
     constructor() {
@@ -12,19 +14,25 @@ export class CtpsSchemas extends DocumentosSchema {
 
         const baseSchema = z.strictObject({
 
-            tipo_ctps: z.enum(["ANTIGO", "NOVO"], "O tipo da CTPS deve ser ANTIGO ou NOVO"),
+            tipo_ctps: z.enum(
+                ["ANTIGO", "NOVO"],
+                "O tipo da CTPS deve ser ANTIGO ou NOVO"
+            ),
 
-            numero: this.numeroSchema("Número da CTPS", 15).optional(),
+            numero: this.numeroSchema("Número da CTPS", 8).optional().nullish(),
 
-            serie: this.numeroSchema("Série da CTPS", 5).optional(),
+            serie: this.numeroSchema("Série da CTPS", 5).optional().nullish(),
 
-            uf_ctps_id: this.idExternoSchema("UF").optional(),
+            uf_ctps_id: this.idExternoSchema("UF").optional().nullish(),
 
-            data_emissao: this.dataSchema("data de emissão")
+            data_emissao: this.dataSchema("Data de emissão")
 
         });
 
-        this.adicionar = baseSchema.superRefine((data, ctx) => {
+        const validarCtps = (
+            data: z.infer<typeof baseSchema>,
+            ctx: z.RefinementCtx
+        ) => {
 
             if (data.tipo_ctps === "ANTIGO") {
 
@@ -84,16 +92,17 @@ export class CtpsSchemas extends DocumentosSchema {
                     });
                 }
             }
-        });
+        };
 
-        this.atualizar = baseSchema
-            .partial()
-            .refine(
-                data => Object.keys(data).length > 0,
-                {
-                    message:
-                        "É necessário informar pelo menos um campo para atualizar"
-                }
-            );
+        this.adicionar = baseSchema.superRefine(validarCtps);
+
+        this.atualizar = baseSchema.superRefine(validarCtps);
     }
 }
+
+export type CtpsUpdate = z.infer<
+    CtpsSchemas["atualizar"]
+>;
+export type CtpsCreate = z.infer<
+    CtpsSchemas["adicionar"]
+>;

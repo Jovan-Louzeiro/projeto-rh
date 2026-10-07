@@ -1,9 +1,11 @@
 import z from "zod";
+
 import { DocumentosSchema } from "./documentos.schemas.js";
 
 export class TituloEleitorSchemas extends DocumentosSchema {
 
     public readonly adicionar;
+
     public readonly atualizar;
 
     constructor() {
@@ -16,19 +18,12 @@ export class TituloEleitorSchemas extends DocumentosSchema {
 
             zona: this.numeroSchema("Zona eleitoral", 4),
 
-            secao: this.numeroSchema("Seção eleitoral", 4),
+            secao: this.numeroSchema("Seção eleitoral", 4)
 
         });
 
         this.adicionar = baseSchema;
 
-        this.atualizar = baseSchema
-            .partial()
-            .refine(
-                data => Object.keys(data).length > 0,
-                {
-                    message: "É necessário informar pelo menos um campo para atualizar"
-                }
-            );
+        this.atualizar = baseSchema;
     }
 }

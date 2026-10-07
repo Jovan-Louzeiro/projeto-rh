@@ -20,7 +20,7 @@ export class DocumentosRoute {
             ...autorizacoes
         }
 
-        this.router = Router();
+        this.router = Router({ mergeParams: true });
 
         this.registrar();
 
@@ -42,7 +42,7 @@ export class DocumentosRoute {
             this.controller.adicionar
         );
 
-        this.router.patch(
+        this.router.put(
             "/",
             autorizar(...this.autorizacoes.atualizar),
             validate(this.schema.params, "params"),

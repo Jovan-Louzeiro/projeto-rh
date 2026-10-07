@@ -6,15 +6,10 @@ export class CrudSchemas {
     public params: ZodType;
 
     constructor(params?: ZodType) {
-        console.log("1 - CrudSchemas recebeu:", params);
-
         this.params = params ?? this.getParams();
-
-        console.log("2 - CrudSchemas ficou com:", this.params);
     }
 
     getParams(): z.ZodType {
-        console.log("erro")
         return z.strictObject({
             id: z.coerce
                 .number("Parâmetro inválido")
