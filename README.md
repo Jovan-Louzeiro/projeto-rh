@@ -1,501 +1,785 @@
-# API Projeto RH
+# 🏢 Projeto RH — Backend
 
-Documentação das rotas da API para uso no frontend.
+API REST para gerenciamento de servidores, documentos funcionais, dados cadastrais e domínios utilizados pelo sistema de Recursos Humanos.
 
-## 🌐 URL base
+O backend foi desenvolvido com **Node.js + Express + TypeScript**, utilizando **Prisma + PostgreSQL** para persistência, **Zod** para validação dos dados e **JWT** para autenticação.
 
-```text
-https://projeto-rh-sj48.onrender.com
-```
+---
 
-Para ambiente local, os endpoints também podem ser acessados em:
+## 🚀 Tecnologias
+
+* Node.js
+* TypeScript
+* Express
+* Prisma ORM
+* PostgreSQL
+* Zod
+* JWT
+* bcrypt
+* CORS
+* date-fns
+
+---
+
+# 🌐 URL da API
+
+### Desenvolvimento
 
 ```text
 http://localhost:3000
 ```
 
-## Backend: configuração e execução local
+### Produção
 
-O backend fica na pasta `backend/` e usa Node.js, TypeScript, Express, Prisma e PostgreSQL. Instale as dependências a partir da raiz do repositório, onde está o `package.json` principal:
-
-```bash
-npm install
-cd backend
+```text
+https://projeto-rh-sj48.onrender.com
 ```
 
-Crie `backend/.env` com as variáveis abaixo. Configure as URLs para o seu banco PostgreSQL e não compartilhe nem versione esse arquivo:
+Todos os endpoints da aplicação utilizam o prefixo:
 
-```env
-DATABASE_URL="postgresql://usuario:senha@localhost:5432/projeto_rh"
-DIRECT_URL="postgresql://usuario:senha@localhost:5432/projeto_rh"
-JWT_SECRET="defina-um-segredo-forte"
-PORT=3000
+```text
+/api
 ```
 
-- `DATABASE_URL`: conexão utilizada pela API.
-- `DIRECT_URL`: conexão direta utilizada pelo Prisma nas migrações.
-- `JWT_SECRET`: segredo usado para assinar e validar os tokens JWT.
-- `PORT`: porta HTTP; se omitida, o backend usa `3000`.
+Exemplo:
 
-Gere o cliente Prisma, aplique as migrações pendentes e inicie o servidor em modo de desenvolvimento:
-
-```bash
-npx prisma generate --config prisma.config.ts
-npx prisma migrate dev --config prisma.config.ts
-npx tsx watch src/app.ts
-```
-
-Para compilar e iniciar a versão compilada, a partir de `backend/`:
-
-```bash
-npx tsc -p tsconfig.json
-node dist/src/app.js
+```text
+GET https://projeto-rh-sj48.onrender.com/api/servidores
 ```
 
 ---
 
-## 🔐 Autenticação
+# 🔐 Autenticação
 
-A API exige autenticação em todas as rotas protegidas. O token deve ser enviado no header:
+Com exceção do login, **todas as rotas exigem autenticação JWT**.
 
-```http
-Authorization: Bearer <token>
-```
-
-O token é retornado pela rota de login e deve ser guardado no frontend, por exemplo em localStorage ou sessionStorage.
-
-### Login
+## Login
 
 ```http
 POST /api/login
-Content-Type: application/json
 ```
 
-Body:
+### Body
 
 ```json
 {
-  "email": "seu@email.com",
-  "senha": "sua_senha"
+  "email": "usuario@email.com",
+  "senha": "123456"
 }
 ```
 
-Resposta de sucesso (`200`):
+### Resposta — `200`
 
 ```json
 {
   "mensagem": "Login Realizado com Sucesso",
-  "token": "eyJ..."
+  "token": "eyJhbGciOiJIUzI1NiIs..."
 }
 ```
 
-O token expira em 8 horas. Envie-o nas rotas protegidas no header HTTP de autorização usando o esquema Bearer.
+O frontend deve armazenar o token e enviá-lo nas próximas requisições.
 
----
-
-## ✅ Permissões
-
-As permissões da aplicação são:
-
-- `ADMIN`
-- `RH`
-
-Regras atuais da API:
-
-- `GET /api/usuarios` e `GET /api/usuarios/:id` → `RH`, `ADMIN`
-- `POST /api/usuarios` → `ADMIN`
-- `PATCH /api/usuarios/:id` e `DELETE /api/usuarios/:id` → `ADMIN`
-- Rotas de domínio, países, estados, municípios e servidores:
-  - `GET` e `GET /:id` → `RH`, `ADMIN`
-  - `POST` → `ADMIN`
-  - `PATCH` e `DELETE` → `ADMIN`
-
----
-
-# 👤 Usuários
-
-## GET `/api/usuarios`
-
-Lista os usuários ativos. Essa rota não oferece um parâmetro para incluir usuários inativos.
-
-Headers:
+### Header
 
 ```http
-Authorization: Bearer <token>
+Authorization: Bearer SEU_TOKEN
 ```
 
 Exemplo:
 
-```bash
-curl -X GET "https://projeto-rh-sj48.onrender.com/api/usuarios" \
-  -H "Authorization: Bearer <token>"
+```javascript
+fetch(`${API_URL}/api/servidores`, {
+  headers: {
+    Authorization: `Bearer ${token}`,
+    Accept: "application/json"
+  }
+});
 ```
+
+### Validade
+
+O token possui validade de **8 horas**.
 
 ---
 
-## GET `/api/usuarios/:id`
+# 👥 Permissões
 
-Busca um usuário pelo ID.
-
-Exemplo:
-
-```bash
-curl -X GET "https://projeto-rh-sj48.onrender.com/api/usuarios/1" \
-  -H "Authorization: Bearer <token>"
-```
-
----
-
-## POST `/api/usuarios`
-
-Cria um novo usuário.
-
-Headers:
-
-```http
-Content-Type: application/json
-Authorization: Bearer <token>
-```
-
-Body:
-
-```json
-{
-  "nome": "João",
-  "email": "joao@email.com",
-  "senha": "123456",
-  "permissao": "RH",
-  "ativo": true
-}
-```
-
-Campos:
-
-- `nome`: string
-- `email`: string
-- `senha`: string
-- `permissao`: `ADMIN` ou `RH`
-- `ativo`: boolean (opcional)
-
----
-
-## PATCH `/api/usuarios/:id`
-
-Atualiza um usuário existente.
-
-Body:
-
-```json
-{
-  "nome": "João da Silva",
-  "permissao": "ADMIN",
-  "ativo": true
-}
-```
-
-Exemplo:
-
-```bash
-curl -X PATCH "https://projeto-rh-sj48.onrender.com/api/usuarios/1" \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer <token>" \
-  -d '{
-    "nome": "João da Silva",
-    "permissao": "ADMIN"
-  }'
-```
-
----
-
-## DELETE `/api/usuarios/:id`
-
-Exclui um usuário.
-
-Exemplo:
-
-```bash
-curl -X DELETE "https://projeto-rh-sj48.onrender.com/api/usuarios/1" \
-  -H "Authorization: Bearer <token>"
-```
-
----
-
-# 📚 Domínios / Tabelas auxiliares
-
-A API também expõe rotas genéricas de domínio, criadas dinamicamente a partir da configuração em `dominiosConfig`.
-
-## Padrão de rota
+Existem dois níveis de usuário:
 
 ```text
-/api/<rota>
+ADMIN
+RH
 ```
 
-## Rotas disponíveis
+Por padrão:
 
-A API não tem uma rota separada por "admin". O que existe é:
+| Operação        |  RH | ADMIN |
+| --------------- | :-: | :---: |
+| Listar          |  ✅  |   ✅   |
+| Procurar por ID |  ✅  |   ✅   |
+| Adicionar       |  ❌  |   ✅   |
+| Atualizar       |  ❌  |   ✅   |
+| Excluir         |  ❌  |   ✅   |
 
-1. rotas de usuários (`/api/usuarios`)
-2. rotas de domínio (`/api/<entidade>`) para as tabelas auxiliares
+> Em ambiente de desenvolvimento (`NODE_ENV=development`), a autorização por permissão é ignorada.
 
-### Rotas de domínio disponíveis
+---
 
-| Entidade | Rota base | Operações |
-| --- | --- | --- |
-| Comunidades indígenas | `/api/comunidadesIndigenas` | `GET`, `GET /:id`, `POST`, `PATCH /:id`, `DELETE /:id` |
-| Escolaridade | `/api/escolaridade` | `GET`, `GET /:id`, `POST`, `PATCH /:id`, `DELETE /:id` |
-| Gêneros | `/api/generos` | `GET`, `GET /:id`, `POST`, `PATCH /:id`, `DELETE /:id` |
-| Raça/Cor | `/api/racacor` | `GET`, `GET /:id`, `POST`, `PATCH /:id`, `DELETE /:id` |
-| Sexos | `/api/sexos` | `GET`, `GET /:id`, `POST`, `PATCH /:id`, `DELETE /:id` |
-| Níveis | `/api/nivel` | `GET`, `GET /:id`, `POST`, `PATCH /:id`, `DELETE /:id` |
-| Estado civil | `/api/estadoCivil` | `GET`, `GET /:id`, `POST`, `PATCH /:id`, `DELETE /:id` |
-| Zona de endereço | `/api/zonaEndereco` | `GET`, `GET /:id`, `POST`, `PATCH /:id`, `DELETE /:id` |
-| Localização diferenciada | `/api/localizacaoDiferenciada` | `GET`, `GET /:id`, `POST`, `PATCH /:id`, `DELETE /:id` |
-| Cargo | `/api/cargo` | `GET`, `GET /:id`, `POST`, `PATCH /:id`, `DELETE /:id` |
-| Função | `/api/funcao` | `GET`, `GET /:id`, `POST`, `PATCH /:id`, `DELETE /:id` |
-| Departamento | `/api/departamento` | `GET`, `GET /:id`, `POST`, `PATCH /:id`, `DELETE /:id` |
-| Tipo de vínculo | `/api/tipoVinculo` | `GET`, `GET /:id`, `POST`, `PATCH /:id`, `DELETE /:id` |
-| Tipo ensino médio cursado | `/api/tipoEnsinoMedioCursado` | `GET`, `GET /:id`, `POST`, `PATCH /:id`, `DELETE /:id` |
-| Situação | `/api/situacao` | `GET`, `GET /:id`, `POST`, `PATCH /:id`, `DELETE /:id` |
+# 📦 Padrão das rotas CRUD
 
-### Outras rotas de cadastro
+A maior parte da API utiliza o seguinte padrão:
 
-Além dos domínios auxiliares, há rotas CRUD para países, estados, municípios e servidores:
+```http
+GET    /api/recurso
+GET    /api/recurso/:id
+POST   /api/recurso
+PATCH  /api/recurso/:id
+DELETE /api/recurso/:id
+```
 
-| Recurso | Rota base | Operações |
-| --- | --- | --- |
-| Países | `/api/pais` | `GET`, `GET /:id`, `POST`, `PATCH /:id`, `DELETE /:id` |
-| Estados | `/api/estados` | `GET`, `GET /:id`, `POST`, `PATCH /:id`, `DELETE /:id` |
-| Municípios | `/api/municipios` | `GET`, `GET /:id`, `POST`, `PATCH /:id`, `DELETE /:id` |
-| Servidores | `/api/servidores` | `GET`, `GET /:id`, `POST`, `PATCH /:id`, `DELETE /:id` |
+### Listar
 
-## 📥 Inputs detalhados das rotas
+```http
+GET /api/recurso
+```
 
-Todas as rotas abaixo, exceto `POST /api/login`, exigem um token JWT válido no header HTTP de autorização (esquema Bearer). Nas operações com JSON, envie também `Content-Type: application/json`. As rotas de leitura não recebem body.
-
-### Parâmetros comuns de rota
-
-Todas as rotas no formato `/:id` recebem o identificador na URL, por exemplo `/api/usuarios/12`. O `id` deve ser um inteiro positivo. Se for inválido, a API responde com erro de validação (`422`).
-
-### Login — `POST /api/login`
-
-Body obrigatório:
-
-| Campo | Tipo | Regra |
-| --- | --- | --- |
-| `email` | string | De 1 a 50 caracteres |
-| `senha` | string | Pelo menos 3 caracteres |
-
-O body não aceita propriedades adicionais. Exemplo:
+Por padrão, são retornados somente registros com:
 
 ```json
 {
-  "email": "rh@exemplo.com",
-  "senha": "senha123"
-}
-```
-
-### Usuários — `/api/usuarios`
-
-| Método e rota | Inputs |
-| --- | --- |
-| `GET /api/usuarios` | Sem body nem parâmetros. Retorna usuários ativos; `mostrarTudo` não altera esse comportamento. |
-| `GET /api/usuarios/:id` | Path param `id`: inteiro positivo. |
-| `POST /api/usuarios` | Body com todos os campos obrigatórios indicados abaixo; `ativo` é opcional. |
-| `PATCH /api/usuarios/:id` | Path param `id` e body com pelo menos um campo da criação; todos os campos do body são opcionais nesta operação. |
-| `DELETE /api/usuarios/:id` | Path param `id`: inteiro positivo; sem body. |
-
-Body de criação (`POST`) e campos permitidos em atualização (`PATCH`):
-
-| Campo | Tipo | Regra |
-| --- | --- | --- |
-| `nome` | string | Obrigatório; de 1 a 50 caracteres |
-| `email` | string | Obrigatório; de 1 a 50 caracteres |
-| `senha` | string | Obrigatório na criação; pelo menos 3 caracteres |
-| `permissao` | string | Obrigatório na criação; `ADMIN` ou `RH` |
-| `ativo` | boolean | Opcional |
-
-No `PATCH`, envie apenas os campos que deseja alterar; `{}` é inválido. Campos extras são rejeitados.
-
-### Rotas de domínio — tabelas auxiliares
-
-Esta seção vale para cada rota base listada na tabela de domínios auxiliares (por exemplo, `/api/sexos`, `/api/cargo` e `/api/situacao`):
-
-| Método | Inputs |
-| --- | --- |
-| `GET /api/<rota>` | Sem body. Opcionalmente, `?mostrarTudo=true` inclui registros inativos; sem isso, lista somente ativos. |
-| `GET /api/<rota>/:id` | Path param `id`: inteiro positivo; sem body. |
-| `POST /api/<rota>` | Body JSON: `descricao` obrigatório e `ativo` opcional. |
-| `PATCH /api/<rota>/:id` | Path param `id` e body com `descricao`, `ativo` ou ambos; envie ao menos um campo. |
-| `DELETE /api/<rota>/:id` | Path param `id`: inteiro positivo; sem body. |
-
-`descricao` deve ser uma string não vazia e respeitar o limite por rota:
-
-| Rota | Máximo de caracteres em `descricao` |
-| --- | ---: |
-| `/api/comunidadesIndigenas` | 50 |
-| `/api/escolaridade` | 50 |
-| `/api/generos` | 20 |
-| `/api/racacor` | 10 |
-| `/api/sexos` | 10 |
-| `/api/nivel` | 10 |
-| `/api/estadoCivil` | 15 |
-| `/api/zonaEndereco` | 10 |
-| `/api/localizacaoDiferenciada` | 50 |
-| `/api/cargo` | 50 |
-| `/api/funcao` | 50 |
-| `/api/departamento` | 150 |
-| `/api/tipoVinculo` | 50 |
-| `/api/tipoEnsinoMedioCursado` | 50 |
-| `/api/situacao` | 30 |
-
-Para `/api/departamento`, além de `descricao` e `ativo`, o campo `inep` é obrigatório no `POST` e aceita string de 1 a 50 caracteres. No `PATCH`, `inep` também pode ser enviado isoladamente.
-
-Exemplo de body para criar ou atualizar um domínio simples:
-
-```json
-{
-  "descricao": "Exemplo",
   "ativo": true
 }
 ```
 
-### Países — `/api/pais`
+Para retornar também registros inativos:
 
-| Método e rota | Inputs |
-| --- | --- |
-| `GET /api/pais` | Sem body; `mostrarTudo=true` opcional para incluir inativos. |
-| `GET /api/pais/:id` | Path param `id`: inteiro positivo. |
-| `POST /api/pais` | Body com `nome`, `gentilico` e `codigo_iso` obrigatórios; `ativo` opcional. |
-| `PATCH /api/pais/:id` | Path param `id` e pelo menos um dos campos permitidos no body de criação. |
-| `DELETE /api/pais/:id` | Path param `id`: inteiro positivo; sem body. |
+```http
+GET /api/recurso?mostrarTudo=true
+```
 
-| Campo | Tipo | Regra |
-| --- | --- | --- |
-| `nome` | string | De 1 a 100 caracteres |
-| `gentilico` | string | De 1 a 100 caracteres |
-| `codigo_iso` | string | De 1 a 2 caracteres |
-| `ativo` | boolean | Opcional |
+### Procurar
 
-### Estados — `/api/estados`
+```http
+GET /api/recurso/:id
+```
 
-| Método e rota | Inputs |
-| --- | --- |
-| `GET /api/estados` | Sem body; `mostrarTudo=true` opcional para incluir inativos. |
-| `GET /api/estados/:id` | Path param `id`: inteiro positivo. |
-| `POST /api/estados` | Body com `nome`, `uf` e `pais_id` obrigatórios; `ativo` opcional. |
-| `PATCH /api/estados/:id` | Path param `id` e pelo menos um dos campos permitidos no body de criação. |
-| `DELETE /api/estados/:id` | Path param `id`: inteiro positivo; sem body. |
+### Adicionar
 
-| Campo | Tipo | Regra |
-| --- | --- | --- |
-| `nome` | string | De 1 a 100 caracteres |
-| `uf` | string | De 1 a 2 caracteres |
-| `pais_id` | inteiro positivo | ID de país |
-| `ativo` | boolean | Opcional |
+```http
+POST /api/recurso
+Content-Type: application/json
+```
 
-### Municípios — `/api/municipios`
+### Atualizar
 
-| Método e rota | Inputs |
-| --- | --- |
-| `GET /api/municipios` | Sem body; `mostrarTudo=true` opcional para incluir inativos. |
-| `GET /api/municipios/:id` | Path param `id`: inteiro positivo. |
-| `POST /api/municipios` | Body com `nome` e `estado_id` obrigatórios; `ativo` opcional. |
-| `PATCH /api/municipios/:id` | Path param `id` e pelo menos um dos campos permitidos no body de criação. |
-| `DELETE /api/municipios/:id` | Path param `id`: inteiro positivo; sem body. |
+```http
+PATCH /api/recurso/:id
+Content-Type: application/json
+```
 
-| Campo | Tipo | Regra |
-| --- | --- | --- |
-| `nome` | string | De 1 a 100 caracteres |
-| `estado_id` | inteiro positivo | ID de estado |
-| `ativo` | boolean | Opcional |
+O `PATCH` permite enviar somente os campos que precisam ser alterados.
 
-### Servidores — `/api/servidores`
+### Excluir
 
-| Método e rota | Inputs |
-| --- | --- |
-| `GET /api/servidores` | Sem body; `mostrarTudo=true` opcional para incluir inativos. |
-| `GET /api/servidores/:id` | Path param `id`: inteiro positivo. |
-| `POST /api/servidores` | Body JSON com todos os campos obrigatórios da tabela a seguir; os demais são opcionais. |
-| `PATCH /api/servidores/:id` | Path param `id` e pelo menos um campo definido abaixo; todos são opcionais nesta operação. |
-| `DELETE /api/servidores/:id` | Path param `id`: inteiro positivo; sem body. |
+```http
+DELETE /api/recurso/:id
+```
 
-Campos obrigatórios no `POST`:
+> ⚠️ A exclusão é física. O campo `ativo` é utilizado para filtragem/listagem, mas o `DELETE` remove o registro do banco.
 
-| Campo | Tipo | Regra |
-| --- | --- | --- |
-| `nome_completo` | string | De 1 a 150 caracteres |
-| `cpf` | string | CPF válido com 11 dígitos; pontuação é removida antes da validação |
-| `data_nascimento` | string | Data válida no formato `DD/MM/AAAA` |
-| `nacionalidade_id` | inteiro positivo | ID de nacionalidade |
-| `nome_mae` | string | De 1 a 150 caracteres |
-| `nome_pai` | string | De 1 a 150 caracteres |
-| `sexo_id` | inteiro positivo | ID de sexo |
-| `racacor_id` | inteiro positivo | ID de raça/cor |
-| `cep` | string numérica | Exatamente 8 dígitos |
-| `logradouro` | string | De 1 a 100 caracteres |
-| `bairro` | string | De 1 a 50 caracteres |
-| `municipio_endereco_id` | inteiro positivo | ID de município |
-| `zona_endereco_id` | inteiro positivo | ID de zona de endereço |
-| `situacao_id` | inteiro positivo | ID de situação |
+---
 
-Campos opcionais em `POST` e `PATCH`:
+# 👤 Servidores
 
-| Campo | Tipo | Regra |
-| --- | --- | --- |
-| `ativo` | boolean | Opcional |
-| `nome_social` | string | Até 150 caracteres |
-| `nis_pis` | string numérica | Exatamente 11 dígitos |
-| `pais_origem_id` | inteiro positivo | ID de país |
-| `ano_chegada_brasil` | inteiro | Entre 1500 e o ano atual |
-| `municipio_nascimento_id` | inteiro positivo | ID de município |
-| `cpf_mae` | string | CPF válido com 11 dígitos |
-| `cpf_pai` | string | CPF válido com 11 dígitos |
-| `estado_civil_id` | inteiro positivo | ID de estado civil |
-| `uniao_estavel` | boolean | Opcional |
-| `genero_id` | inteiro positivo | ID de gênero |
-| `comunidade_indigena_id` | inteiro positivo | ID de comunidade indígena |
-| `numero` | string | Até 10 caracteres; pode ser vazio |
-| `complemento` | string | Até 100 caracteres |
-| `localizacao_diferenciada_id` | inteiro positivo | ID de localização diferenciada |
-| `cartao_sus` | string numérica | Exatamente 15 dígitos |
-| `escolaridade_id` | inteiro positivo | ID de escolaridade |
-| `tipo_ensino_medio_cursado_id` | inteiro positivo | ID do tipo de ensino médio |
-| `observacao` | string | Até 500 caracteres; pode ser vazia |
+Endpoint principal:
 
-Campos numéricos de documentos devem ser enviados como strings. A validação remove caracteres não numéricos antes de conferir a quantidade de dígitos. Os campos `id` aceitam valores que possam ser convertidos em inteiro positivo. Corpos de criação e atualização rejeitam campos não listados; no `PATCH`, o body não pode estar vazio.
+```text
+/api/servidores
+```
 
-### Rotas de usuários
+## Listar servidores
 
-| Rota | Operações |
-| --- | --- |
-| `/api/usuarios` | `GET`, `POST` |
-| `/api/usuarios/:id` | `GET`, `PATCH`, `DELETE` |
-| `/api/login` | `POST` |
+```http
+GET /api/servidores
+```
 
-> O “admin” não é uma rota em si; ele é um papel de permissão (`ADMIN`) que autoriza acesso a determinados endpoints.
+Somente servidores ativos são retornados por padrão.
 
-### Operações por domínio
+Para todos:
 
-#### `GET /api/<rota>`
+```http
+GET /api/servidores?mostrarTudo=true
+```
 
-Lista os registros ativos do domínio, ou todos quando `mostrarTudo=true`.
+---
+
+## Buscar servidor
+
+```http
+GET /api/servidores/:idServidor
+```
 
 Exemplo:
 
-```bash
-curl -X GET "https://projeto-rh-sj48.onrender.com/api/sexos?mostrarTudo=true" \
-  -H "Authorization: Bearer <token>"
+```http
+GET /api/servidores/1
 ```
 
-#### `GET /api/<rota>/:id`
+---
 
-Busca um registro pelo identificador.
+## Cadastrar servidor
 
-#### `POST /api/<rota>`
+```http
+POST /api/servidores
+```
 
-Cria um novo registro do domínio.
+### Body
 
-Body:
+```json
+{
+  "nome_completo": "João da Silva",
+  "nome_social": "João",
+  "cpf": "12345678909",
+  "nis_pis": "12345678901",
+
+  "data_nascimento": "10/05/1990",
+
+  "nacionalidade_id": 1,
+  "pais_origem_id": 1,
+  "ano_chegada_brasil": 2000,
+  "municipio_nascimento_id": 1,
+
+  "cpf_mae": "98765432100",
+  "nome_mae": "Maria da Silva",
+
+  "cpf_pai": "11122233344",
+  "nome_pai": "José da Silva",
+
+  "estado_civil_id": 1,
+  "uniao_estavel": false,
+
+  "sexo_id": 1,
+  "genero_id": 1,
+  "racacor_id": 1,
+  "comunidade_indigena_id": 1,
+
+  "cep": "65210000",
+  "logradouro": "Rua Principal",
+  "numero": "100",
+  "complemento": "Casa",
+  "bairro": "Centro",
+
+  "municipio_endereco_id": 1,
+  "zona_endereco_id": 1,
+  "localizacao_diferenciada_id": 1,
+
+  "cartao_sus": "123456789012345",
+
+  "situacao_id": 1,
+  "escolaridade_id": 1,
+  "tipo_ensino_medio_cursado_id": 1,
+
+  "observacao": "Observação do servidor"
+}
+```
+
+### Campos obrigatórios
+
+```text
+nome_completo
+cpf
+data_nascimento
+nacionalidade_id
+nome_mae
+nome_pai
+sexo_id
+racacor_id
+cep
+logradouro
+bairro
+municipio_endereco_id
+zona_endereco_id
+situacao_id
+```
+
+Os demais campos podem ser opcionais conforme o schema.
+
+### Formato das datas
+
+O frontend deve enviar datas como:
+
+```text
+DD/MM/AAAA
+```
+
+Exemplo:
+
+```text
+25/12/2000
+```
+
+A API converte internamente para `Date`.
+
+---
+
+## Atualizar servidor
+
+```http
+PATCH /api/servidores/:idServidor
+```
+
+Exemplo:
+
+```json
+{
+  "nome_social": "João Silva",
+  "observacao": "Servidor atualizado"
+}
+```
+
+É necessário enviar pelo menos um campo.
+
+---
+
+## Excluir servidor
+
+```http
+DELETE /api/servidores/:idServidor
+```
+
+---
+
+# 📄 Documentos do servidor
+
+Os documentos pertencem diretamente a um servidor.
+
+A estrutura das URLs é:
+
+```text
+/api/servidores/:idServidor/{documento}
+```
+
+Documentos disponíveis:
+
+```text
+certidao
+cnh
+ctps
+identidade
+tituloEleitor
+```
+
+Exemplo:
+
+```text
+/api/servidores/15/identidade
+```
+
+Cada servidor possui no máximo um registro de cada tipo de documento.
+
+---
+
+# 🪪 Identidade
+
+Endpoint:
+
+```text
+/api/servidores/:idServidor/identidade
+```
+
+## Buscar
+
+```http
+GET /api/servidores/15/identidade
+```
+
+## Cadastrar
+
+```http
+POST /api/servidores/15/identidade
+```
+
+### RG
+
+```json
+{
+  "tipo_identidade": "RG",
+  "numero": "123456789",
+  "orgao_emissor": "SSP",
+  "rg_uf_id": 10,
+  "rg_data_emissao": "10/05/2018"
+}
+```
+
+### CIN
+
+Na CIN, o CPF é o identificador e **não deve ser enviado como `numero`**.
+
+```json
+{
+  "tipo_identidade": "CIN",
+  "orgao_emissor": "SSP",
+  "rg_uf_id": 10,
+  "rg_data_emissao": "10/05/2025"
+}
+```
+
+Valores permitidos:
+
+```text
+tipo_identidade:
+- RG
+- CIN
+```
+
+> Para RG, `numero` é obrigatório. Para CIN, `numero` não deve ser informado.
+
+---
+
+## Atualizar identidade
+
+```http
+PUT /api/servidores/:idServidor/identidade
+```
+
+Exemplo:
+
+```json
+{
+  "tipo_identidade": "RG",
+  "numero": "123456789",
+  "orgao_emissor": "SSP",
+  "rg_uf_id": 10,
+  "rg_data_emissao": "10/05/2018"
+}
+```
+
+## Excluir identidade
+
+```http
+DELETE /api/servidores/:idServidor/identidade
+```
+
+---
+
+# 🚘 CNH
+
+Endpoint:
+
+```text
+/api/servidores/:idServidor/cnh
+```
+
+### POST
+
+```http
+POST /api/servidores/15/cnh
+```
+
+```json
+{
+  "numero": "12345678901",
+  "categoria": "AB",
+  "data_emissao": "10/05/2020",
+  "data_validade": "10/05/2030"
+}
+```
+
+### PUT
+
+```http
+PUT /api/servidores/15/cnh
+```
+
+Utiliza o mesmo formato.
+
+### GET
+
+```http
+GET /api/servidores/15/cnh
+```
+
+### DELETE
+
+```http
+DELETE /api/servidores/15/cnh
+```
+
+O número da CNH deve possuir exatamente **11 dígitos**.
+
+---
+
+# 💼 CTPS
+
+Endpoint:
+
+```text
+/api/servidores/:idServidor/ctps
+```
+
+Existem dois tipos:
+
+```text
+ANTIGO
+NOVO
+```
+
+## CTPS antiga
+
+```json
+{
+  "tipo_ctps": "ANTIGO",
+  "numero": "12345678",
+  "serie": "12345",
+  "uf_ctps_id": 10,
+  "data_emissao": "10/05/2018"
+}
+```
+
+Para CTPS antiga, os seguintes campos são obrigatórios:
+
+```text
+numero
+serie
+uf_ctps_id
+```
+
+## CTPS nova
+
+```json
+{
+  "tipo_ctps": "NOVO",
+  "data_emissao": "10/05/2025"
+}
+```
+
+Na CTPS nova:
+
+```text
+numero → não enviar
+serie → não enviar
+uf_ctps_id → não enviar
+```
+
+---
+
+# 📜 Certidão
+
+Endpoint:
+
+```text
+/api/servidores/:idServidor/certidao
+```
+
+Tipos:
+
+```text
+NASCIMENTO
+CASAMENTO
+```
+
+## Certidão nova
+
+```json
+{
+  "nova_certidao": true,
+  "matricula": "12345678901234567890123456789012",
+  "tipo_certidao": "NASCIMENTO",
+  "data_emissao": "10/05/2020"
+}
+```
+
+Para certidão nova:
+
+```text
+termo → não enviar
+folha → não enviar
+livro → não enviar
+```
+
+## Certidão antiga
+
+```json
+{
+  "nova_certidao": false,
+  "matricula": "12345678901234567890123456789012",
+  "tipo_certidao": "NASCIMENTO",
+  "termo": "12345",
+  "folha": "12345",
+  "livro": "12345",
+  "data_emissao": "10/05/2000"
+}
+```
+
+Para certidão antiga, `termo`, `folha` e `livro` são obrigatórios.
+
+---
+
+# 🗳️ Título de Eleitor
+
+Endpoint:
+
+```text
+/api/servidores/:idServidor/tituloEleitor
+```
+
+### Body
+
+```json
+{
+  "numero": "123456789012",
+  "zona": "1234",
+  "secao": "1234"
+}
+```
+
+Todos os campos são obrigatórios.
+
+---
+
+# 📚 Detalhar servidor + documentos
+
+Para obter um servidor juntamente com todos os seus documentos:
+
+```http
+GET /api/servidores/:idServidor/detalharDocumentos
+```
+
+Exemplo:
+
+```http
+GET /api/servidores/15/detalharDocumentos
+```
+
+A resposta contém o servidor e os relacionamentos:
+
+```text
+certidao
+cnh
+ctps
+identidade
+titulo_eleitor
+```
+
+Essa é a rota recomendada para a tela de **Perfil/Detalhes do Servidor**.
+
+---
+
+# 🌎 Países
+
+Endpoint:
+
+```text
+/api/pais
+```
+
+### POST
+
+```json
+{
+  "nome": "Brasil",
+  "gentilico": "Brasileiro",
+  "codigo_iso": "BR"
+}
+```
+
+### Campos
+
+| Campo      | Tipo             |
+| ---------- | ---------------- |
+| nome       | string           |
+| gentilico  | string           |
+| codigo_iso | string           |
+| ativo      | boolean opcional |
+
+---
+
+# 🗺️ Estados
+
+Endpoint:
+
+```text
+/api/estados
+```
+
+### POST
+
+```json
+{
+  "nome": "Maranhão",
+  "uf": "MA",
+  "pais_id": 1
+}
+```
+
+---
+
+# 🏙️ Municípios
+
+Endpoint:
+
+```text
+/api/municipios
+```
+
+### POST
+
+```json
+{
+  "nome": "Carutapera",
+  "estado_id": 10
+}
+```
+
+---
+
+# 📚 Domínios
+
+Os domínios são utilizados pelo frontend para preencher `selects`, filtros e formulários.
+
+Todos seguem o padrão CRUD:
+
+```http
+GET    /api/{dominio}
+GET    /api/{dominio}/:id
+POST   /api/{dominio}
+PATCH  /api/{dominio}/:id
+DELETE /api/{dominio}/:id
+```
+
+## Endpoints disponíveis
+
+| Domínio                      | Endpoint                       |
+| ---------------------------- | ------------------------------ |
+| Comunidades Indígenas        | `/api/comunidadesIndigenas`    |
+| Escolaridade                 | `/api/escolaridade`            |
+| Gênero                       | `/api/generos`                 |
+| Raça/Cor                     | `/api/racacor`                 |
+| Sexo                         | `/api/sexos`                   |
+| Nível                        | `/api/nivel`                   |
+| Estado Civil                 | `/api/estadoCivil`             |
+| Zona de Endereço             | `/api/zonaEndereco`            |
+| Localização Diferenciada     | `/api/localizacaoDiferenciada` |
+| Cargo                        | `/api/cargo`                   |
+| Função                       | `/api/funcao`                  |
+| Departamento                 | `/api/departamento`            |
+| Tipo de Vínculo              | `/api/tipoVinculo`             |
+| Tipo de Ensino Médio Cursado | `/api/tipoEnsinoMedioCursado`  |
+| Situação                     | `/api/situacao`                |
+
+---
+
+# 🏷️ Estrutura dos domínios
+
+A maioria dos domínios utiliza:
+
+```json
+{
+  "descricao": "Descrição do registro"
+}
+```
+
+O campo `ativo` é opcional:
 
 ```json
 {
@@ -504,107 +788,874 @@ Body:
 }
 ```
 
-#### `PATCH /api/<rota>/:id`
+### Exemplo
 
-Atualiza um registro do domínio.
+```http
+GET /api/sexos
+```
+
+Resposta:
+
+```json
+[
+  {
+    "id_sexo": 1,
+    "descricao": "Masculino",
+    "ativo": true
+  },
+  {
+    "id_sexo": 2,
+    "descricao": "Feminino",
+    "ativo": true
+  }
+]
+```
+
+---
+
+# 🏫 Departamento
+
+O departamento possui um campo adicional:
+
+```json
+{
+  "descricao": "Secretaria Municipal de Educação",
+  "inep": "12345678"
+}
+```
+
+Endpoint:
+
+```text
+/api/departamento
+```
+
+---
+
+# 👤 Usuários
+
+Endpoint:
+
+```text
+/api/usuarios
+```
+
+O endpoint utiliza o mesmo padrão CRUD.
+
+## Criar usuário
+
+Somente `ADMIN`.
+
+```http
+POST /api/usuarios
+```
+
+```json
+{
+  "nome": "Administrador",
+  "email": "admin@email.com",
+  "senha": "123456",
+  "permissao": "ADMIN",
+  "ativo": true
+}
+```
+
+Permissões:
+
+```text
+ADMIN
+RH
+```
+
+A senha é armazenada utilizando hash.
+
+---
+
+# 📋 Respostas da API
+
+## POST
+
+Ao cadastrar um registro:
+
+```http
+201 Created
+```
+
+Formato:
+
+```json
+{
+  "mensagem": "Servidor cadastrado com sucesso",
+  "dados": {
+    "...": "..."
+  }
+}
+```
+
+---
+
+## PATCH
+
+```http
+200 OK
+```
+
+Formato:
+
+```json
+{
+  "mensagem": "Servidor atualizado com sucesso",
+  "dados": {
+    "...": "..."
+  }
+}
+```
+
+---
+
+## DELETE
+
+```http
+200 OK
+```
+
+Formato:
+
+```json
+{
+  "mensagem": "Servidor Excluído com sucesso",
+  "dados": {
+    "...": "..."
+  }
+}
+```
+
+---
+
+## GET
+
+As rotas de listagem retornam diretamente um array:
+
+```json
+[
+  {
+    "id": 1
+  },
+  {
+    "id": 2
+  }
+]
+```
+
+As rotas de busca retornam diretamente o objeto:
+
+```json
+{
+  "id": 1
+}
+```
+
+---
+
+# ❌ Tratamento de erros
+
+A API utiliza respostas JSON padronizadas.
+
+## Dados inválidos — `422`
+
+Quando o frontend envia dados que não atendem ao schema:
+
+```json
+{
+  "erro": "DADOS_INVALIDOS",
+  "detalhes": [
+    {
+      "code": "invalid_type",
+      "path": ["cpf"],
+      "message": "..."
+    }
+  ]
+}
+```
+
+O campo `detalhes` deve ser utilizado pelo frontend para apresentar mensagens de validação.
+
+---
+
+## Não autenticado — `401`
+
+### Token ausente
+
+```json
+{
+  "erro": "TokenNaoFornecido",
+  "mensagem": "Token não fornecido"
+}
+```
+
+### Token inválido/expirado
+
+```json
+{
+  "erro": "TokenInvalidoOuExpirado",
+  "mensagem": "Token invalido ou expirado"
+}
+```
+
+Nesse caso, o frontend deve normalmente:
+
+1. remover o token armazenado;
+2. redirecionar o usuário para o login.
+
+---
+
+## Sem permissão — `403`
+
+```json
+{
+  "erro": "NaoAutorizado",
+  "mensagem": "Você não tem permissão para esta ação"
+}
+```
+
+---
+
+## Usuário inativo — `403`
+
+```json
+{
+  "erro": "UsuarioInativo",
+  "mensagem": "O usuário não está ativo"
+}
+```
+
+---
+
+## Registro não encontrado — `404`
+
+```json
+{
+  "erro": "RegistroNaoEncontradoError",
+  "mensagem": "Servidor não encontrado."
+}
+```
+
+---
+
+## Registro duplicado — `409`
+
+```json
+{
+  "erro": "RegistroJaExistenteError",
+  "mensagem": "cpf informado já está em uso."
+}
+```
+
+Isso pode acontecer, por exemplo, ao tentar cadastrar um CPF já existente.
+
+---
+
+## Registro em uso — `409`
+
+```json
+{
+  "erro": "RegistroEmUso",
+  "mensagem": "Registro não pode ser deletado, pois está sendo utilizado."
+}
+```
+
+---
+
+## Erro interno — `500`
+
+```json
+{
+  "erro": "ERRO_INTERNO",
+  "mensagem": "Erro interno do servidor."
+}
+```
+
+---
+
+# 🔢 Formatação dos números
+
+A API recebe documentos como **strings**, mesmo quando são exclusivamente numéricos.
+
+Exemplo correto:
+
+```json
+{
+  "cpf": "12345678909"
+}
+```
+
+A API remove automaticamente caracteres de formatação.
+
+Assim, também é possível enviar:
+
+```text
+123.456.789-09
+```
+
+e o backend armazenará:
+
+```text
+12345678909
+```
+
+O mesmo comportamento é utilizado para diversos campos numéricos, como:
+
+```text
+CPF
+NIS/PIS
+CEP
+Cartão SUS
+RG
+CNH
+CTPS
+Título de Eleitor
+Zona
+Seção
+```
+
+Por isso, o frontend **não deve converter esses campos para `number`**.
+
+Use:
+
+```typescript
+cpf: string
+```
+
+e não:
+
+```typescript
+cpf: number
+```
+
+Isso também evita a perda de zeros à esquerda.
+
+---
+
+# 📅 Datas
+
+As datas enviadas para a API devem utilizar:
+
+```text
+DD/MM/AAAA
+```
+
+Exemplo:
+
+```text
+07/10/2026
+```
+
+A API transforma essas strings em `Date` antes de persistir no PostgreSQL.
+
+No retorno JSON, datas podem aparecer no formato ISO:
+
+```text
+2026-10-07T00:00:00.000Z
+```
+
+O frontend deve formatá-las para apresentação ao usuário.
+
+---
+
+# 🧩 Exemplo de cliente HTTP
+
+Uma implementação simples para o frontend:
+
+```typescript
+const API_URL = import.meta.env.VITE_API_URL ?? "";
+
+async function apiFetch(
+  endpoint: string,
+  options: RequestInit = {}
+) {
+  const token = localStorage.getItem("rh_access_token");
+
+  const response = await fetch(
+    `${API_URL}/api${endpoint}`,
+    {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+
+        ...(token
+          ? {
+              Authorization: `Bearer ${token}`
+            }
+          : {}),
+
+        ...options.headers
+      }
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw data;
+  }
+
+  return data;
+}
+```
+
+Exemplo:
+
+```typescript
+const servidores = await apiFetch("/servidores");
+```
+
+Cadastrar:
+
+```typescript
+await apiFetch("/servidores", {
+  method: "POST",
+  body: JSON.stringify({
+    nome_completo: "João da Silva",
+    cpf: "12345678909",
+    // ...
+  })
+});
+```
+
+---
+
+# ⚠️ Pontos importantes para o frontend
+
+## 1. Não utilizar `/adicionar`, `/atualizar` ou `/deletar`
+
+As rotas atuais são RESTful.
+
+❌ Incorreto:
+
+```text
+POST /api/sexos/adicionar
+PUT /api/sexos/atualizar/1
+DELETE /api/sexos/deletar/1
+```
+
+✅ Correto:
+
+```text
+POST /api/sexos
+PATCH /api/sexos/1
+DELETE /api/sexos/1
+```
+
+---
+
+## 2. Servidores utilizam `idServidor`
+
+Para servidores:
+
+```text
+/api/servidores/:idServidor
+```
+
+Exemplo:
+
+```text
+/api/servidores/10
+```
+
+---
+
+## 3. Documentos utilizam o ID do servidor
+
+Não existe uma rota global como:
+
+```text
+/api/documentos
+```
+
+O documento sempre pertence a um servidor:
+
+```text
+/api/servidores/10/identidade
+/api/servidores/10/cnh
+/api/servidores/10/ctps
+/api/servidores/10/certidao
+/api/servidores/10/tituloEleitor
+```
+
+---
+
+## 4. Documentos usam JSON
+
+Os endpoints de documentos atualmente recebem:
+
+```http
+Content-Type: application/json
+```
+
+e **não utilizam `multipart/form-data` nem upload de arquivos**.
+
+---
+
+## 5. Não enviar `servidor_id` ao cadastrar documentos
+
+O servidor é identificado pela URL.
+
+Exemplo:
+
+```http
+POST /api/servidores/10/identidade
+```
 
 Body:
 
 ```json
 {
-  "descricao": "Feminino",
-  "ativo": true
+  "tipo_identidade": "RG",
+  "numero": "123456789",
+  "orgao_emissor": "SSP",
+  "rg_uf_id": 10,
+  "rg_data_emissao": "10/05/2018"
 }
 ```
 
-#### `DELETE /api/<rota>/:id`
+O backend associa automaticamente:
 
-Exclui um registro do domínio.
-
----
-
-## Exemplo de domínio: sexos
-
-### GET `/api/sexos`
-
-```bash
-curl -X GET "https://projeto-rh-sj48.onrender.com/api/sexos" \
-  -H "Authorization: Bearer <token>"
-```
-
-### GET `/api/sexos/:id`
-
-```bash
-curl -X GET "https://projeto-rh-sj48.onrender.com/api/sexos/1" \
-  -H "Authorization: Bearer <token>"
-```
-
-### POST `/api/sexos`
-
-```bash
-curl -X POST "https://projeto-rh-sj48.onrender.com/api/sexos" \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer <token>" \
-  -d '{
-    "descricao": "Masculino",
-    "ativo": true
-  }'
-```
-
-### PATCH `/api/sexos/:id`
-
-```bash
-curl -X PATCH "https://projeto-rh-sj48.onrender.com/api/sexos/1" \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer <token>" \
-  -d '{
-    "descricao": "Feminino"
-  }'
-```
-
-### DELETE `/api/sexos/:id`
-
-```bash
-curl -X DELETE "https://projeto-rh-sj48.onrender.com/api/sexos/1" \
-  -H "Authorization: Bearer <token>"
+```text
+servidor_id = 10
 ```
 
 ---
 
-# 📋 Resumo das rotas principais
+# 🗂️ Estrutura resumida da API
 
-| Método | Endpoint | Auth | Descrição |
-| --- | --- | --- | --- |
-| `POST` | `/api/login` | ❌ | Realiza login |
-| `GET` | `/api/usuarios` | ✅ | Lista usuários |
-| `GET` | `/api/usuarios/:id` | ✅ | Busca usuário por ID |
-| `POST` | `/api/usuarios` | ✅ | Cria usuário |
-| `PATCH` | `/api/usuarios/:id` | ✅ | Atualiza usuário |
-| `DELETE` | `/api/usuarios/:id` | ✅ | Remove usuário |
-| `GET` | `/api/<rota>` | ✅ | Lista registros do domínio |
-| `GET` | `/api/<rota>/:id` | ✅ | Busca registro do domínio |
-| `POST` | `/api/<rota>` | ✅ | Cria registro do domínio |
-| `PATCH` | `/api/<rota>/:id` | ✅ | Atualiza registro do domínio |
-| `DELETE` | `/api/<rota>/:id` | ✅ | Remove registro do domínio |
-| `GET`, `POST`, `PATCH`, `DELETE` | `/api/pais`, `/api/estados`, `/api/municipios`, `/api/servidores` | ✅ | Consulta e mantém cadastros geográficos e de servidores |
+```text
+/api
+│
+├── /login
+│
+├── /usuarios
+│
+├── /servidores
+│   ├── /:idServidor
+│   ├── /:idServidor/detalharDocumentos
+│   ├── /:idServidor/certidao
+│   ├── /:idServidor/cnh
+│   ├── /:idServidor/ctps
+│   ├── /:idServidor/identidade
+│   └── /:idServidor/tituloEleitor
+│
+├── /pais
+├── /estados
+├── /municipios
+│
+├── /comunidadesIndigenas
+├── /escolaridade
+├── /generos
+├── /racacor
+├── /sexos
+├── /nivel
+├── /estadoCivil
+├── /zonaEndereco
+├── /localizacaoDiferenciada
+├── /cargo
+├── /funcao
+├── /departamento
+├── /tipoVinculo
+├── /tipoEnsinoMedioCursado
+└── /situacao
+```
 
 ---
 
-# 🧩 Observações importantes para o frontend
+# 🛠️ Executando o backend
 
-- O frontend deve enviar o token em todas as rotas autenticadas.
-- O token recebido no login deve ser salvo no armazenamento do navegador.
-- As rotas de domínio seguem o mesmo padrão CRUD para todos os registros auxiliares.
-- O backend aceita CORS para:
-  - `https://projeto-rh-sj48.onrender.com`
-  - `http://localhost:3000`
-  - `http://localhost:5173`
+## Instalação
+
+Dentro da pasta `backend`:
+
+```bash
+npm install
+```
+
+## Variáveis de ambiente
+
+Crie um arquivo:
+
+```text
+.env
+```
+
+com as configurações necessárias:
+
+```env
+DATABASE_URL="postgresql://usuario:senha@host:5432/banco"
+JWT_SECRET="sua-chave-secreta"
+NODE_ENV="development"
+PORT=3000
+```
 
 ---
 
-# ⚠️ Segurança
+## Prisma
 
-- Nunca commitar tokens reais.
-- Não expor segredo de JWT no código do frontend.
-- Usar variáveis de ambiente para URLs e tokens em desenvolvimento.
-- Sempre validar o status HTTP antes de atualizar a UI.
+Para gerar o Prisma Client:
+
+```bash
+npx prisma generate
+```
+
+Para aplicar as migrations:
+
+```bash
+npx prisma migrate deploy
+```
+
+Durante desenvolvimento:
+
+```bash
+npx prisma migrate dev
+```
+
+---
+
+## Rodar em desenvolvimento
+
+```bash
+npm run dev
+```
+
+A API ficará disponível em:
+
+```text
+http://localhost:3000
+```
+
+---
+
+## Build
+
+```bash
+npm run build
+```
+
+## Produção
+
+```bash
+npm start
+```
+
+---
+
+# 🏗️ Arquitetura
+
+O backend utiliza uma arquitetura baseada em:
+
+```text
+Routes
+   ↓
+Controllers
+   ↓
+Services
+   ↓
+Prisma
+   ↓
+PostgreSQL
+```
+
+### Routes
+
+Responsáveis por definir:
+
+* métodos HTTP;
+* endpoints;
+* autenticação;
+* autorização;
+* validação.
+
+### Controllers
+
+Responsáveis por:
+
+* receber requisições;
+* chamar os services;
+* definir status HTTP;
+* devolver respostas JSON.
+
+### Services
+
+Contêm as regras de negócio e acesso aos dados através do Prisma.
+
+### Schemas
+
+Utilizam Zod para validar:
+
+* `body`;
+* `params`;
+* `query`.
+
+### Middleware de autenticação
+
+Responsável por validar o JWT e controlar as permissões dos usuários.
+
+---
+
+# 🗄️ Banco de dados
+
+O projeto utiliza:
+
+```text
+PostgreSQL
+```
+
+através do Prisma ORM.
+
+As principais entidades atualmente implementadas incluem:
+
+```text
+Servidor
+Usuario
+
+Pais
+Estado
+Municipio
+
+Sexo
+Genero
+RacaCor
+ComunidadeIndigena
+Escolaridade
+Nivel
+EstadoCivil
+ZonaEndereco
+LocalizacaoDiferenciada
+
+Cargo
+Funcao
+Departamento
+TipoVinculo
+TipoEnsinoMedioCursado
+Situacao
+
+Certidao
+CNH
+CTPS
+Identidade
+TituloEleitor
+```
+
+---
+
+# 📌 Status do backend
+
+O backend possui atualmente:
+
+* ✅ Autenticação JWT
+* ✅ Controle de permissões
+* ✅ CRUD de servidores
+* ✅ CRUD de usuários
+* ✅ CRUD de países
+* ✅ CRUD de estados
+* ✅ CRUD de municípios
+* ✅ CRUD de domínios
+* ✅ Identidade/RG/CIN
+* ✅ CNH
+* ✅ CTPS
+* ✅ Certidão
+* ✅ Título de Eleitor
+* ✅ Validação com Zod
+* ✅ Tratamento padronizado de erros
+* ✅ Prisma + PostgreSQL
+* ✅ Migrations
+
+---
+
+# 👨‍💻 Integração com o frontend
+
+O frontend deve tratar o backend como uma **API REST autenticada**.
+
+Fluxo recomendado:
+
+```text
+1. Usuário abre o sistema
+        ↓
+2. Frontend apresenta login
+        ↓
+3. POST /api/login
+        ↓
+4. Backend retorna JWT
+        ↓
+5. Frontend armazena token
+        ↓
+6. Frontend envia Authorization: Bearer TOKEN
+        ↓
+7. Frontend consome os endpoints
+        ↓
+8. Se receber 401 → renovar/login novamente
+        ↓
+9. Se receber 403 → informar falta de permissão
+```
+
+Para formulários:
+
+```text
+Frontend
+   ↓
+validação/formatação visual
+   ↓
+JSON
+   ↓
+API
+   ↓
+Zod
+   ↓
+Service
+   ↓
+Prisma
+   ↓
+PostgreSQL
+```
+
+---
+
+# ⚠️ Observação sobre o frontend atual
+
+O frontend presente neste repositório ainda possui alguns serviços que seguem um contrato anterior da API.
+
+Por exemplo, o serviço atual de documentos utiliza:
+
+```text
+/api/documentos
+```
+
+e `FormData`, enquanto o backend atual utiliza:
+
+```text
+/api/servidores/:idServidor/documento
+```
+
+com `application/json`.
+
+Da mesma forma, o cadastro atual de servidor no frontend utiliza nomes simplificados como:
+
+```text
+nome
+dataNascimento
+sexoId
+```
+
+enquanto o backend espera:
+
+```text
+nome_completo
+data_nascimento
+sexo_id
+```
+
+Portanto, **os serviços do frontend devem ser adaptados ao contrato documentado neste README**, e não o contrário.
+
+---
+
+# 📄 Licença
+
+Projeto desenvolvido para fins de desenvolvimento do sistema de Recursos Humanos.
