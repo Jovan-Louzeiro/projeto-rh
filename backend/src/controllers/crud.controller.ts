@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
-import type { DominioServices } from "../services/dominios/dominios.service.js";
 import { CrudSchemas } from "../schemas/crud.schemas.js";
+import { CRUDServices } from "../services/crud.service.js";
 
 export class CrudController {
 
@@ -8,7 +8,7 @@ export class CrudController {
     schema: CrudSchemas
 
     constructor(
-        private readonly service: DominioServices<any, any>,
+        private readonly service: CRUDServices<any, any>,
     ) {
         this.nome = service.nome
         this.schema = new CrudSchemas()

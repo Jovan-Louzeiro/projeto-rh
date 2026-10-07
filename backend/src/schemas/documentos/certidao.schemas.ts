@@ -1,7 +1,7 @@
 import z from "zod";
-import { CrudSchemas } from "../crud.schemas.js";
+import { DocumentosSchema } from "./documentos.schemas.js";
 
-export class CertidaoSchemas extends CrudSchemas {
+export class CertidaoSchemas extends DocumentosSchema {
 
     public readonly adicionar;
     public readonly atualizar;
@@ -14,12 +14,9 @@ export class CertidaoSchemas extends CrudSchemas {
 
             nova_certidao: this.booleanSchema("Nova Certidão"),
 
-            matricula: this.stringSchema("Matrícula", 1, 50
-            ),
+            matricula: this.numeroSchema("Matrícula", 32),
 
             tipo_certidao: z.enum(["NASCIMENTO", "CASAMENTO"], "O tipo da certidão deve ser NASCIMENTO ou CASAMENTO"),
-
-            ativo: this.ativoSchema(),
 
             termo: this.numeroSchema("Termo", 5).optional(),
 

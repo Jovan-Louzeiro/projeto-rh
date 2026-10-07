@@ -1,5 +1,10 @@
 import z from "zod";
 import { CrudSchemas } from "./crud.schemas.js";
+import { IdentidadeSchemas } from "./documentos/identidade.schemas.js";
+import { CertidaoSchemas } from "./documentos/certidao.schemas.js";
+import { CnhSchemas } from "./documentos/cnh.schemas.js";
+import { CtpsSchemas } from "./documentos/ctps.schemas.js";
+import { TituloEleitorSchemas } from "./documentos/tituloEleitor.schema.js";
 
 export class ServidorSchemas extends CrudSchemas {
 
@@ -7,7 +12,25 @@ export class ServidorSchemas extends CrudSchemas {
     public readonly atualizar
 
     constructor() {
-        super()
+
+        const params = z.strictObject({
+            idServidor: z.coerce
+                .number("Parâmetro inválido")
+                .int("O ID deve ser um número inteiro")
+                .positive("O ID deve ser positivo")
+        });
+
+
+        super(params)
+
+        const documentos = {
+            certidao: new CertidaoSchemas(),
+            cnh: new CnhSchemas(),
+            ctps: new CtpsSchemas(),
+            identidade: new IdentidadeSchemas(),
+            titulo_eleitor: new TituloEleitorSchemas()
+        }
+
 
         const baseSchema = z.strictObject({
 
@@ -100,7 +123,15 @@ export class ServidorSchemas extends CrudSchemas {
             observacao: this.stringSchema("Observação", 0, 500, true)
         })
 
-        this.adicionar = baseSchema
+        this.adicionar = baseSchema.extend({
+
+            certidao: documentos.certidao.adicionar.optional(),
+            cnh: documentos.cnh.adicionar.optional(),
+            ctps: documentos.ctps.adicionar.optional(),
+            identidade: documentos.identidade.adicionar.optional(),
+            titulo_eleitor: documentos.titulo_eleitor.adicionar.optional()
+
+        })
 
         this.atualizar = baseSchema
             .partial()

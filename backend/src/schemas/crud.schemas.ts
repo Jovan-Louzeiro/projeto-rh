@@ -1,13 +1,21 @@
 import { isValid, parse } from "date-fns";
-import z from "zod";
+import z, { ZodType } from "zod";
 import { validarCpf } from "../utils/validators.js";
 
 export class CrudSchemas {
+    public params: ZodType;
 
-    public readonly params;
+    constructor(params?: ZodType) {
+        console.log("1 - CrudSchemas recebeu:", params);
 
-    constructor() {
-        this.params = z.object({
+        this.params = params ?? this.getParams();
+
+        console.log("2 - CrudSchemas ficou com:", this.params);
+    }
+
+    getParams(): z.ZodType {
+        console.log("erro")
+        return z.strictObject({
             id: z.coerce
                 .number("Parâmetro inválido")
                 .int("O ID deve ser um número inteiro")

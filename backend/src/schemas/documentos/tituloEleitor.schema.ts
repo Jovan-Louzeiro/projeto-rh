@@ -1,8 +1,7 @@
 import z from "zod";
+import { DocumentosSchema } from "./documentos.schemas.js";
 
-import { CrudSchemas } from "../crud.schemas.js";
-
-export class TituloEleitorSchemas extends CrudSchemas {
+export class TituloEleitorSchemas extends DocumentosSchema {
 
     public readonly adicionar;
     public readonly atualizar;
@@ -18,8 +17,6 @@ export class TituloEleitorSchemas extends CrudSchemas {
             zona: this.numeroSchema("Zona eleitoral", 4),
 
             secao: this.numeroSchema("Seção eleitoral", 4),
-
-            ativo: this.ativoSchema()
 
         });
 

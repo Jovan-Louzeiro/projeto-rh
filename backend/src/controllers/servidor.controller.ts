@@ -1,4 +1,4 @@
-import { ServidorService } from "../services/servidr.service.js";
+import { ServidorService } from "../services/servidor.service.js";
 import { CrudController } from "./crud.controller.js";
 
 export class ServidorController extends CrudController{

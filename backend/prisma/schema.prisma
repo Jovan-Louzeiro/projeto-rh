@@ -30,6 +30,11 @@ enum PermissaoUsuario {
   RH
 }
 
+enum TipoIdentidade {
+  RG
+  CIN
+}
+
 // Tabelas de Dominio Simples
 model Sexo {
   id_sexo   Int     @id @default(autoincrement())
@@ -108,7 +113,7 @@ model Estado {
   pais    Pais @relation(fields: [pais_id], references: [id_pais])
 
   municipios Municipio[]
-  rg         RG[]        @relation("RgUf")
+  identidade         Identidade[]        @relation("IdentidadeUF")
   ctps       CTPS[]      @relation("CtpsUf")
 }
 
@@ -195,32 +200,34 @@ model Situacao {
 }
 
 // Documentos
-model RG {
-  id_rg            Int     @id @default(autoincrement())
-  rg               String  @db.VarChar(30)
-  rg_orgao_emissor String  @db.VarChar(30)
-  ativo            Boolean @default(true)
 
-  rg_uf_id Int
-  rg_uf    Estado @relation("RgUf", fields: [rg_uf_id], references: [id_estado])
+model Certidao {
+  id_certidao   Int          @id @default(autoincrement())
 
-  rg_data_emissao DateTime
+  nova_certidao Boolean
+
+  matricula     String       @db.VarChar(50)
+  tipo_certidao TipoCertidao
+
+  termo String? @db.VarChar(5)
+  folha String? @db.VarChar(5)
+  livro String? @db.VarChar(5)
+
+  data_emissao DateTime
 
   servidor_id Int      @unique
-  servidor    Servidor @relation(fields: [servidor_id], references: [id_servidor])
-
-  @@unique([rg, rg_orgao_emissor, rg_uf_id])
+  servidor    Servidor @relation(fields: [servidor_id], references: [id_servidor], onDelete: Cascade)
 }
 
-model TituloEleitor {
-  id_titulo_eleitor Int     @id @default(autoincrement())
-  numero            String  @unique @db.VarChar(12)
-  zona              String  @db.VarChar(4)
-  secao             String  @db.VarChar(4)
-  ativo             Boolean @default(true)
+model CNH {
+  id_cnh        Int      @id @default(autoincrement())
+  numero        String   @unique @db.VarChar(11)
+  categoria     String   @db.VarChar(15)
+  data_emissao  DateTime
+  data_validade DateTime
 
   servidor_id Int      @unique
-  servidor    Servidor @relation(fields: [servidor_id], references: [id_servidor])
+  servidor    Servidor @relation(fields: [servidor_id], references: [id_servidor], onDelete: Cascade)
 }
 
 model CTPS {
@@ -231,50 +238,48 @@ model CTPS {
   numero String? @db.VarChar(15)
   serie  String? @db.VarChar(5)
 
-  ativo Boolean @default(true)
-
   uf_ctps_id Int?
   uf_ctps Estado? @relation("CtpsUf", fields: [uf_ctps_id], references: [id_estado])
 
   data_emissao DateTime
 
   servidor_id Int           @unique
-  servidor Servidor @relation(fields: [servidor_id], references:  [id_servidor])
+  servidor Servidor @relation(fields: [servidor_id], references:  [id_servidor], onDelete: Cascade)
 
   @@unique([numero, serie, uf_ctps_id])
 }
 
-model CNH {
-  id_cnh        Int      @id @default(autoincrement())
-  numero        String   @unique @db.VarChar(15)
-  categoria     String   @db.VarChar(15)
-  data_emissao  DateTime
-  data_validade DateTime
-  ativo         Boolean  @default(true)
+model Identidade {
+  id_identidade    Int     @id @default(autoincrement())
+
+  tipo TipoIdentidade
+
+  numero               String  @db.VarChar(30)
+  orgao_emissor String  @db.VarChar(30)
+
+  rg_uf_id Int
+  rg_uf    Estado @relation("IdentidadeUF", fields: [rg_uf_id], references: [id_estado])
+
+  rg_data_emissao DateTime
 
   servidor_id Int      @unique
-  servidor    Servidor @relation(fields: [servidor_id], references: [id_servidor])
+  servidor    Servidor @relation(fields: [servidor_id], references: [id_servidor], onDelete: Cascade)
+
+  @@unique([numero, orgao_emissor, rg_uf_id])
 }
 
-model Certidao {
-  id_certidao   Int          @id @default(autoincrement())
-  
-  nova_certidao Boolean
+model TituloEleitor {
+  id_titulo_eleitor Int     @id @default(autoincrement())
 
-  matricula     String       @db.VarChar(50)
-  tipo_certidao TipoCertidao
-  ativo         Boolean      @default(true)
-
-  termo String? @db.VarChar(5)
-  folha String? @db.VarChar(5)
-  livro String? @db.VarChar(5)
-
-  data_emissao DateTime
+  numero            String  @unique @db.VarChar(12)
+  zona              String  @db.VarChar(4)
+  secao             String  @db.VarChar(4)
 
   servidor_id Int      @unique
-  servidor    Servidor @relation(fields: [servidor_id], references: [id_servidor])
+  servidor    Servidor @relation(fields: [servidor_id], references: [id_servidor], onDelete: Cascade)
 }
 
+//Saúde
 model CID {
   id_cid Int     @id @default(autoincrement())
   codigo String  @unique @db.VarChar(10)
@@ -404,8 +409,6 @@ model Servidor {
   nome_social   String?     @db.VarChar(150)
   cpf           String      @unique @db.VarChar(11)
 
-  rg RG?
-
   nis_pis String? @unique @db.VarChar(20)
 
   // Nacimento / Nacionalidade
@@ -468,10 +471,10 @@ model Servidor {
 
   // Documentos
   certidao       Certidao?
-  titulo_eleitor TituloEleitor?
-  ctps      CTPS?
-
   cnh CNH?
+  ctps      CTPS?
+  identidade Identidade?
+  titulo_eleitor TituloEleitor?
 
   // Saúde
   cartao_sus   String?       @unique @db.VarChar(15)

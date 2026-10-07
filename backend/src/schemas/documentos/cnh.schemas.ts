@@ -1,7 +1,7 @@
 import z from "zod";
-import { CrudSchemas } from "../crud.schemas.js";
+import { DocumentosSchema } from "./documentos.schemas.js";
 
-export class CnhSchemas extends CrudSchemas {
+export class CnhSchemas extends DocumentosSchema {
 
     public readonly adicionar;
     public readonly atualizar;
@@ -19,8 +19,6 @@ export class CnhSchemas extends CrudSchemas {
             data_emissao: this.dataSchema("data de emissão"),
 
             data_validade: this.dataSchema("data de validade"),
-
-            ativo: this.ativoSchema()
 
         });
 

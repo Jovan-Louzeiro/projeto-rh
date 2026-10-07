@@ -1,29 +1,19 @@
 import { Router } from "express";
-import { Autorizacoes, CrudSchema } from "../types/crud.types.js";
-import { DominioController } from "../controllers/dominios/dominios.controller.js";
-import { PermissaoUsuario } from "../../generated/prisma/enums.js";
+import { Autorizacoes, autorizacoesPadrao, CrudSchema } from "../types/crud.types.js";
 import { autorizar } from "../middlewares/auth.js";
 import { validate } from "../middlewares/validate.js";
 import { CrudController } from "../controllers/crud.controller.js";
-import { CrudSchemas } from "../schemas/crud.schemas.js";
-
-const autorizacoesPadrao: Autorizacoes = {
-    listar: [PermissaoUsuario.RH, PermissaoUsuario.ADMIN],
-    procurar: [PermissaoUsuario.RH, PermissaoUsuario.ADMIN],
-    adicionar: [PermissaoUsuario.ADMIN],
-    atualizar: [PermissaoUsuario.ADMIN],
-    deletar: [PermissaoUsuario.ADMIN],
-};
 
 export class CrudRoutes<TSchema extends CrudSchema> {
 
     public readonly router: Router;
-    private readonly autorizacoes: Autorizacoes;
+    protected readonly autorizacoes: Autorizacoes;
 
     constructor(
         protected controller: CrudController,
-        private readonly schema: TSchema,
-        autorizacoes?: Partial<Autorizacoes>
+        protected readonly schema: TSchema,
+        autorizacoes?: Partial<Autorizacoes>,
+        protected readonly parametroId = "id"
     ) {
         this.autorizacoes = {
             ...autorizacoesPadrao,
@@ -35,7 +25,7 @@ export class CrudRoutes<TSchema extends CrudSchema> {
         this.registrar();
     } 
 
-    private registrar(): void {
+    protected registrar(): void {
 
     this.router.get(
         "/",
@@ -44,7 +34,7 @@ export class CrudRoutes<TSchema extends CrudSchema> {
     );
 
     this.router.get(
-        "/:id",
+        `/:${this.parametroId}`,
         autorizar(...this.autorizacoes.procurar),
         validate(this.schema.params, "params"),
         this.controller.procurar
@@ -58,7 +48,7 @@ export class CrudRoutes<TSchema extends CrudSchema> {
     );
 
     this.router.patch(
-        "/:id",
+        `/:${this.parametroId}`,
         autorizar(...this.autorizacoes.atualizar),
         validate(this.schema.params, "params"),
         validate(this.schema.atualizar, "body"),
@@ -66,7 +56,7 @@ export class CrudRoutes<TSchema extends CrudSchema> {
     );
 
     this.router.delete(
-        "/:id",
+        `/:${this.parametroId}`,
         autorizar(...this.autorizacoes.deletar),
         validate(this.schema.params, "params"),
         this.controller.deletar

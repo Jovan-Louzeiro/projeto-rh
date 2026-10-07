@@ -1,5 +1,4 @@
 import { PaisController } from "../controllers/pais.controller.js";
-import { autorizar } from "../middlewares/auth.js";
 import { PaisSchemas } from "../schemas/pais.Schema.js";
 import { CrudRoutes } from "./crud.routes.js";
 
