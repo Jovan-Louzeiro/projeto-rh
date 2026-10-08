@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 
@@ -11,8 +10,11 @@ type Props = {
   logged: boolean;
 };
 
-export default function Login({ onLogin, logged }: Props) {
-  const nav = useNavigate();
+export default function Login({
+  onLogin,
+  logged,
+}: Props) {
+  const navigate = useNavigate();
 
   const [forgot, setForgot] = useState(false);
   const [email, setEmail] = useState("");
@@ -20,50 +22,99 @@ export default function Login({ onLogin, logged }: Props) {
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState("");
 
+  /*
+   * Se o usuário já estiver logado,
+   * não precisa permanecer na tela de login.
+   */
   if (logged) {
-    return <Navigate to="/dashboard" replace />;
+    return (
+      <Navigate
+        to="/dashboard"
+        replace
+      />
+    );
   }
 
-  async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  async function handleLogin(
+    event: React.FormEvent<HTMLFormElement>
+  ) {
+    event.preventDefault();
 
     setErro("");
     setLoading(true);
 
     try {
-      const resultado = await realizarLogin(email, senha);
+      const resultado = await realizarLogin(
+        email.trim(),
+        senha
+      );
 
-      console.log("Resultado do login:", resultado);
+      console.log(
+        "Resultado do login:",
+        resultado
+      );
 
-      // Se a API respondeu com sucesso
+      /*
+       * O serviço realizarLogin já deve lançar
+       * um erro caso a API retorne falha.
+       */
       onLogin();
-      nav("/dashboard");
-    } catch (error) {
-      console.error("Erro ao realizar login:", error);
 
-      setErro("E-mail ou senha inválidos.");
+      navigate("/dashboard", {
+        replace: true,
+      });
+    } catch (error) {
+      console.error(
+        "Erro ao realizar login:",
+        error
+      );
+
+      setErro(
+        error instanceof Error &&
+          error.message
+          ? error.message
+          : "E-mail ou senha inválidos."
+      );
     } finally {
       setLoading(false);
     }
   }
 
   function handleRecuperarSenha(
-    e: React.FormEvent<HTMLFormElement>
+    event: React.FormEvent<HTMLFormElement>
   ) {
-    e.preventDefault();
+    event.preventDefault();
 
     console.log(
       "Solicitação de recuperação para:",
       email
     );
 
+    /*
+     * Aqui você poderá integrar futuramente
+     * o endpoint de recuperação de senha.
+     */
+    setForgot(false);
+  }
+
+  function abrirRecuperacao() {
+    setErro("");
+    setForgot(true);
+  }
+
+  function voltarLogin() {
+    setErro("");
     setForgot(false);
   }
 
   return (
     <div className="login-screen">
       <div className="login-card">
-        {/* Identidade visual */}
+
+        {/* ==================================================
+            IDENTIDADE VISUAL
+        ================================================== */}
+
         <div className="brand-center">
           <div className="brand-logo">
             <PrefeituraLogo />
@@ -78,7 +129,10 @@ export default function Login({ onLogin, logged }: Props) {
 
         {!forgot ? (
           <>
-            {/* Login */}
+            {/* ==================================================
+                LOGIN
+            ================================================== */}
+
             <h2>Acesse sua conta</h2>
 
             <p className="muted">
@@ -86,16 +140,22 @@ export default function Login({ onLogin, logged }: Props) {
             </p>
 
             <form onSubmit={handleLogin}>
+
               <label>
                 E-mail
 
                 <input
                   type="email"
+                  name="email"
                   placeholder="seu@email.com"
                   value={email}
-                  onChange={(e) =>
-                    setEmail(e.target.value)
+                  onChange={(event) =>
+                    setEmail(
+                      event.target.value
+                    )
                   }
+                  autoComplete="email"
+                  disabled={loading}
                   required
                 />
               </label>
@@ -105,17 +165,25 @@ export default function Login({ onLogin, logged }: Props) {
 
                 <input
                   type="password"
+                  name="senha"
                   placeholder="Sua senha"
                   value={senha}
-                  onChange={(e) =>
-                    setSenha(e.target.value)
+                  onChange={(event) =>
+                    setSenha(
+                      event.target.value
+                    )
                   }
+                  autoComplete="current-password"
+                  disabled={loading}
                   required
                 />
               </label>
 
               {erro && (
-                <p className="login-error">
+                <p
+                  className="login-error"
+                  role="alert"
+                >
                   {erro}
                 </p>
               )}
@@ -123,10 +191,8 @@ export default function Login({ onLogin, logged }: Props) {
               <button
                 type="button"
                 className="forgot"
-                onClick={() => {
-                  setErro("");
-                  setForgot(true);
-                }}
+                onClick={abrirRecuperacao}
+                disabled={loading}
               >
                 Esqueceu sua senha?
               </button>
@@ -144,26 +210,36 @@ export default function Login({ onLogin, logged }: Props) {
           </>
         ) : (
           <>
-            {/* Recuperação de senha */}
+            {/* ==================================================
+                RECUPERAÇÃO DE SENHA
+            ================================================== */}
+
             <h2>Recuperar senha</h2>
 
             <p className="muted">
-              Informe seu e-mail para receber as instruções.
+              Informe seu e-mail para receber
+              as instruções.
             </p>
 
             <form
-              onSubmit={handleRecuperarSenha}
+              onSubmit={
+                handleRecuperarSenha
+              }
             >
               <label>
                 E-mail
 
                 <input
                   type="email"
+                  name="email"
                   placeholder="seu@email.com"
                   value={email}
-                  onChange={(e) =>
-                    setEmail(e.target.value)
+                  onChange={(event) =>
+                    setEmail(
+                      event.target.value
+                    )
                   }
+                  autoComplete="email"
                   required
                 />
               </label>
@@ -179,18 +255,19 @@ export default function Login({ onLogin, logged }: Props) {
             <button
               type="button"
               className="back-login"
-              onClick={() => {
-                setErro("");
-                setForgot(false);
-              }}
+              onClick={voltarLogin}
             >
               <Icon name="arrow-left" />
+
               Voltar para o login
             </button>
           </>
         )}
 
-        {/* Rodapé */}
+        {/* ==================================================
+            RODAPÉ
+        ================================================== */}
+
         <small>
           © 2026 Prefeitura de Carutapera - MA
         </small>

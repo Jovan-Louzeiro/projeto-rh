@@ -1,199 +1,217 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import type { Servidor } from "../types";
 import { listarServidores } from "../services/servidores";
-import Icon from "../components/Icon";
-import MetricCard from "../components/MetricCard";
-import Status from "../components/Status";
 
 type Props = {
-  onProfile: (s: Servidor) => void;
+  onProfile: (servidor: Servidor) => void;
   onNew: () => void;
 };
 
-export default function Servidores({ onProfile, onNew }: Props) {
-  const [query, setQuery] = useState("");
+export function Servidores({
+  onProfile,
+  onNew,
+}: Props) {
   const [servidores, setServidores] = useState<Servidor[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [erro, setErro] = useState("");
 
-  // Carregar servidores
+  async function carregarServidores() {
+    try {
+      setLoading(true);
+      setErro("");
+
+      const lista = await listarServidores();
+
+      setServidores(lista);
+    } catch (error) {
+      console.error(error);
+
+      setErro(
+        error instanceof Error
+          ? error.message
+          : "Não foi possível carregar os servidores."
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
   useEffect(() => {
-    const controller = new AbortController();
-
-    listarServidores(controller.signal)
-      .then(setServidores)
-      .catch((err: unknown) => {
-        if (
-          !(err instanceof DOMException && err.name === "AbortError")
-        ) {
-          setError(
-            "Não foi possível carregar os servidores. Verifique a conexão com a API."
-          );
-        }
-      })
-      .finally(() => setLoading(false));
-
-    return () => controller.abort();
+    carregarServidores();
   }, []);
 
-  const filtered = useMemo(
-    () =>
-      servidores.filter((s) =>
-        `${s.nome} ${s.matricula} ${s.cargo} ${s.secretaria}`
-          .toLowerCase()
-          .includes(query.toLowerCase())
-      ),
-    [query, servidores]
-  );
-
-  const quantidade = (status: Servidor["status"]) =>
-    servidores.filter((s) => s.status === status).length;
-
   return (
-    <>
-      <div className="page-head">
+    <div className="page">
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: "24px",
+        }}
+      >
         <div>
           <h1>Servidores</h1>
-          <p>Gerencie os servidores cadastrados no município.</p>
+
+          <p>
+            Lista de servidores cadastrados no RH Digital.
+          </p>
         </div>
 
-        <button className="btn primary" onClick={onNew}>
-          <Icon name="add" /> Novo Servidor
+        <button
+          type="button"
+          onClick={onNew}
+        >
+          Novo servidor
         </button>
       </div>
 
-      <div className="cards">
-        <MetricCard
-          icon="users"
-          value={String(servidores.length)}
-          label="Total de Servidores"
-        />
+      {loading && (
+        <p className="table-message">
+          Carregando servidores...
+        </p>
+      )}
 
-        <MetricCard
-          icon="user-check"
-          value={String(quantidade("Ativo"))}
-          label="Ativos"
-        />
+      {!loading && erro && (
+        <div className="form-error">
+          <p>{erro}</p>
 
-        <MetricCard
-          icon="user-time"
-          value={String(quantidade("Afastado"))}
-          label="Afastados"
-        />
-
-        <MetricCard
-          icon="user-shield"
-          value={String(quantidade("Licença"))}
-          label="Em Licença"
-        />
-      </div>
-
-      <div className="card">
-        <div className="filters">
-          <div className="filter-search">
-            <Icon name="search" />
-
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Buscar por nome, matrícula ou cargo..."
-            />
-          </div>
-
-          <select>
-            <option>Todos os status</option>
-          </select>
-
-          <select>
-            <option>Todas as secretarias</option>
-          </select>
+          <button
+            type="button"
+            onClick={carregarServidores}
+          >
+            Tentar novamente
+          </button>
         </div>
+      )}
 
-        <div className="table-scroll">
-          <table className="table">
+      {!loading && !erro && servidores.length === 0 && (
+        <div className="table-message">
+          <p>
+            Nenhum servidor cadastrado.
+          </p>
+        </div>
+      )}
+
+      {!loading && !erro && servidores.length > 0 && (
+        <div
+          style={{
+            overflowX: "auto",
+          }}
+        >
+          <table
+            style={{
+              width: "100%",
+              borderCollapse: "collapse",
+            }}
+          >
             <thead>
               <tr>
-                <th>Servidor</th>
-                <th>Matrícula</th>
-                <th>Cargo</th>
-                <th>Secretaria</th>
-                <th>Situação</th>
-                <th>Ações</th>
+                <th
+                  style={{
+                    textAlign: "left",
+                    padding: "12px",
+                  }}
+                >
+                  ID
+                </th>
+
+                <th
+                  style={{
+                    textAlign: "left",
+                    padding: "12px",
+                  }}
+                >
+                  Nome
+                </th>
+
+                <th
+                  style={{
+                    textAlign: "left",
+                    padding: "12px",
+                  }}
+                >
+                  CPF
+                </th>
+
+                <th
+                  style={{
+                    textAlign: "left",
+                    padding: "12px",
+                  }}
+                >
+                  Status
+                </th>
+
+                <th
+                  style={{
+                    textAlign: "right",
+                    padding: "12px",
+                  }}
+                >
+                  Ações
+                </th>
               </tr>
             </thead>
 
             <tbody>
-              {loading ? (
-                <Message>Carregando servidores...</Message>
-              ) : error ? (
-                <Message>{error}</Message>
-              ) : filtered.length === 0 ? (
-                <Message>
-                  Nenhum servidor encontrado. Os registros aparecerão aqui após
-                  a conexão com o banco de dados.
-                </Message>
-              ) : (
-                filtered.map((s) => (
-                  <tr key={s.id}>
-                    <td>
-                      <div className="person">
-                        <div className="avatar">{initials(s.nome)}</div>
-                        <strong>{s.nome}</strong>
-                      </div>
-                    </td>
+              {servidores.map((servidor) => (
+                <tr key={servidor.id}>
+                  <td
+                    style={{
+                      padding: "12px",
+                    }}
+                  >
+                    {servidor.id}
+                  </td>
 
-                    <td>{s.matricula}</td>
-                    <td>{s.cargo}</td>
-                    <td>{s.secretaria}</td>
+                  <td
+                    style={{
+                      padding: "12px",
+                    }}
+                  >
+                    {servidor.nome}
+                  </td>
 
-                    <td>
-                      <Status
-                        tone={s.status === "Ativo" ? "green" : "yellow"}
-                      >
-                        {s.status}
-                      </Status>
-                    </td>
+                  <td
+                    style={{
+                      padding: "12px",
+                    }}
+                  >
+                    {servidor.cpf || "-"}
+                  </td>
 
-                    <td>
-                      <button
-                        className="icon-btn"
-                        onClick={() => onProfile(s)}
-                      >
-                        <Icon name="eye" />
-                      </button>
+                  <td
+                    style={{
+                      padding: "12px",
+                    }}
+                  >
+                    {servidor.status}
+                  </td>
 
-                      <button
-                        className="icon-btn"
-                        onClick={() => onProfile(s)}
-                      >
-                        <Icon name="edit" />
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
+                  <td
+                    style={{
+                      padding: "12px",
+                      textAlign: "right",
+                    }}
+                  >
+                    <button
+                      type="button"
+                      onClick={() =>
+                        onProfile(servidor)
+                      }
+                    >
+                      Ver perfil
+                    </button>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
-      </div>
-    </>
+      )}
+    </div>
   );
 }
 
-function Message({ children }: { children: string }) {
-  return (
-    <tr>
-      <td colSpan={6} className="table-message">
-        {children}
-      </td>
-    </tr>
-  );
-}
-
-function initials(name: string) {
-  return name
-    .split(" ")
-    .map((x) => x[0])
-    .slice(0, 2)
-    .join("");
-}
+export default Servidores;

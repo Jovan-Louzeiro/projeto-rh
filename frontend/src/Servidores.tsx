@@ -1,25 +1,32 @@
-import type { Servidor } from "../types";
+import type { Servidor } from "./types";
 
+/**
+ * URL base da API
+ */
 const apiUrl = (
   import.meta.env.VITE_API_URL ??
   "https://projeto-rh-sj48.onrender.com"
 ).replace(/\/$/, "");
 
+/**
+ * Endpoint de servidores
+ */
 const endpoint = `${apiUrl}/api/servidores`;
 
-function getToken(): string {
-  return (
+/**
+ * Headers padrão da API
+ */
+function getHeaders(): HeadersInit {
+  const token =
+    localStorage.getItem("rh_access_token") ??
     localStorage.getItem("token") ??
     localStorage.getItem("token_access") ??
-    ""
-  );
-}
-
-function getHeaders(): HeadersInit {
-  const token = localStorage.getItem("rh_access_token");
+    "";
 
   return {
     Accept: "application/json",
+    "Content-Type": "application/json",
+
     ...(token
       ? {
           Authorization: `Bearer ${token}`,
@@ -28,6 +35,13 @@ function getHeaders(): HeadersInit {
   };
 }
 
+/**
+ * Dados enviados para:
+ * POST /api/servidores
+ *
+ * Campos que possuem relacionamento
+ * devem receber o ID correspondente.
+ */
 export type NovoServidorDados = {
   ativo: boolean;
 
@@ -74,16 +88,26 @@ export type NovoServidorDados = {
   observacao: string | null;
 };
 
+/**
+ * Resposta de um servidor vindo da API
+ */
 type ApiServidor = NovoServidorDados & {
   id_servidor: number;
 };
 
+/**
+ * Resposta da listagem
+ */
 type ApiListResponse =
   | ApiServidor[]
   | {
       data?: ApiServidor[];
     };
 
+/**
+ * Converte o servidor da API para o formato
+ * utilizado pelo frontend.
+ */
 function adaptarServidor(api: ApiServidor): Servidor {
   return {
     id: String(api.id_servidor),
@@ -119,6 +143,9 @@ function adaptarServidor(api: ApiServidor): Servidor {
   };
 }
 
+/**
+ * GET /api/servidores
+ */
 export async function listarServidores(
   signal?: AbortSignal
 ): Promise<Servidor[]> {
@@ -129,9 +156,23 @@ export async function listarServidores(
   });
 
   if (!response.ok) {
-    throw new Error(
-      `Não foi possível carregar os servidores. Status: ${response.status}`
-    );
+    let mensagem =
+      `Não foi possível carregar os servidores. Status: ${response.status}`;
+
+    try {
+      const erro = await response.json();
+
+      mensagem =
+        erro?.mensagem ??
+        erro?.message ??
+        erro?.erro ??
+        erro?.error ??
+        mensagem;
+    } catch {
+      // A API não retornou JSON.
+    }
+
+    throw new Error(mensagem);
   }
 
   const body: ApiListResponse = await response.json();
@@ -143,20 +184,15 @@ export async function listarServidores(
   return lista.map(adaptarServidor);
 }
 
+/**
+ * POST /api/servidores
+ */
 export async function cadastrarServidor(
   dados: NovoServidorDados
 ): Promise<ApiServidor> {
-
-  console.log
-  
   const response = await fetch(endpoint, {
     method: "POST",
-
-    headers: {
-      ...getHeaders(),
-      "Content-Type": "application/json",
-    },
-
+    headers: getHeaders(),
     body: JSON.stringify(dados),
   });
 
@@ -171,9 +207,10 @@ export async function cadastrarServidor(
         erro?.mensagem ??
         erro?.message ??
         erro?.erro ??
+        erro?.error ??
         mensagem;
     } catch {
-      // API não retornou JSON.
+      // A API não retornou JSON.
     }
 
     throw new Error(mensagem);

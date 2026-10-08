@@ -37,6 +37,7 @@ export interface Servidor {
   status: Status;
   email: string;
   cpf?: string;
+  dataNascimento?: string;
   dataAdmissao?: string;
   lotacao?: string;
   endereco?: string;

@@ -1,51 +1,56 @@
+import { getApiUrl, getAuthHeaders } from "./api";
+
 export type Sexo = {
   id: string | number;
   descricao: string;
-  ativo: boolean;
 };
 
-const API_URL = (
-  import.meta.env.VITE_API_URL ??
-  "https://projeto-rh-sj48.onrender.com"
-).replace(/\/$/, "");
+type ApiSexo = {
+  id_sexo?: number;
+  id?: number;
+  descricao?: string;
+  nome?: string;
+};
 
 export async function listarSexos(
   signal?: AbortSignal
 ): Promise<Sexo[]> {
-  const token = localStorage.getItem("rh_access_token");
   const response = await fetch(
-    `${API_URL}/api/sexos?mostrarTudo=true`,
+    getApiUrl("/api/sexos"),
     {
       method: "GET",
-
-      headers: {
-        Accept: "application/json",
-        ...(token
-          ? { Authorization: token.startsWith("Bearer ") ? token : `Bearer ${token}` }
-          : {}),
-      },
-
+      headers: getAuthHeaders(),
       signal,
     }
   );
 
   if (!response.ok) {
-    const mensagem = await response.text();
+    let mensagem =
+      `Erro ao carregar /api/sexos: ${response.status}`;
 
-    throw new Error(
-      `Erro ao buscar sexos: ${response.status} ${mensagem}`
-    );
+    try {
+      const erro = await response.json();
+
+      mensagem =
+        erro?.message ??
+        erro?.mensagem ??
+        erro?.erro ??
+        mensagem;
+    } catch {
+      // A API não retornou JSON.
+    }
+
+    throw new Error(mensagem);
   }
 
   const body = await response.json();
 
-  if (Array.isArray(body)) {
-    return body;
-  }
+  const lista: ApiSexo[] = Array.isArray(body)
+    ? body
+    : body?.data ?? [];
 
-  if (Array.isArray(body.data)) {
-    return body.data;
-  }
-
-  return [];
+  return lista.map((sexo) => ({
+    id: sexo.id_sexo ?? sexo.id ?? "",
+    descricao: sexo.descricao ?? sexo.nome ?? "",
+  }));
 }
