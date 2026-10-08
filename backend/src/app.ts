@@ -26,7 +26,8 @@ app.use(cors({
     origin: [
         "https://projeto-rh-sj48.onrender.com",
         "http://localhost:3000",
-        "http://localhost:5173"
+        "http://localhost:5173",
+        "http://192.168.1.105:5173"
     ]
 }))
 
@@ -50,7 +51,7 @@ app.use("/api/servidores", new ServidorRouter().router)
 
 app.use(errorHandler)
 
-app.listen(port, ()=>{
+app.listen(port, "0.0.0.0",  ()=>{
     console.log("Servidor Rodando em: Servidor rodando em http://localhost:" + port)
 })
 

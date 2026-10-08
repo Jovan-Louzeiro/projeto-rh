@@ -53,22 +53,23 @@ export class CrudSchemas {
     }
 
     dataSchema(nome: string) {
+
         return z.string(
             `A ${nome} deve ser uma string`
         )
             .regex(
-                /^\d{2}\/\d{2}\/\d{4}$/,
-                "A data deve estar no formato DD/MM/AAAA"
+                /^\d{4}-\d{2}-\d{2}$/,
+                `A ${nome} deve estar no formato AAAA-MM-DD`
             )
             .refine((val) => {
                 return isValid(
-                    parse(val, "dd/MM/yyyy", new Date())
+                    parse(val, "yyyy-MM-dd", new Date())
                 );
             }, {
                 message: "Data inválida"
             })
             .transform((val) =>
-                parse(val, "dd/MM/yyyy", new Date())
+                parse(val, "yyyy-MM-dd", new Date())
             );
     }
 

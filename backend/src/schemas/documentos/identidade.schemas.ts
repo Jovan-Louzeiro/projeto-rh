@@ -62,7 +62,7 @@ export class IdentidadeSchemas extends DocumentosSchema {
 
             } else {
 
-                if (data.numero !== undefined) {
+                if (!data.numero) {
                     ctx.addIssue({
                         code: "custom",
                         path: ["numero"],

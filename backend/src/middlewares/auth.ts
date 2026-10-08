@@ -53,11 +53,6 @@ export function autorizar(...permissoesPermitidas: PermissaoUsuario[]) {
         next: NextFunction
     ) => {
 
-        // Bypass durante desenvolvimento
-        if (process.env.NODE_ENV === "development") {
-            return next()
-        }
-
         const usuario = req.usuario
 
         if (
