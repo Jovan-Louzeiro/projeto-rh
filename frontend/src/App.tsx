@@ -15,7 +15,15 @@ import Sidebar from "./components/Sidebar";
 import Header from "./components/Header";
 
 // Serviços
-import { listarServidores } from "./services/servidores";
+import {
+  adaptarServidor,
+  detalharServidor,
+  type DetalhesServidor,
+  type Servidor as ServidorApi,
+} from "./services/servidores";
+import { carregarDadosGeograficos, type DadosGeograficos } from "./services/localizacao";
+import { carregarOpcoesServidor, type OpcoesServidorCompletas } from "./services/opcoesServidor";
+import { isAuthenticated } from "./services/api";
 
 // Páginas
 import Dashboard from "./pages/Dashboard";
@@ -48,6 +56,7 @@ import Relatorios from "./pages/Relatorios";
 import ConfigurarRelatorio from "./pages/ConfigurarRelatorio";
 
 import Configuracoes from "./pages/Configuracoes";
+import Cadastros from "./pages/Cadastros";
 
 import Requerimentos from "./pages/Requerimentos";
 import NovoRequerimento from "./pages/NovoRequerimento";
@@ -56,7 +65,7 @@ import DetalheRequerimento from "./pages/DetalheRequerimento";
 import Login from "./pages/Login";
 
 export default function App() {
-  const [logged, setLogged] = useState(false);
+  const [logged, setLogged] = useState(isAuthenticated);
 
   return (
     <BrowserRouter>
@@ -268,6 +277,8 @@ export default function App() {
               <Configuracoes initialTab="aparencia" />
             }
           />
+
+          <Route path="/cadastros" element={<Cadastros />} />
         </Route>
 
         {/* REDIRECIONAMENTOS */}
@@ -675,8 +686,12 @@ function PerfilRoute() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const [servidor, setServidor] =
-    useState<Servidor | null>(null);
+  const [perfil, setPerfil] = useState<{
+    servidor: Servidor;
+    detalhes: DetalhesServidor;
+    geografia: DadosGeograficos;
+    opcoes: OpcoesServidorCompletas;
+  } | null>(null);
 
   const [erro, setErro] =
     useState("");
@@ -685,15 +700,20 @@ function PerfilRoute() {
     const controller =
       new AbortController();
 
-    listarServidores(controller.signal)
-      .then((lista) => {
-        const encontrado =
-          lista.find(
-            (servidor) =>
-              String(servidor.id) === String(id)
-          ) ?? null;
+    if (!id) return () => controller.abort();
 
-        setServidor(encontrado);
+    Promise.all([
+      detalharServidor(id, controller.signal),
+      carregarDadosGeograficos(controller.signal),
+      carregarOpcoesServidor(controller.signal),
+    ])
+      .then(([detalhes, geografia, opcoes]) => {
+        setPerfil({
+          servidor: adaptarServidor(detalhes as ServidorApi),
+          detalhes,
+          geografia,
+          opcoes,
+        });
       })
       .catch((error) => {
         if (
@@ -720,7 +740,7 @@ function PerfilRoute() {
     );
   }
 
-  if (!servidor) {
+  if (!perfil) {
     return (
       <p className="table-message">
         Carregando perfil do servidor...
@@ -730,7 +750,10 @@ function PerfilRoute() {
 
   return (
     <PerfilServidor
-      servidor={servidor}
+      servidor={perfil.servidor}
+      detalhes={perfil.detalhes}
+      geografia={perfil.geografia}
+      opcoes={perfil.opcoes}
       onQuinquenios={() =>
         navigate("/quinquenios")
       }

@@ -27,6 +27,7 @@ import {
 } from "../services/opcoesServidor";
 
 import Icon from "../components/Icon";
+import { carregarDadosGeograficos, type DadosGeograficos } from "../services/localizacao";
 
 type Props = {
   onBack: () => void;
@@ -63,25 +64,11 @@ const opcoesVazias: Opcoes = {
   comunidadesIndigenas: [],
   situacoes: [],
 };
+const dadosGeograficosVazios: DadosGeograficos = { paises: [], estados: [], municipios: [] };
 
 function formatarDataParaApi(data: string): string {
-  if (!data) {
-    return "";
-  }
-
-  const partes = data.split("-");
-
-  if (partes.length !== 3) {
-    return "";
-  }
-
-  const [ano, mes, dia] = partes;
-
-  if (!ano || !mes || !dia) {
-    return "";
-  }
-
-  return `${dia}/${mes}/${ano}`;
+  // Input type="date" já fornece YYYY-MM-DD, formato validado pelo backend.
+  return data;
 }
 
 export default function NovoServidor({
@@ -93,6 +80,16 @@ export default function NovoServidor({
 
   const [opcoes, setOpcoes] =
     useState<Opcoes>(opcoesVazias);
+  const [geografia, setGeografia] = useState(dadosGeograficosVazios);
+  const [documentosIncluidos, setDocumentosIncluidos] = useState({
+    certidao: false,
+    cnh: false,
+    ctps: false,
+    identidade: false,
+    tituloEleitor: false,
+  });
+  const [certidaoNova, setCertidaoNova] = useState(true);
+  const [ctpsAntiga, setCtpsAntiga] = useState(true);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -116,6 +113,7 @@ export default function NovoServidor({
           localizacoesDiferenciadas,
           comunidadesIndigenas,
           situacoes,
+          geografiaCarregada,
         ] = await Promise.all([
           listarSexos(controller.signal),
           listarGeneros(controller.signal),
@@ -134,6 +132,7 @@ export default function NovoServidor({
             controller.signal
           ),
           listarSituacoes(controller.signal),
+          carregarDadosGeograficos(controller.signal),
         ]);
 
         setOpcoes({
@@ -151,6 +150,7 @@ export default function NovoServidor({
           comunidadesIndigenas,
           situacoes,
         });
+        setGeografia(geografiaCarregada);
       } catch (erro: unknown) {
         if (
           erro instanceof DOMException &&
@@ -192,12 +192,12 @@ export default function NovoServidor({
      */
     const texto = (
       name: string
-    ): string | null => {
+    ): string | undefined => {
       const value = String(
         form.get(name) ?? ""
       ).trim();
 
-      return value || null;
+      return value || undefined;
     };
 
     /**
@@ -207,13 +207,13 @@ export default function NovoServidor({
      */
     const id = (
       name: string
-    ): number | null => {
+    ): number | undefined => {
       const value = String(
         form.get(name) ?? ""
       ).trim();
 
       if (!value) {
-        return null;
+        return undefined;
       }
 
       const convertido = Number(value);
@@ -222,7 +222,7 @@ export default function NovoServidor({
         !Number.isInteger(convertido) ||
         convertido <= 0
       ) {
-        return null;
+        return undefined;
       }
 
       return convertido;
@@ -234,7 +234,7 @@ export default function NovoServidor({
      */
     const documento = (
       name: string
-    ): string | null => {
+    ): string | undefined => {
       const value = String(
         form.get(name) ?? ""
       ).trim();
@@ -242,8 +242,11 @@ export default function NovoServidor({
       const somenteNumeros =
         value.replace(/\D/g, "");
 
-      return somenteNumeros || null;
+      return somenteNumeros || undefined;
     };
+
+    const campo = (name: string) => texto(name);
+    const numeroDocumento = (name: string) => documento(name);
 
     const dataNascimento = String(
       form.get("data_nascimento") ?? ""
@@ -356,6 +359,64 @@ export default function NovoServidor({
 
       observacao:
         texto("observacao"),
+
+      certidao: documentosIncluidos.certidao
+        ? {
+            nova_certidao: form.get("certidao_nova") === "true",
+            matricula: numeroDocumento("certidao_matricula"),
+            tipo_certidao: campo("certidao_tipo"),
+            data_emissao: campo("certidao_data_emissao"),
+            ...(form.get("certidao_nova") === "true"
+              ? {}
+              : {
+                  termo: numeroDocumento("certidao_termo"),
+                  folha: numeroDocumento("certidao_folha"),
+                  livro: numeroDocumento("certidao_livro"),
+                }),
+          }
+        : undefined,
+
+      cnh: documentosIncluidos.cnh
+        ? {
+            numero: numeroDocumento("cnh_numero"),
+            categoria: campo("cnh_categoria"),
+            data_emissao: campo("cnh_data_emissao"),
+            data_validade: campo("cnh_data_validade"),
+          }
+        : undefined,
+
+      ctps: documentosIncluidos.ctps
+        ? {
+            tipo_ctps: campo("ctps_tipo"),
+            ...(form.get("ctps_tipo") === "ANTIGO"
+              ? {
+                  numero: numeroDocumento("ctps_numero"),
+                  serie: numeroDocumento("ctps_serie"),
+                  uf_ctps_id: id("ctps_uf_id"),
+                }
+              : {}),
+            data_emissao: campo("ctps_data_emissao"),
+          }
+        : undefined,
+
+      identidade: documentosIncluidos.identidade
+        ? {
+            tipo_identidade: campo("identidade_tipo"),
+            // O schema atual do backend ainda exige `numero` para CIN.
+            numero: numeroDocumento("identidade_numero"),
+            orgao_emissor: campo("identidade_orgao"),
+            rg_uf_id: id("identidade_uf_id"),
+            rg_data_emissao: campo("identidade_data_emissao"),
+          }
+        : undefined,
+
+      titulo_eleitor: documentosIncluidos.tituloEleitor
+        ? {
+            numero: numeroDocumento("titulo_numero"),
+            zona: numeroDocumento("titulo_zona"),
+            secao: numeroDocumento("titulo_secao"),
+          }
+        : undefined,
     };
 
     /*
@@ -584,6 +645,19 @@ export default function NovoServidor({
     );
   }
 
+  const opcoesPaises: OpcaoServidor[] = geografia.paises.map(pais => ({
+    id: pais.id_pais,
+    descricao: pais.gentilico ? `${pais.gentilico} (${pais.nome})` : pais.nome,
+  }));
+  const opcoesMunicipios: OpcaoServidor[] = geografia.municipios.map(municipio => {
+    const estado = geografia.estados.find(item => item.id_estado === municipio.estado_id);
+    return { id: municipio.id_municipio, descricao: `${municipio.nome}${estado ? ` - ${estado.uf}` : ""}` };
+  });
+  const opcoesEstados: OpcaoServidor[] = geografia.estados.map(estado => ({
+    id: estado.id_estado,
+    descricao: `${estado.nome} (${estado.uf})`,
+  }));
+
   return (
     <>
       <div className="page-head">
@@ -608,7 +682,7 @@ export default function NovoServidor({
       <div className="card cadastro-servidor">
         <form onSubmit={submit}>
           {error && (
-            <p className="form-error">
+            <p className="form-error" role="alert" style={{ whiteSpace: "pre-line" }}>
               {error}
             </p>
           )}
@@ -864,26 +938,9 @@ export default function NovoServidor({
           <h2>Outros dados</h2>
 
           <div className="form-grid">
-            <label>
-              Nacionalidade ID
+            <SelectApi name="nacionalidade_id" label="Nacionalidade" options={opcoesPaises} required />
 
-              <input
-                name="nacionalidade_id"
-                type="number"
-                placeholder="ID da nacionalidade"
-                required
-              />
-            </label>
-
-            <label>
-              País de origem ID
-
-              <input
-                name="pais_origem_id"
-                type="number"
-                placeholder="ID do país"
-              />
-            </label>
+            <SelectApi name="pais_origem_id" label="País de origem" options={opcoesPaises} />
 
             <label>
               Ano de chegada ao Brasil
@@ -895,26 +952,9 @@ export default function NovoServidor({
               />
             </label>
 
-            <label>
-              Município de nascimento ID
+            <SelectApi name="municipio_nascimento_id" label="Município de nascimento" options={opcoesMunicipios} />
 
-              <input
-                name="municipio_nascimento_id"
-                type="number"
-                placeholder="ID do município"
-              />
-            </label>
-
-            <label>
-              Município do endereço ID
-
-              <input
-                name="municipio_endereco_id"
-                type="number"
-                placeholder="ID do município"
-                required
-              />
-            </label>
+            <SelectApi name="municipio_endereco_id" label="Município do endereço" options={opcoesMunicipios} required />
 
             <label>
               Cartão SUS
@@ -926,6 +966,72 @@ export default function NovoServidor({
               />
             </label>
           </div>
+
+          <h2>Documentos (opcionais)</h2>
+          <p className="muted">Marque os documentos que deseja cadastrar junto com o servidor.</p>
+
+          <label className="document-toggle">
+            <input type="checkbox" checked={documentosIncluidos.certidao} onChange={e => setDocumentosIncluidos(v => ({ ...v, certidao: e.target.checked }))} />
+            Incluir certidão
+          </label>
+          {documentosIncluidos.certidao && <div className="form-grid">
+            <label>Tipo de certidão<select name="certidao_tipo" defaultValue="NASCIMENTO"><option value="NASCIMENTO">Nascimento</option><option value="CASAMENTO">Casamento</option></select></label>
+            <label>Modelo<select name="certidao_nova" value={String(certidaoNova)} onChange={e => setCertidaoNova(e.target.value === "true")}><option value="true">Nova</option><option value="false">Antiga</option></select></label>
+            <label>Matrícula (32 dígitos)<input name="certidao_matricula" inputMode="numeric" maxLength={32} required /></label>
+            <label>Data de emissão<input name="certidao_data_emissao" type="date" required /></label>
+            {!certidaoNova && <>
+              <label>Termo (5 dígitos)<input name="certidao_termo" inputMode="numeric" maxLength={5} required /></label>
+              <label>Folha (5 dígitos)<input name="certidao_folha" inputMode="numeric" maxLength={5} required /></label>
+              <label>Livro (5 dígitos)<input name="certidao_livro" inputMode="numeric" maxLength={5} required /></label>
+            </>}
+          </div>}
+
+          <label className="document-toggle">
+            <input type="checkbox" checked={documentosIncluidos.cnh} onChange={e => setDocumentosIncluidos(v => ({ ...v, cnh: e.target.checked }))} />
+            Incluir CNH
+          </label>
+          {documentosIncluidos.cnh && <div className="form-grid">
+            <label>Número da CNH (11 dígitos)<input name="cnh_numero" inputMode="numeric" maxLength={11} required /></label>
+            <label>Categoria<input name="cnh_categoria" maxLength={15} required /></label>
+            <label>Data de emissão<input name="cnh_data_emissao" type="date" required /></label>
+            <label>Data de validade<input name="cnh_data_validade" type="date" required /></label>
+          </div>}
+
+          <label className="document-toggle">
+            <input type="checkbox" checked={documentosIncluidos.ctps} onChange={e => setDocumentosIncluidos(v => ({ ...v, ctps: e.target.checked }))} />
+            Incluir CTPS
+          </label>
+          {documentosIncluidos.ctps && <div className="form-grid">
+            <label>Tipo de CTPS<select name="ctps_tipo" value={ctpsAntiga ? "ANTIGO" : "NOVO"} onChange={e => setCtpsAntiga(e.target.value === "ANTIGO")}><option value="ANTIGO">Antiga</option><option value="NOVO">Digital/nova</option></select></label>
+            {ctpsAntiga && <>
+              <label>Número (CTPS antiga)<input name="ctps_numero" inputMode="numeric" maxLength={8} required /></label>
+              <label>Série (CTPS antiga)<input name="ctps_serie" inputMode="numeric" maxLength={5} required /></label>
+              <SelectApi name="ctps_uf_id" label="UF da CTPS" options={opcoesEstados} required />
+            </>}
+            <label>Data de emissão<input name="ctps_data_emissao" type="date" required /></label>
+          </div>}
+
+          <label className="document-toggle">
+            <input type="checkbox" checked={documentosIncluidos.identidade} onChange={e => setDocumentosIncluidos(v => ({ ...v, identidade: e.target.checked }))} />
+            Incluir identidade
+          </label>
+          {documentosIncluidos.identidade && <div className="form-grid">
+            <label>Tipo<select name="identidade_tipo" defaultValue="RG"><option value="RG">RG</option><option value="CIN">CIN</option></select></label>
+            <label>Número do RG ou CPF da CIN<input name="identidade_numero" inputMode="numeric" maxLength={30} required /></label>
+            <label>Órgão emissor<input name="identidade_orgao" maxLength={30} required /></label>
+            <SelectApi name="identidade_uf_id" label="UF da identidade" options={opcoesEstados} required />
+            <label>Data de emissão<input name="identidade_data_emissao" type="date" required /></label>
+          </div>}
+
+          <label className="document-toggle">
+            <input type="checkbox" checked={documentosIncluidos.tituloEleitor} onChange={e => setDocumentosIncluidos(v => ({ ...v, tituloEleitor: e.target.checked }))} />
+            Incluir título de eleitor
+          </label>
+          {documentosIncluidos.tituloEleitor && <div className="form-grid">
+            <label>Número (12 dígitos)<input name="titulo_numero" inputMode="numeric" maxLength={12} required /></label>
+            <label>Zona eleitoral (4 dígitos)<input name="titulo_zona" inputMode="numeric" maxLength={4} required /></label>
+            <label>Seção (4 dígitos)<input name="titulo_secao" inputMode="numeric" maxLength={4} required /></label>
+          </div>}
 
           <label>
             Observação

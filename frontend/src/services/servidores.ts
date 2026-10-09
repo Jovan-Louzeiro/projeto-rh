@@ -1,183 +1,378 @@
-import type { Servidor } from "../types";
+import {
+  apiDelete,
+  apiGet,
+  apiPatch,
+  apiPost,
+} from "./api";
+import type { Servidor as ServidorTela } from "../types";
 
-const apiUrl = (
-  import.meta.env.VITE_API_URL ??
-  "https://projeto-rh-sj48.onrender.com"
-).replace(/\/$/, "");
+/* =========================================================
+   TIPOS
+   ========================================================= */
 
-const endpoint = `${apiUrl}/api/servidores`;
+export type Servidor = {
+  id_servidor: number | string;
 
-function getToken(): string {
-  return (
-    localStorage.getItem("token") ??
-    localStorage.getItem("token_access") ??
-    ""
-  );
-}
-
-function getHeaders(): HeadersInit {
-  const token = localStorage.getItem("rh_access_token");
-
-  return {
-    Accept: "application/json",
-    ...(token
-      ? {
-          Authorization: `Bearer ${token}`,
-        }
-      : {}),
-  };
-}
-
-export type NovoServidorDados = {
-  ativo: boolean;
+  ativo?: boolean;
 
   nome_completo: string;
-  nome_social: string | null;
-  cpf: string;
-  nis_pis: string | null;
-  data_nascimento: string;
 
-  nacionalidade_id: number | null;
-  pais_origem_id: number | null;
-  ano_chegada_brasil: number | null;
-  municipio_nascimento_id: number | null;
+  cpf?: string | null;
+  rg?: string | null;
 
-  cpf_mae: string | null;
-  nome_mae: string | null;
-  cpf_pai: string | null;
-  nome_pai: string | null;
+  data_nascimento?: string | null;
 
-  estado_civil_id: number | null;
-  uniao_estavel: boolean;
+  nacionalidade_id?: number | string | null;
+  nome_mae?: string | null;
+  nome_pai?: string | null;
 
-  sexo_id: number | null;
-  genero_id: number | null;
-  racacor_id: number | null;
-  comunidade_indigena_id: number | null;
+  sexo_id?: number | string | null;
+  racacor_id?: number | string | null;
+  genero_id?: number | string | null;
+  estado_civil_id?: number | string | null;
 
-  cep: string | null;
-  logradouro: string | null;
-  numero: string | null;
-  complemento: string | null;
-  bairro: string | null;
+  cep?: string | null;
+  logradouro?: string | null;
+  numero?: string | null;
+  complemento?: string | null;
+  bairro?: string | null;
 
-  municipio_endereco_id: number | null;
-  zona_endereco_id: number | null;
-  localizacao_diferenciada_id: number | null;
+  municipio_endereco_id?: number | string | null;
+  zona_endereco_id?: number | string | null;
 
-  cartao_sus: string | null;
+  situacao_id?: number | string | null;
 
-  situacao_id: number | null;
-  escolaridade_id: number | null;
-  tipo_ensino_medio_cursado_id: number | null;
+  cargo_id?: number | string | null;
+  departamento_id?: number | string | null;
 
-  observacao: string | null;
+  tipo_vinculo_id?: number | string | null;
+
+  data_admissao?: string | null;
+
+  escolaridade_id?: number | string | null;
+  tipo_ensino_medio_id?: number | string | null;
+
+  localizacao_diferenciada_id?: number | string | null;
+  comunidade_indigena_id?: number | string | null;
+
+  [key: string]: unknown;
 };
 
-type ApiServidor = NovoServidorDados & {
-  id_servidor: number;
+
+/* =========================================================
+   DADOS PARA CADASTRO
+   ========================================================= */
+
+export type NovoServidorDados = {
+  nome_completo: string;
+
+  cpf?: string;
+  rg?: string;
+
+  data_nascimento?: string;
+
+  nacionalidade_id?: number | string;
+  nome_mae?: string;
+  nome_pai?: string;
+
+  sexo_id?: number | string;
+  racacor_id?: number | string;
+  genero_id?: number | string;
+  estado_civil_id?: number | string;
+
+  cep?: string;
+  logradouro?: string;
+  numero?: string;
+  complemento?: string;
+  bairro?: string;
+
+  municipio_endereco_id?: number | string;
+  zona_endereco_id?: number | string;
+
+  situacao_id?: number | string;
+
+  cargo_id?: number | string;
+  departamento_id?: number | string;
+
+  tipo_vinculo_id?: number | string;
+
+  data_admissao?: string;
+
+  escolaridade_id?: number | string;
+  tipo_ensino_medio_id?: number | string;
+
+  localizacao_diferenciada_id?: number | string;
+  comunidade_indigena_id?: number | string;
+
+  [key: string]: unknown;
 };
 
-type ApiListResponse =
-  | ApiServidor[]
-  | {
-      data?: ApiServidor[];
-    };
 
-function adaptarServidor(api: ApiServidor): Servidor {
-  return {
-    id: String(api.id_servidor),
+/* =========================================================
+   RESPOSTA PAGINADA
+   ========================================================= */
 
-    nome: api.nome_completo,
+export type ListaServidoresResponse = {
+  data?: Servidor[];
 
-    matricula: "",
+  servidores?: Servidor[];
 
-    cargo: "",
+  items?: Servidor[];
 
-    secretaria: "",
+  total?: number;
 
-    status: api.ativo ? "Ativo" : "Afastado",
+  page?: number;
 
-    email: "",
+  limit?: number;
 
-    cpf: api.cpf,
+  [key: string]: unknown;
+};
 
-    dataNascimento: api.data_nascimento,
 
-    sexoId:
-      api.sexo_id != null
-        ? String(api.sexo_id)
-        : "",
+/* =========================================================
+   NORMALIZAÇÃO DE LISTA
+   ========================================================= */
 
-    endereco: api.logradouro ?? "",
+/**
+ * O backend pode retornar:
+ *
+ * [
+ *   servidor,
+ *   servidor
+ * ]
+ *
+ * ou:
+ *
+ * {
+ *   data: [...]
+ * }
+ *
+ * ou:
+ *
+ * {
+ *   servidores: [...]
+ * }
+ *
+ * Esta função deixa o frontend preparado para
+ * essas diferentes estruturas.
+ */
+function normalizarLista(
+  response: unknown,
+): Servidor[] {
+  if (Array.isArray(response)) {
+    return response as Servidor[];
+  }
 
-    numeroEndereco: api.numero ?? "",
+  if (
+    response &&
+    typeof response === "object"
+  ) {
+    const body = response as ListaServidoresResponse;
 
-    bairro: api.bairro ?? "",
+    if (Array.isArray(body.data)) {
+      return body.data;
+    }
 
-    telefone: "",
-  };
+    if (Array.isArray(body.servidores)) {
+      return body.servidores;
+    }
+
+    if (Array.isArray(body.items)) {
+      return body.items;
+    }
+  }
+
+  return [];
 }
 
-export async function listarServidores(
-  signal?: AbortSignal
-): Promise<Servidor[]> {
-  const response = await fetch(endpoint, {
-    method: "GET",
-    headers: getHeaders(),
-    signal,
-  });
 
-  if (!response.ok) {
+/* =========================================================
+   NORMALIZAÇÃO DE ID
+   ========================================================= */
+
+function normalizarId(
+  idServidor: number | string,
+): string {
+  const id = String(idServidor).trim();
+
+  if (!id) {
     throw new Error(
-      `Não foi possível carregar os servidores. Status: ${response.status}`
+      "O ID do servidor é obrigatório.",
     );
   }
 
-  const body: ApiListResponse = await response.json();
-
-  const lista = Array.isArray(body)
-    ? body
-    : body.data ?? [];
-
-  return lista.map(adaptarServidor);
+  return encodeURIComponent(id);
 }
 
-export async function cadastrarServidor(
-  dados: NovoServidorDados
-): Promise<ApiServidor> {
 
-  console.log
-  
-  const response = await fetch(endpoint, {
-    method: "POST",
+/* =========================================================
+   LISTAR SERVIDORES
+   ========================================================= */
 
-    headers: {
-      ...getHeaders(),
-      "Content-Type": "application/json",
+export async function listarServidores(
+  signal?: AbortSignal,
+): Promise<ServidorTela[]> {
+  const response = await apiGet<unknown>(
+    "/api/servidores",
+    {
+      signal,
     },
+  );
 
-    body: JSON.stringify(dados),
-  });
+  return normalizarLista(response).map(adaptarServidor);
+}
 
-  if (!response.ok) {
-    let mensagem =
-      `Erro ao cadastrar servidor. Status: ${response.status}`;
+export function adaptarServidor(item: Servidor): ServidorTela {
+  const raw = item as Servidor & Record<string, unknown>;
+  const id = String(raw.id_servidor ?? raw.id ?? "");
+  const descricao = (valor: unknown) => valor && typeof valor === "object"
+    ? (valor as Record<string, unknown>).descricao
+    : undefined;
+  return {
+    id,
+    nome: raw.nome_completo ?? "",
+    matricula: String(raw.matricula ?? id),
+    cargo: String(descricao(raw.cargo) ?? raw.cargo_descricao ?? "Não informado"),
+    secretaria: String(descricao(raw.departamento) ?? raw.departamento_descricao ?? "Não informado"),
+    status: String(descricao(raw.situacao) ?? (raw.ativo === false ? "Inativo" : "Ativo")) as ServidorTela["status"],
+    email: String(raw.email ?? ""),
+    cpf: raw.cpf ?? undefined,
+    dataNascimento: raw.data_nascimento ?? undefined,
+    dataAdmissao: raw.data_admissao ?? undefined,
+    endereco: raw.logradouro ?? undefined,
+    numeroEndereco: raw.numero ?? undefined,
+    bairro: raw.bairro ?? undefined,
+    sexoId: raw.sexo_id ?? undefined,
+  };
+}
 
-    try {
-      const erro = await response.json();
 
-      mensagem =
-        erro?.mensagem ??
-        erro?.message ??
-        erro?.erro ??
-        mensagem;
-    } catch {
-      // API não retornou JSON.
-    }
+/* =========================================================
+   BUSCAR SERVIDOR POR ID
+   ========================================================= */
 
-    throw new Error(mensagem);
-  }
+export async function buscarServidor(
+  idServidor: number | string,
+  signal?: AbortSignal,
+): Promise<Servidor> {
+  const id = normalizarId(idServidor);
 
-  return response.json();
+  return apiGet<Servidor>(
+    `/api/servidores/${id}`,
+    {
+      signal,
+    },
+  );
+}
+
+
+/* =========================================================
+   CADASTRAR SERVIDOR
+   ========================================================= */
+
+export async function cadastrarServidor(
+  dados: NovoServidorDados,
+): Promise<Servidor> {
+  return apiPost<Servidor>(
+    "/api/servidores",
+    dados,
+  );
+}
+
+
+/* =========================================================
+   ATUALIZAR SERVIDOR
+   ========================================================= */
+
+export async function atualizarServidor(
+  idServidor: number | string,
+  dados: Partial<NovoServidorDados>,
+): Promise<Servidor> {
+  const id = normalizarId(idServidor);
+
+  return apiPatch<Servidor>(
+    `/api/servidores/${id}`,
+    dados,
+  );
+}
+
+
+/* =========================================================
+   EXCLUIR SERVIDOR
+   ========================================================= */
+
+export async function excluirServidor(
+  idServidor: number | string,
+): Promise<void> {
+  const id = normalizarId(idServidor);
+
+  await apiDelete(
+    `/api/servidores/${id}`,
+  );
+}
+
+
+/* =========================================================
+   ATIVAR SERVIDOR
+   ========================================================= */
+
+export async function ativarServidor(
+  idServidor: number | string,
+): Promise<Servidor> {
+  return atualizarServidor(
+    idServidor,
+    {
+      ativo: true,
+    },
+  );
+}
+
+
+/* =========================================================
+   DESATIVAR SERVIDOR
+   ========================================================= */
+
+export async function desativarServidor(
+  idServidor: number | string,
+): Promise<Servidor> {
+  return atualizarServidor(
+    idServidor,
+    {
+      ativo: false,
+    },
+  );
+}
+
+
+/* =========================================================
+   DETALHES / DOCUMENTOS
+   ========================================================= */
+
+export type DetalhesServidor = {
+  servidor?: Servidor;
+
+  documentos?: unknown[];
+
+  [key: string]: unknown;
+};
+
+
+/**
+ * Busca os dados detalhados do servidor.
+ *
+ * Essa rota será utilizada posteriormente
+ * pela tela PerfilServidor.
+ */
+export async function detalharServidor(
+  idServidor: number | string,
+  signal?: AbortSignal,
+): Promise<DetalhesServidor> {
+  const id = normalizarId(idServidor);
+
+  return apiGet<DetalhesServidor>(
+    `/api/servidores/${id}/detalharDocumentos`,
+    {
+      signal,
+    },
+  );
 }
