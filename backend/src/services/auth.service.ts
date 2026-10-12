@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken"
-import { EmailOuSenhaInvalidos, UsuarioInativo } from "../errors/auth.erros.js";
-import { prisma } from "../lib/prisma.js";
-import { compararSenha } from "../utils/senha.js";
+import { EmailOuSenhaInvalidos, UsuarioInativo } from "@/errors/auth.erros.js";
+import { prisma } from "@/lib/prisma.js";
+import { compararSenha } from "@/utils/senha.js";
 
 export async function loginService(email: string, senha: string) {
 

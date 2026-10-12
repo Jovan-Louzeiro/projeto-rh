@@ -1,6 +1,6 @@
 import { isValid, parse } from "date-fns";
 import z, { ZodType } from "zod";
-import { validarCpf } from "../utils/validators.js";
+import { validarCpf } from "@/utils/validators.js";
 
 export class CrudSchemas {
     public params: ZodType;

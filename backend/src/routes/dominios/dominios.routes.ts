@@ -1,20 +1,19 @@
 import { Router } from "express";
-import { comunidadeIndigenaRoutes } from "./comunidadesIndigenas.routes.js";
-import { EscolaridadeRouter } from "./escolaridade.routes.js";
-import { domainToUnicode } from "node:url";
-import { GeneroRouter } from "./genero.routes.js";
-import { RacaCorRouter } from "./racaCor.routes.js";
-import { SexoRouter } from "./sexo.routes.js";
-import { NivelRouter } from "./nivel.routes.js";
-import { EstadoCivilRouter } from "./estadoCivil.routes.js";
-import { ZonaEnderecoRouter } from "./zonaEndereco.routes.js";
-import { LocalizacaoDiferenciadaRouter } from "./localizacaoDiferenciada.routes.js";
-import { CargoRouter } from "./cargo.routes.js";
-import { FuncaoRouter } from "./funcao.routes.js";
-import { DepartamentoRouter } from "./departamento.routes.js";
-import { TipoVinculoRouter } from "./tipoVinculo.routes.js";
-import { TipoEnsinoMedioCursadoRouter } from "./tipoEnsinoMedio.routes.js";
-import { SituacaoRouter } from "./situacao.routes.js";
+import { comunidadeIndigenaRoutes } from "@/routes/dominios/comunidadesIndigenas.routes.js";
+import { EscolaridadeRouter } from "@/routes/dominios/escolaridade.routes.js";
+import { GeneroRouter } from "@/routes/dominios/genero.routes.js";
+import { RacaCorRouter } from "@/routes/dominios/racaCor.routes.js";
+import { SexoRouter } from "@/routes/dominios/sexo.routes.js";
+import { NivelRouter } from "@/routes/dominios/nivel.routes.js";
+import { EstadoCivilRouter } from "@/routes/dominios/estadoCivil.routes.js";
+import { ZonaEnderecoRouter } from "@/routes/dominios/zonaEndereco.routes.js";
+import { LocalizacaoDiferenciadaRouter } from "@/routes/dominios/localizacaoDiferenciada.routes.js";
+import { CargoRouter } from "@/routes/dominios/cargo.routes.js";
+import { FuncaoRouter } from "@/routes/dominios/funcao.routes.js";
+import { DepartamentoRouter } from "@/routes/dominios/departamento.routes.js";
+import { TipoVinculoRouter } from "@/routes/dominios/tipoVinculo.routes.js";
+import { TipoEnsinoMedioCursadoRouter } from "@/routes/dominios/tipoEnsinoMedio.routes.js";
+import { SituacaoRouter } from "@/routes/dominios/situacao.routes.js";
 
 const dominiosRoutes = Router()
 

@@ -6,10 +6,10 @@ import {
     TokenInvalidoOuExpirado,
     TokenNaoFornecido,
     UsuarioInativo
-} from "../errors/auth.erros.js";
+} from "@/errors/auth.erros.js";
 
-import { tratarErroPrisma } from "../errors/prisma.errors.js";
-import { AppError } from "../errors/app.errors.js";
+import { tratarErroPrisma } from "@/errors/prisma.errors.js";
+import { AppError } from "@/errors/app.errors.js";
 
 export function errorHandler(
     error: unknown,

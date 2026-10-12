@@ -1,8 +1,8 @@
-import z, { ZodType } from "zod";
+import z from "zod";
 
-import { PermissaoUsuario } from "../../generated/prisma/enums.js";
+import { PermissaoUsuario } from "#/generated/prisma/enums.js";
 
-import { CrudSchemas } from "./crud.schemas.js";
+import { CrudSchemas } from "@/schemas/crud.schemas.js";
 
 export class UsuariosSchemas extends CrudSchemas {
 

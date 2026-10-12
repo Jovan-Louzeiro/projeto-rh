@@ -1,5 +1,5 @@
-import { RacaCorService } from "../../services/dominios/racaCor.service.js";
-import { DominioController } from "./dominios.controller.js";
+import { RacaCorService } from "@/services/dominios/racaCor.service.js";
+import { DominioController } from "@/controllers/dominios/dominios.controller.js";
 
 export class RacaCorController extends DominioController{
     constructor(){

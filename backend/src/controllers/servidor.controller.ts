@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import { ServidorService } from "../services/servidor.service.js";
-import { CrudController } from "./crud.controller.js";
+import { ServidorService } from "@/services/servidor.service.js";
+import { CrudController } from "@/controllers/crud.controller.js";
 
 export class ServidorController extends CrudController{
 

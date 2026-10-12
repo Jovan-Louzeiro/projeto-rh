@@ -1,9 +1,9 @@
 import { omit } from "zod/mini";
-import { prisma } from "../lib/prisma.js";
-import { CRUDServices } from "./crud.service.js";
-import { RegistroNaoEncontradoError } from "../errors/dominios.errors.js";
-import { UsuarioCreate, UsuarioUpdate } from "../schemas/usuario.schema.js";
-import { gerarHash } from "../utils/senha.js";
+import { prisma } from "@/lib/prisma.js";
+import { CRUDServices } from "@/services/crud.service.js";
+import { RegistroNaoEncontradoError } from "@/errors/dominios.errors.js";
+import { UsuarioCreate, UsuarioUpdate } from "@/schemas/usuario.schema.js";
+import { gerarHash } from "@/utils/senha.js";
 import { constructFromSymbol } from "date-fns/constants";
 
 export class UsuariosService extends CRUDServices<UsuarioCreate, UsuarioUpdate> {

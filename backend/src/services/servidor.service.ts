@@ -1,14 +1,14 @@
-import z, { includes } from "zod";
-import { prisma } from "../lib/prisma.js";
-import { DocumentosServices } from "./documentos/documentos.service.js";
-import { ServidorSchemas } from "../schemas/servidor.schemas.js";
-import { RegistroNaoEncontradoError } from "../errors/dominios.errors.js";
+import z from "zod";
+import { prisma } from "@/lib/prisma.js";
+import { ServidorSchemas } from "@/schemas/servidor.schemas.js";
+import { RegistroNaoEncontradoError } from "@/errors/dominios.errors.js";
+import { CRUDServices } from "@/services/crud.service.js";
 
 type ServidorAdicionar = z.infer<ServidorSchemas["adicionar"]>;
 
 type ServidorAtualizar = z.infer<ServidorSchemas["atualizar"]>;
 
-export class ServidorService extends DocumentosServices<ServidorAdicionar, ServidorAtualizar>{
+export class ServidorService extends CRUDServices<ServidorAdicionar, ServidorAtualizar>{
 
     constructor(){
         super(

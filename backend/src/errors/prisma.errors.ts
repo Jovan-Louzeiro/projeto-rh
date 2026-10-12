@@ -1,10 +1,10 @@
-import { Prisma } from "../../generated/prisma/client.js";
+import { Prisma } from "#/generated/prisma/client.js";
 
 import {
     RegistroEmUso,
     RegistroJaExistenteError,
     RegistroNaoEncontradoError
-} from "./dominios.errors.js";
+} from "@/errors/dominios.errors.js";
 
 export function tratarErroPrisma(error: unknown): never {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {

@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import Jwt from "jsonwebtoken";
-import { NaoAutorizado, TokenInvalidoOuExpirado, TokenNaoFornecido } from "../errors/auth.erros.js";
-import { PermissaoUsuario } from "../../generated/prisma/enums.js";
+import { NaoAutorizado, TokenInvalidoOuExpirado, TokenNaoFornecido } from "@/errors/auth.erros.js";
+import { PermissaoUsuario } from "#/generated/prisma/enums.js";
 
 
 type JwtUsuarioPayload = Jwt.JwtPayload & {

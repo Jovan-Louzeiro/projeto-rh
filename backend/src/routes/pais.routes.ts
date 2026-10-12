@@ -1,6 +1,6 @@
-import { PaisController } from "../controllers/pais.controller.js";
-import { PaisSchemas } from "../schemas/pais.Schema.js";
-import { CrudRoutes } from "./crud.routes.js";
+import { PaisController } from "@/controllers/pais.controller.js";
+import { PaisSchemas } from "@/schemas/pais.Schema.js";
+import { CrudRoutes } from "@/routes/crud.routes.js";
 
 export class PaisRoutes extends CrudRoutes<PaisSchemas>{
 

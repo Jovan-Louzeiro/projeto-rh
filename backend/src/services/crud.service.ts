@@ -1,5 +1,5 @@
-import { prismaModel } from "../types/crud.types.js";
-import { RegistroNaoEncontradoError } from "../errors/dominios.errors.js";
+import { prismaModel } from "@/types/crud.types.js";
+import { RegistroNaoEncontradoError } from "@/errors/dominios.errors.js";
 
 export class CRUDServices<TCreate, TUpdate> {
 

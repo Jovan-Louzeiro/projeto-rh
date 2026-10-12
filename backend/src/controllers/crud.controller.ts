@@ -1,6 +1,5 @@
 import type { Request, Response } from "express";
-import { CrudSchemas } from "../schemas/crud.schemas.js";
-import { CRUDServices } from "../services/crud.service.js";
+import { CRUDServices } from "@/services/crud.service.js";
 
 export class CrudController {
 

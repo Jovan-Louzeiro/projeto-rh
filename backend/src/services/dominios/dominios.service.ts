@@ -1,5 +1,5 @@
-import { prismaModel } from "../../types/crud.types.js";
-import { CRUDServices } from "../crud.service.js";
+import { prismaModel } from "@/types/crud.types.js";
+import { CRUDServices } from "@/services/crud.service.js";
 
 export class DominioServices<TCreate, TUpdate> extends CRUDServices<TCreate, TUpdate> {
 

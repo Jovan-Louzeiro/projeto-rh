@@ -1,8 +1,8 @@
 import { Router } from "express";
-import { Autorizacoes, autorizacoesPadrao, CrudSchema } from "../types/crud.types.js";
-import { autorizar } from "../middlewares/auth.js";
-import { validate } from "../middlewares/validate.js";
-import { CrudController } from "../controllers/crud.controller.js";
+import { Autorizacoes, autorizacoesPadrao, CrudSchema } from "@/types/crud.types.js";
+import { autorizar } from "@/middlewares/auth.js";
+import { validate } from "@/middlewares/validate.js";
+import { CrudController } from "@/controllers/crud.controller.js";
 
 export class CrudRoutes<TSchema extends CrudSchema> {
 

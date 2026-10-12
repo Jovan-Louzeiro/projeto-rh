@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import { PaisService } from "../services/pais.service.js";
-import { CrudController } from "./crud.controller.js";
+import { PaisService } from "@/services/pais.service.js";
+import { CrudController } from "@/controllers/crud.controller.js";
 
 export class PaisController extends CrudController{
 

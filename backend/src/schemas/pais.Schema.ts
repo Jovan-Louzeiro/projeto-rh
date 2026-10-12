@@ -1,5 +1,5 @@
 import z from "zod";
-import { CrudSchemas } from "./crud.schemas.js";
+import { CrudSchemas } from "@/schemas/crud.schemas.js";
 
 export class PaisSchemas extends CrudSchemas{
 
