@@ -1,31 +1,43 @@
 import { prismaModel } from "@/types/crud.types.js";
 import { RegistroNaoEncontradoError } from "@/errors/dominios.errors.js";
 
+export type ParametrosController = {
+    procurar?: string;
+    atualizar?: string;
+    deletar?: string;
+};
+
 export class CRUDServices<TCreate, TUpdate> {
+
+    protected readonly idField: Required<ParametrosController>
 
     constructor(
         protected readonly prismaModel: prismaModel,
         public readonly nome: string,
-        protected readonly idField: string,
+        parametros: ParametrosController = {}
     ) {
+
+        this.idField = {
+            procurar: "id",
+            atualizar: "id",
+            deletar: "id",
+            ...parametros
+        }
+
     }
 
     async listar(mostrarTudo?: boolean) {
-        if (mostrarTudo) {
-            return await this.prismaModel.findMany()
+    return await this.prismaModel.findMany({
+        where: {
+            ...(!mostrarTudo && { ativo: true }),
         }
+    });
+}
 
-        return await this.prismaModel.findMany({
-            where: {
-                ativo: true
-            }
-        })
-    }
-
-    async procurar(id: number) {
+    async procurar(id: number, idField=this.idField.procurar) {
         const resultado = await this.prismaModel.findUnique({
             where: {
-                [this.idField]: id
+                [idField]: id
             }
         })
 
@@ -36,32 +48,38 @@ export class CRUDServices<TCreate, TUpdate> {
         return resultado
     }
 
-    async adicionar(data: TCreate) {
+    async adicionar(usuario: string, data: TCreate) {
+
+        console.log(`Um novo ${this.nome} foi adicionado por ${usuario}`)
 
         return await this.prismaModel.create({
             data: data
         })
     }
 
-    async atualizar(id: number, data: TUpdate) {
+    async atualizar(id: number, usuario: string, data: TUpdate, idField=this.idField.atualizar) {
 
-        await this.procurar(id)
+        await this.procurar(id, idField)
+
+        console.log(`${this.nome} id:${id} foi atualizado por ${usuario}`)
 
         return this.prismaModel.update({
             where: {
-                [this.idField]: id
+                [idField]: id
             },
             data: data
         })
 
     }
 
-    async deletar(id: number) {
+    async deletar(id: number, usuario: string, idField=this.idField.deletar) {
         await this.procurar(id)
+
+        console.log(`${this.nome} id:${id} foi apagado por ${usuario}`)
 
         return await this.prismaModel.delete({
             where: {
-                [this.idField]: id
+                [idField]: id
             }
         })
     }

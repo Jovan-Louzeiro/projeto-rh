@@ -8,6 +8,7 @@ import { CnhRouter } from "@/routes/registros_servidor/documentos_cadastrais/cnh
 import { CtpsRouter } from "@/routes/registros_servidor/documentos_cadastrais/ctps.routes.js";
 import { IdentidadeRouter } from "@/routes/registros_servidor/documentos_cadastrais/identidade.routes.js";
 import { TituloEleitorRouter } from "@/routes/registros_servidor/documentos_cadastrais/tituloEleitor.routes.js";
+import { ContatoRouter } from "@/routes/registros_servidor/contato.routes.js";
 
 export class ServidorRouter extends CrudRoutes<ServidorSchemas>{
 
@@ -45,6 +46,8 @@ export class ServidorRouter extends CrudRoutes<ServidorSchemas>{
         this.router.use(`/:${this.parametroId}/identidade`, new IdentidadeRouter().router)
 
         this.router.use(`/:${this.parametroId}/tituloEleitor`, new TituloEleitorRouter().router)
+
+        this.router.use(`/:${this.parametroId}/contatos`, new ContatoRouter().router)
     }
 
 }

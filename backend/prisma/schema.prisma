@@ -325,7 +325,7 @@ model ServidorCursoFormacaoContinuada {
 model Contato {
   id_contato   Int         @id @default(autoincrement())
   tipo_contato TipoContato
-  contato      String      @db.VarChar(150)
+  contato      String      @unique @db.VarChar(150)
   principal    Boolean     @default(false)
   ativo        Boolean     @default(true)
 

@@ -1,22 +1,17 @@
-import { DocumentosCadastraisController } from "@/controllers/registros_servidor/documentos_cadastrais/documentosCadastrais.controller.js";
+import { CrudController } from "@/controllers/crud.controller.js";
 import { autorizar } from "@/middlewares/auth.js";
 import { validate } from "@/middlewares/validate.js";
-import { CertidaoRouter } from "@/routes/registros_servidor/documentos_cadastrais/certidao.routes.js";
-import { CnhRouter } from "@/routes/registros_servidor/documentos_cadastrais/cnh.routes.js";
-import { CtpsRouter } from "@/routes/registros_servidor/documentos_cadastrais/ctps.routes.js";
-import { IdentidadeRouter } from "@/routes/registros_servidor/documentos_cadastrais/identidade.routes.js";
-import { TituloEleitorRouter } from "@/routes/registros_servidor/documentos_cadastrais/tituloEleitor.routes.js";
 import { Autorizacoes, autorizacoesPadrao, DocumentosSchemas } from "@/types/crud.types.js";
 import { Router } from "express";
 
-export class RegistrosServidorRoute {
+export class RegistrosServidorRoute<TController extends CrudController> {
 
     public readonly router: Router
     public readonly autorizacoes: Autorizacoes
 
     constructor(
-        protected controller: DocumentosCadastraisController,
-        private readonly schema: DocumentosSchemas,
+        protected controller: TController,
+        protected schema: DocumentosSchemas,
         autorizacoes?: Partial<Autorizacoes>
     ) {
 
@@ -31,7 +26,7 @@ export class RegistrosServidorRoute {
 
     }
 
-    private registrar(): void {
+    protected registrar(): void {
 
         this.router.get(
             "/",

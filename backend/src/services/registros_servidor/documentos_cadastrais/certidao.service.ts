@@ -6,11 +6,7 @@ import {
     CertidaoCreate,
     CertidaoUpdate
 } from "@/schemas/registros_servidor/documentos_cadastrais/certidao.schemas.js";
-
-export class CertidaoService extends DocumentosCadastraisServices<
-    CertidaoCreate,
-    CertidaoUpdate
-> {
+export class CertidaoService extends DocumentosCadastraisServices<CertidaoCreate, CertidaoUpdate> {
 
     constructor() {
         super(
@@ -19,7 +15,7 @@ export class CertidaoService extends DocumentosCadastraisServices<
         );
     }
 
-    async atualizar(id: number, data: CertidaoUpdate) {
+    async atualizar(id: number, usuario: string, data: CertidaoUpdate) {
 
         if (data.nova_certidao) {
             data.termo = null;
@@ -27,6 +23,6 @@ export class CertidaoService extends DocumentosCadastraisServices<
             data.livro = null;
         }
 
-        return super.atualizar(id, data);
+        return super.atualizar(id, usuario, data);
     }
 }

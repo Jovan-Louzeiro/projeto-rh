@@ -11,7 +11,7 @@ export class CtpsService extends DocumentosCadastraisServices<CtpsCreate, CtpsUp
         )
     }
 
-    async atualizar(id: number, data: CtpsUpdate){
+    async atualizar(id: number, usuario: string, data: CtpsUpdate){
         
         if(data.tipo_ctps == "NOVO"){
             data.numero = null,
@@ -19,7 +19,7 @@ export class CtpsService extends DocumentosCadastraisServices<CtpsCreate, CtpsUp
             data.uf_ctps_id = null
         }
 
-        return super.atualizar(id, data)
+        return super.atualizar(id, usuario, data)
     }
 
 }

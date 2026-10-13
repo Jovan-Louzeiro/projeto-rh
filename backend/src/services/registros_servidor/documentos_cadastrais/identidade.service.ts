@@ -11,7 +11,7 @@ export class IdentidadeService extends DocumentosCadastraisServices<IdentidadeCr
         )
     }
 
-    async atualizar (id: number, data: IdentidadeUpdate){
+    async atualizar (id: number, usuario: string, data: IdentidadeUpdate){
 
         console.log(data)
         
@@ -21,7 +21,7 @@ export class IdentidadeService extends DocumentosCadastraisServices<IdentidadeCr
 
         console.log(data)
 
-        return super.atualizar(id, data)
+        return super.atualizar(id, usuario, data)
     }
 
 }

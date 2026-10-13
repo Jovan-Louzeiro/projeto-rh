@@ -7,6 +7,7 @@ import { PermissaoUsuario } from "#/generated/prisma/enums.js";
 type JwtUsuarioPayload = Jwt.JwtPayload & {
     id: number;
     permissao: PermissaoUsuario;
+    nome: string
 };
 
 declare global {
@@ -71,4 +72,19 @@ export function autorizar(...permissoesPermitidas: PermissaoUsuario[]) {
 
         next()
     }
+}
+
+export function obterUsuario(req: Request): JwtUsuarioPayload {
+    const usuario = req.usuario;
+
+    if (
+        !usuario ||
+        typeof usuario === "string" ||
+        !("id" in usuario) ||
+        !("permissao" in usuario)
+    ) {
+        throw new NaoAutorizado();
+    }
+
+    return usuario as JwtUsuarioPayload;
 }

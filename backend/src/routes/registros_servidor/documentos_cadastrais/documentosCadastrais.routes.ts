@@ -1,8 +1,9 @@
 import { Autorizacoes, autorizacoesPadrao, DocumentosSchemas } from "@/types/crud.types.js";
 import { DocumentosCadastraisController } from "@/controllers/registros_servidor/documentos_cadastrais/documentosCadastrais.controller.js";
 import { RegistrosServidorRoute } from "@/routes/registros_servidor/registros_servidor.routes.js";
+import { DocumentosCadastraisSchema } from "@/schemas/registros_servidor/documentos_cadastrais/documentosCadastrais.schemas.js";
 
-export class DocumentosCadastraisRoute extends RegistrosServidorRoute{
+export class DocumentosCadastraisRoute extends RegistrosServidorRoute<any>{
 
     constructor(
         protected controller: DocumentosCadastraisController,
