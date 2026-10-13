@@ -1,61 +1,19 @@
-import { Router } from "express";
 import { Autorizacoes, autorizacoesPadrao, DocumentosSchemas } from "@/types/crud.types.js";
-import { DocumentosCadastraisController } from "@/controllers/documentos_cadatrais/documentosCadastrais.controller.js";
-import { autorizar } from "@/middlewares/auth.js";
-import { validate } from "@/middlewares/validate.js";
+import { DocumentosCadastraisController } from "@/controllers/registros_servidor/documentos_cadastrais/documentosCadastrais.controller.js";
+import { RegistrosServidorRoute } from "@/routes/registros_servidor/registros_servidor.routes.js";
 
-export class DocumentosCadastraisRoute {
-
-    public readonly router: Router
-    public readonly autorizacoes: Autorizacoes
+export class DocumentosCadastraisRoute extends RegistrosServidorRoute{
 
     constructor(
         protected controller: DocumentosCadastraisController,
-        private readonly schema: DocumentosSchemas,
+        schema: DocumentosSchemas,
         autorizacoes?: Partial<Autorizacoes>
     ) {
-
-        this.autorizacoes = {
-            ...autorizacoesPadrao,
-            ...autorizacoes
-        }
-
-        this.router = Router({ mergeParams: true });
-
-        this.registrar();
-
+        super(
+            controller,
+            schema,
+            autorizacoes
+        )
     }
 
-    private registrar(): void {
-
-        this.router.get(
-            "/",
-            autorizar(...this.autorizacoes.procurar),
-            validate(this.schema.params, "params"),
-            this.controller.procurar
-        );
-
-        this.router.post(
-            "/",
-            autorizar(...this.autorizacoes.adicionar),
-            validate(this.schema.adicionar, "body"),
-            this.controller.adicionar
-        );
-
-        this.router.put(
-            "/",
-            autorizar(...this.autorizacoes.atualizar),
-            validate(this.schema.params, "params"),
-            validate(this.schema.atualizar, "body"),
-            this.controller.atualizar
-        );
-
-        this.router.delete(
-            "/",
-            autorizar(...this.autorizacoes.deletar),
-            validate(this.schema.params, "params"),
-            this.controller.deletar
-        );
-
-    }
 }

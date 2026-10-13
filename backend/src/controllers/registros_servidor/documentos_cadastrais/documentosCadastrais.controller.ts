@@ -5,11 +5,12 @@ import { CrudController } from "@/controllers/crud.controller.js";
 export class DocumentosCadastraisController extends CrudController{
     
     constructor(DocumentoService: DocumentosCadastraisServices<any, any>){
+        
         super(
             DocumentoService,
             "idServidor"
         )
-    
+
     }
 
     adicionar = async (req: Request, res: Response) => {

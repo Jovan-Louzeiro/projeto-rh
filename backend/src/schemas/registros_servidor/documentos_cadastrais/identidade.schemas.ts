@@ -62,7 +62,7 @@ export class IdentidadeSchemas extends DocumentosCadastraisSchema {
 
             } else {
 
-                if (!data.numero) {
+                if (data.numero) {
                     ctx.addIssue({
                         code: "custom",
                         path: ["numero"],

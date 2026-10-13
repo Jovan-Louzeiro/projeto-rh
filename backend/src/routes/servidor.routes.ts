@@ -19,18 +19,22 @@ export class ServidorRouter extends CrudRoutes<ServidorSchemas>{
             "idServidor"
         )
 
-        this.documentos()
+        this.registrosServidor()
+
+        this.outrosMetodos()
 
     }
 
-    private documentos(): void {
-
+    private outrosMetodos(): void {
         this.router.get(
             `/:${this.parametroId}/detalharDocumentos`,
             autorizar(...this.autorizacoes.procurar),
             validate(this.schema.params, "params"),
             this.servidorController.detalharDocumentos
         )
+    }
+
+    private registrosServidor(): void {
 
         this.router.use(`/:${this.parametroId}/certidao`, new CertidaoRouter().router)
 

@@ -13,7 +13,7 @@ export class CtpsService extends DocumentosCadastraisServices<CtpsCreate, CtpsUp
 
     async atualizar(id: number, data: CtpsUpdate){
         
-        if(data.tipo_ctps){
+        if(data.tipo_ctps == "NOVO"){
             data.numero = null,
             data.serie = null,
             data.uf_ctps_id = null
