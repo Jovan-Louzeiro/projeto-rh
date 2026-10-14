@@ -8,7 +8,6 @@ export type Screen =
   | "nova-licenca"
   | "contratos"
   | "novo-contrato"
-  | "frequencia"
   | "quinquenios"
   | "novo-quinquenio"
   | "solicitacoes"
@@ -21,7 +20,6 @@ export type Screen =
   | "relatorio-licencas"
   | "relatorio-quinquenios"
   | "relatorio-contratos"
-  | "relatorio-frequencia"
   | "relatorio-admissoes"
   | "relatorio-desligamentos"
   | "configuracoes";

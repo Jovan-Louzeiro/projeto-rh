@@ -1,4 +1,4 @@
-export type RelatorioTipo = "servidores" | "ferias" | "licencas" | "quinquenios" | "contratos" | "frequencia" | "admissoes" | "desligamentos";
+export type RelatorioTipo = "servidores" | "ferias" | "licencas" | "quinquenios" | "contratos" | "admissoes" | "desligamentos";
 export type FiltrosRelatorio = Record<string, string>;
 export type OpcoesRelatorio = { servidores?: string[]; setores?: string[]; cargos?: string[]; situacoes?: string[]; tipos?: string[] };
 export type PreviaRelatorio = { colunas: Array<{ chave: string; titulo: string }>; linhas: Array<Record<string, string | number | null>>; totais?: Array<{ titulo: string; valor: string | number }> };

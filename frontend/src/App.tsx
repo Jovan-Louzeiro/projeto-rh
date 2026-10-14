@@ -41,7 +41,6 @@ import NovaLicenca from "./pages/NovaLicenca";
 import Contratos from "./pages/Contratos";
 import NovoContrato from "./pages/NovoContrato";
 
-import Frequencia from "./pages/Frequencia";
 
 import Quinquenios from "./pages/Quinquenios";
 import NovoQuinquenio from "./pages/NovoQuinquenio";
@@ -144,12 +143,6 @@ export default function App() {
             element={<NovoContratoRoute />}
           />
 
-          {/* Frequência */}
-          <Route
-            path="/frequencia"
-            element={<Frequencia />}
-          />
-
           {/* Quinquênios */}
           <Route
             path="/quinquenios"
@@ -217,7 +210,6 @@ export default function App() {
               "licencas",
               "quinquenios",
               "contratos",
-              "frequencia",
               "admissoes",
               "desligamentos",
             ] as const
