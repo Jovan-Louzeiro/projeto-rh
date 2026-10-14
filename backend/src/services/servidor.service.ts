@@ -1,14 +1,9 @@
-import z, { includes } from "zod";
-import { prisma } from "../lib/prisma.js";
-import { DocumentosServices } from "./documentos/documentos.service.js";
-import { ServidorSchemas } from "../schemas/servidor.schemas.js";
-import { RegistroNaoEncontradoError } from "../errors/dominios.errors.js";
+import { prisma } from "@/lib/prisma.js";
+import type { ServidorCreate, ServidorUpdate } from "@/schemas/servidor.schemas.js";
+import { RegistroNaoEncontradoError } from "@/errors/dominios.errors.js";
+import { CRUDServices } from "@/services/crud.service.js";
 
-type ServidorAdicionar = z.infer<ServidorSchemas["adicionar"]>;
-
-type ServidorAtualizar = z.infer<ServidorSchemas["atualizar"]>;
-
-export class ServidorService extends DocumentosServices<ServidorAdicionar, ServidorAtualizar>{
+export class ServidorService extends CRUDServices<ServidorCreate, ServidorUpdate>{
 
     constructor(){
         super(
@@ -21,7 +16,7 @@ export class ServidorService extends DocumentosServices<ServidorAdicionar, Servi
     async detalhar(id: number){
         const resultado = await this.prismaModel.findUnique({
                     where: {
-                        [this.idField]: id
+                        id_servidor: id
                     },
                     include: {
                         certidao: true,
@@ -39,7 +34,7 @@ export class ServidorService extends DocumentosServices<ServidorAdicionar, Servi
                 return resultado
     }
 
-    async adicionar(data: ServidorAdicionar){
+    async adicionar(usuario: string, data: ServidorCreate){
 
         const {
             certidao,

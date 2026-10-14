@@ -1,5 +1,5 @@
 import z from "zod";
-import { CrudSchemas } from "./crud.schemas.js";
+import { CrudSchemas } from "@/schemas/crud.schemas.js";
 
 export class EstadoSchemas extends CrudSchemas{
 
@@ -32,3 +32,11 @@ export class EstadoSchemas extends CrudSchemas{
     }
 
 }
+
+export type EstadoCreate = z.infer<
+    EstadoSchemas["adicionar"]
+>
+
+export type EstadoUpdate = z.infer<
+    EstadoSchemas["atualizar"]
+>

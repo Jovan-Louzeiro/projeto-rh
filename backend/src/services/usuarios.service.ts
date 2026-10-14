@@ -1,9 +1,9 @@
 import { omit } from "zod/mini";
-import { prisma } from "../lib/prisma.js";
-import { CRUDServices } from "./crud.service.js";
-import { RegistroNaoEncontradoError } from "../errors/dominios.errors.js";
-import { UsuarioCreate, UsuarioUpdate } from "../schemas/usuario.schema.js";
-import { gerarHash } from "../utils/senha.js";
+import { prisma } from "@/lib/prisma.js";
+import { CRUDServices } from "@/services/crud.service.js";
+import { RegistroNaoEncontradoError } from "@/errors/dominios.errors.js";
+import type { UsuarioCreate, UsuarioUpdate } from "@/schemas/usuario.schema.js";
+import { gerarHash } from "@/utils/senha.js";
 import { constructFromSymbol } from "date-fns/constants";
 
 export class UsuariosService extends CRUDServices<UsuarioCreate, UsuarioUpdate> {
@@ -43,7 +43,7 @@ export class UsuariosService extends CRUDServices<UsuarioCreate, UsuarioUpdate> 
         return resultado
     }
 
-    async atualizar(id: number, data: UsuarioUpdate) {
+    async atualizar(usuario: string, id: number, data: UsuarioUpdate) {
 
         if(data.senha){
 
@@ -51,18 +51,14 @@ export class UsuariosService extends CRUDServices<UsuarioCreate, UsuarioUpdate> 
 
         }
 
-        return super.atualizar(id, data)
+        return super.atualizar(usuario, id, data)
     }
 
-    async adicionar(data: { nome: string | undefined; email: string | undefined; senha: string | undefined; permissao: "ADMIN" | "RH"; ativo?: boolean | undefined; }): Promise<any> {        
+    async adicionar(usuario: string, data: UsuarioCreate){        
        
-        if(data.senha){
+        data.senha = await gerarHash(data.senha)
 
-            data.senha = await gerarHash(data.senha)
-
-        }
-
-        return super.adicionar(data)
+        return super.adicionar(usuario, data)
 
     }
 

@@ -1,10 +1,10 @@
 import z from "zod";
-import { CrudSchemas } from "./crud.schemas.js";
-import { IdentidadeSchemas } from "./documentos/identidade.schemas.js";
-import { CertidaoSchemas } from "./documentos/certidao.schemas.js";
-import { CnhSchemas } from "./documentos/cnh.schemas.js";
-import { CtpsSchemas } from "./documentos/ctps.schemas.js";
-import { TituloEleitorSchemas } from "./documentos/tituloEleitor.schema.js";
+import { CrudSchemas } from "@/schemas/crud.schemas.js";
+import { IdentidadeSchemas } from "@/schemas/registros_servidor/documentos_cadastrais/identidade.schemas.js";
+import { CertidaoSchemas } from "@/schemas/registros_servidor/documentos_cadastrais/certidao.schemas.js";
+import { CnhSchemas } from "@/schemas/registros_servidor/documentos_cadastrais/cnh.schemas.js";
+import { CtpsSchemas } from "@/schemas/registros_servidor/documentos_cadastrais/ctps.schemas.js";
+import { TituloEleitorSchemas } from "@/schemas/registros_servidor/documentos_cadastrais/tituloEleitor.schema.js";
 
 export class ServidorSchemas extends CrudSchemas {
 
@@ -144,3 +144,11 @@ export class ServidorSchemas extends CrudSchemas {
 
     }
 }
+
+export type ServidorCreate = z.infer<
+    ServidorSchemas["adicionar"]
+>
+
+export type ServidorUpdate = z.infer<
+    ServidorSchemas["atualizar"]
+>

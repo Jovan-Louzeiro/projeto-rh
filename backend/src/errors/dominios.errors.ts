@@ -1,4 +1,4 @@
-import { AppError } from "./app.errors.js"
+import { AppError } from "@/errors/app.errors.js"
 
 export class RegistroJaExistenteError extends AppError {
     constructor(campo: string){

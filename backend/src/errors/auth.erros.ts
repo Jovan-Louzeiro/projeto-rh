@@ -1,4 +1,4 @@
-import { AppError } from "./app.errors.js"
+import { AppError } from "@/errors/app.errors.js"
 
 export class EmailOuSenhaInvalidos extends AppError{
     constructor(){

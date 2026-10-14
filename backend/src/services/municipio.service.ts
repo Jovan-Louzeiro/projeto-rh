@@ -1,7 +1,8 @@
-import { prisma } from "../lib/prisma.js";
-import { CRUDServices } from "./crud.service.js";
+import { prisma } from "@/lib/prisma.js";
+import type { MunicipioCreate, MunicipioUpdate } from "@/schemas/municipio.schema.js";
+import { CRUDServices } from "@/services/crud.service.js";
 
-export class MunicipioService<TCreate, TUpdate> extends CRUDServices<TCreate, TUpdate>{
+export class MunicipioService extends CRUDServices<MunicipioCreate, MunicipioUpdate>{
     constructor(){
         super(
             prisma.municipio,

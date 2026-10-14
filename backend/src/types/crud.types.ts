@@ -1,4 +1,4 @@
-import { PermissaoUsuario } from "../../generated/prisma/enums.js";
+import { PermissaoUsuario } from "#/generated/prisma/enums.js";
 import { ZodType } from "zod";
 
 export const autorizacoesPadrao: Autorizacoes = {

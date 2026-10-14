@@ -1,5 +1,5 @@
 import z from "zod";
-import { CrudSchemas } from "./crud.schemas.js";
+import { CrudSchemas } from "@/schemas/crud.schemas.js";
 
 export class MunicipioSchema extends CrudSchemas {
     
@@ -29,3 +29,11 @@ export class MunicipioSchema extends CrudSchemas {
             );
     }
 }
+
+export type MunicipioCreate = z.infer<
+    MunicipioSchema["adicionar"]
+>
+
+export type MunicipioUpdate = z.infer<
+    MunicipioSchema["atualizar"]
+>
