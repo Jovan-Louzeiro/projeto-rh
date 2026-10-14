@@ -1,9 +1,6 @@
 // frontend/src/services/api.ts
 
-const API_URL = (
-  import.meta.env.VITE_API_URL ??
-  "http://192.168.18.218:3000"
-).replace(/\/$/, "");
+const API_URL = (import.meta.env.VITE_API_URL ?? "").replace(/\/$/, "");
 
 const TOKEN_KEY = "rh_access_token";
 
@@ -121,11 +118,17 @@ function getErrorMessage(
       const issues = body.detalhes
         .map((item) => {
           if (!item || typeof item !== "object") return "";
-          const issue = item as { path?: unknown; message?: unknown };
+          const issue = item as { campo?: unknown; path?: unknown; mensagem?: unknown; message?: unknown };
           const path = Array.isArray(issue.path)
             ? issue.path.filter((part) => typeof part === "string" || typeof part === "number").join(".")
-            : "";
-          const message = typeof issue.message === "string" ? issue.message : "Valor inválido.";
+            : typeof issue.campo === "string"
+              ? issue.campo
+              : "";
+          const message = typeof issue.mensagem === "string"
+            ? issue.mensagem
+            : typeof issue.message === "string"
+              ? issue.message
+              : "Valor inválido.";
           const campo = path ? nomeCampo(path) : "Dados";
           return `${campo}: ${message}`;
         })

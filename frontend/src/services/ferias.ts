@@ -1,10 +1,7 @@
 
 import type { Ferias } from "../types";
 
-const apiUrl = (
-  import.meta.env.VITE_API_URL ??
-  "http://192.168.18.218:3000"
-).replace(/\/$/, "");
+const apiUrl = (import.meta.env.VITE_API_URL ?? "").replace(/\/$/, "");
 
 const endpoint = `${apiUrl}/api/ferias`;
 

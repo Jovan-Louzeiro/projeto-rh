@@ -7,7 +7,14 @@ export default defineConfig(({ mode }) => {
     plugins: [react()],
     server: {
       proxy: {
-        "/sexos": { target: env.VITE_API_URL || "http://localhost:3000", changeOrigin: true },
+        ...(env.VITE_API_URL
+          ? {
+              "/sexos": {
+                target: env.VITE_API_URL,
+                changeOrigin: true,
+              },
+            }
+          : {}),
       },
     },
   };

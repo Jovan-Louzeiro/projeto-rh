@@ -1,9 +1,6 @@
 import type { Solicitacao } from "../types";
 
-const API_URL = (
-  import.meta.env.VITE_API_URL ??
-  "http://192.168.18.218:3000"
-).replace(/\/$/, "");
+const API_URL = (import.meta.env.VITE_API_URL ?? "").replace(/\/$/, "");
 
 const endpoint = `${API_URL}/api/solicitacoes`;
 

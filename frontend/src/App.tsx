@@ -63,6 +63,7 @@ import NovoRequerimento from "./pages/NovoRequerimento";
 import DetalheRequerimento from "./pages/DetalheRequerimento";
 
 import Login from "./pages/Login";
+import { CadastroPais } from "./pages/teste";
 
 export default function App() {
   const [logged, setLogged] = useState(isAuthenticated);
@@ -87,6 +88,11 @@ export default function App() {
           <Route
             path="/dashboard"
             element={<DashboardRoute />}
+          />
+
+          <Route
+            path="/teste"
+            element={<CadastroPais />}
           />
 
           {/* Servidores */}
@@ -692,6 +698,7 @@ function PerfilRoute() {
     geografia: DadosGeograficos;
     opcoes: OpcoesServidorCompletas;
   } | null>(null);
+  const [versaoPerfil, setVersaoPerfil] = useState(0);
 
   const [erro, setErro] =
     useState("");
@@ -730,7 +737,7 @@ function PerfilRoute() {
 
     return () =>
       controller.abort();
-  }, [id]);
+  }, [id, versaoPerfil]);
 
   if (erro) {
     return (
@@ -754,6 +761,7 @@ function PerfilRoute() {
       detalhes={perfil.detalhes}
       geografia={perfil.geografia}
       opcoes={perfil.opcoes}
+      onUpdated={() => setVersaoPerfil(versao => versao + 1)}
       onQuinquenios={() =>
         navigate("/quinquenios")
       }

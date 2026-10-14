@@ -1,5 +1,4 @@
 import {
-  FormEvent,
   useEffect,
   useState,
 } from "react";
@@ -28,6 +27,8 @@ import {
 
 import Icon from "../components/Icon";
 import { carregarDadosGeograficos, type DadosGeograficos } from "../services/localizacao";
+import { FormularioDinamicoContainer } from "../components/formularios/FormularioDinamicoContainer";
+import type { CampoFormularioConfig } from "../types/json-schema.types";
 
 type Props = {
   onBack: () => void;
@@ -90,6 +91,7 @@ export default function NovoServidor({
   });
   const [certidaoNova, setCertidaoNova] = useState(true);
   const [ctpsAntiga, setCtpsAntiga] = useState(true);
+  const [identidadeTipo, setIdentidadeTipo] = useState<"RG" | "CIN">("RG");
 
   useEffect(() => {
     const controller = new AbortController();
@@ -174,17 +176,9 @@ export default function NovoServidor({
     return () => controller.abort();
   }, []);
 
-  async function submit(
-    event: FormEvent<HTMLFormElement>
-  ) {
-    event.preventDefault();
-
+  async function submit(_dados: Record<string, unknown>, form: FormData) {
     setSaving(true);
     setError("");
-
-    const form = new FormData(
-      event.currentTarget
-    );
 
     /**
      * Texto:
@@ -259,7 +253,7 @@ export default function NovoServidor({
      * Os relacionamentos são enviados como IDs.
      */
     const dados: NovoServidorDados = {
-      ativo: true,
+      ativo: form.get("ativo") === "on",
 
       nome_completo: String(
         form.get("nome_completo") ?? ""
@@ -304,8 +298,7 @@ export default function NovoServidor({
         id("estado_civil_id"),
 
       uniao_estavel:
-        form.get("uniao_estavel") ===
-        "true",
+        form.get("uniao_estavel") === "on",
 
       sexo_id:
         id("sexo_id"),
@@ -401,9 +394,10 @@ export default function NovoServidor({
 
       identidade: documentosIncluidos.identidade
         ? {
-            tipo_identidade: campo("identidade_tipo"),
-            // O schema atual do backend ainda exige `numero` para CIN.
-            numero: numeroDocumento("identidade_numero"),
+            tipo_identidade: identidadeTipo,
+            ...(identidadeTipo === "RG"
+              ? { numero: numeroDocumento("identidade_numero") }
+              : {}),
             orgao_emissor: campo("identidade_orgao"),
             rg_uf_id: id("identidade_uf_id"),
             rg_data_emissao: campo("identidade_data_emissao"),
@@ -657,6 +651,51 @@ export default function NovoServidor({
     id: estado.id_estado,
     descricao: `${estado.nome} (${estado.uf})`,
   }));
+  const configurarOpcoes = (itens: OpcaoServidor[]) => ({
+    type: "select" as const,
+    disabled: loading,
+    options: itens.map(item => ({ value: item.id, label: item.descricao })),
+  });
+  const campos: Record<string, CampoFormularioConfig> = {
+    ativo: { title: "Servidor ativo", defaultValue: true },
+    nome_completo: { title: "Nome completo", placeholder: "Nome completo" },
+    nome_social: { title: "Nome social", placeholder: "Nome social" },
+    cpf: { title: "CPF", placeholder: "CPF", inputMode: "numeric", maxLength: 14 },
+    nis_pis: { title: "NIS/PIS", placeholder: "NIS/PIS", inputMode: "numeric", maxLength: 11 },
+    data_nascimento: { title: "Data de nascimento", type: "date" },
+    nacionalidade_id: { title: "Nacionalidade", ...configurarOpcoes(opcoesPaises) },
+    pais_origem_id: { title: "País de origem", ...configurarOpcoes(opcoesPaises) },
+    ano_chegada_brasil: { title: "Ano de chegada ao Brasil", type: "number", placeholder: "Ano" },
+    municipio_nascimento_id: { title: "Município de nascimento", ...configurarOpcoes(opcoesMunicipios) },
+    cpf_mae: { title: "CPF da mãe", placeholder: "CPF da mãe", inputMode: "numeric", maxLength: 14 },
+    nome_mae: { title: "Nome da mãe", placeholder: "Nome da mãe" },
+    cpf_pai: { title: "CPF do pai", placeholder: "CPF do pai", inputMode: "numeric", maxLength: 14 },
+    nome_pai: { title: "Nome do pai", placeholder: "Nome do pai" },
+    estado_civil_id: { title: "Estado civil", ...configurarOpcoes(opcoes.estadosCivis) },
+    uniao_estavel: { title: "União estável" },
+    sexo_id: { title: "Sexo", ...configurarOpcoes(opcoes.sexos) },
+    genero_id: { title: "Gênero", ...configurarOpcoes(opcoes.generos) },
+    racacor_id: { title: "Raça/cor", ...configurarOpcoes(opcoes.racasCor) },
+    comunidade_indigena_id: { title: "Comunidade indígena", ...configurarOpcoes(opcoes.comunidadesIndigenas) },
+    cep: { title: "CEP", placeholder: "CEP", inputMode: "numeric", maxLength: 9 },
+    logradouro: { title: "Logradouro", placeholder: "Rua, avenida..." },
+    numero: { title: "Número", placeholder: "Número" },
+    complemento: { title: "Complemento", placeholder: "Complemento" },
+    bairro: { title: "Bairro", placeholder: "Bairro" },
+    municipio_endereco_id: { title: "Município do endereço", ...configurarOpcoes(opcoesMunicipios) },
+    zona_endereco_id: { title: "Zona do endereço", ...configurarOpcoes(opcoes.zonasEndereco) },
+    localizacao_diferenciada_id: { title: "Localização diferenciada", ...configurarOpcoes(opcoes.localizacoesDiferenciadas) },
+    cartao_sus: { title: "Cartão SUS", placeholder: "Cartão SUS", inputMode: "numeric", maxLength: 15 },
+    situacao_id: { title: "Situação", ...configurarOpcoes(opcoes.situacoes) },
+    escolaridade_id: { title: "Escolaridade", ...configurarOpcoes(opcoes.escolaridades) },
+    tipo_ensino_medio_cursado_id: { title: "Tipo de ensino médio", ...configurarOpcoes(opcoes.tiposEnsinoMedio) },
+    observacao: { title: "Observação", type: "textarea" },
+    certidao: { hidden: true },
+    cnh: { hidden: true },
+    ctps: { hidden: true },
+    identidade: { hidden: true },
+    titulo_eleitor: { hidden: true },
+  };
 
   return (
     <>
@@ -680,293 +719,21 @@ export default function NovoServidor({
       </div>
 
       <div className="card cadastro-servidor">
-        <form onSubmit={submit}>
-          {error && (
-            <p className="form-error" role="alert" style={{ whiteSpace: "pre-line" }}>
-              {error}
-            </p>
-          )}
-
-          <h2>Dados pessoais</h2>
-
-          <div className="form-grid">
-            <label>
-              Nome completo
-
-              <input
-                name="nome_completo"
-                placeholder="Nome completo"
-                required
-              />
-            </label>
-
-            <label>
-              Nome social
-
-              <input
-                name="nome_social"
-                placeholder="Nome social"
-              />
-            </label>
-
-            <label>
-              CPF
-
-              <input
-                name="cpf"
-                placeholder="CPF"
-                inputMode="numeric"
-                maxLength={14}
-                required
-              />
-            </label>
-
-            <label>
-              NIS/PIS
-
-              <input
-                name="nis_pis"
-                placeholder="NIS/PIS"
-                inputMode="numeric"
-              />
-            </label>
-
-            <label>
-              Data de nascimento
-
-              <input
-                name="data_nascimento"
-                type="date"
-                required
-              />
-            </label>
-
-            <SelectApi
-              name="sexo_id"
-              label="Sexo"
-              options={opcoes.sexos}
-              required
-            />
-
-            <SelectApi
-              name="genero_id"
-              label="Gênero"
-              options={opcoes.generos}
-            />
-
-            <SelectApi
-              name="racacor_id"
-              label="Raça/Cor"
-              options={opcoes.racasCor}
-              required
-            />
-
-            <SelectApi
-              name="estado_civil_id"
-              label="Estado civil"
-              options={opcoes.estadosCivis}
-            />
-
-            <SelectApi
-              name="situacao_id"
-              label="Situação"
-              options={opcoes.situacoes}
-              required
-            />
-
-            <label>
-              União estável
-
-              <select
-                name="uniao_estavel"
-                defaultValue="false"
-              >
-                <option value="false">
-                  Não
-                </option>
-
-                <option value="true">
-                  Sim
-                </option>
-              </select>
-            </label>
-          </div>
-
-          <h2>Filiação</h2>
-
-          <div className="form-grid">
-            <label>
-              Nome da mãe
-
-              <input
-                name="nome_mae"
-                placeholder="Nome da mãe"
-                required
-              />
-            </label>
-
-            <label>
-              CPF da mãe
-
-              <input
-                name="cpf_mae"
-                placeholder="CPF da mãe"
-                inputMode="numeric"
-                maxLength={14}
-              />
-            </label>
-
-            <label>
-              Nome do pai
-
-              <input
-                name="nome_pai"
-                placeholder="Nome do pai"
-                required
-              />
-            </label>
-
-            <label>
-              CPF do pai
-
-              <input
-                name="cpf_pai"
-                placeholder="CPF do pai"
-                inputMode="numeric"
-                maxLength={14}
-              />
-            </label>
-          </div>
-
-          <h2>Dados educacionais</h2>
-
-          <div className="form-grid">
-            <SelectApi
-              name="escolaridade_id"
-              label="Escolaridade"
-              options={opcoes.escolaridades}
-            />
-
-            <SelectApi
-              name="tipo_ensino_medio_cursado_id"
-              label="Tipo de ensino médio"
-              options={
-                opcoes.tiposEnsinoMedio
-              }
-            />
-          </div>
-
-          <h2>Endereço</h2>
-
-          <div className="form-grid">
-            <label>
-              CEP
-
-              <input
-                name="cep"
-                placeholder="CEP"
-                inputMode="numeric"
-                maxLength={9}
-                required
-              />
-            </label>
-
-            <label>
-              Logradouro
-
-              <input
-                name="logradouro"
-                placeholder="Rua, avenida..."
-                required
-              />
-            </label>
-
-            <label>
-              Número
-
-              <input
-                name="numero"
-                placeholder="Número"
-              />
-            </label>
-
-            <label>
-              Complemento
-
-              <input
-                name="complemento"
-                placeholder="Complemento"
-              />
-            </label>
-
-            <label>
-              Bairro
-
-              <input
-                name="bairro"
-                placeholder="Bairro"
-                required
-              />
-            </label>
-
-            <SelectApi
-              name="zona_endereco_id"
-              label="Zona do endereço"
-              options={
-                opcoes.zonasEndereco
-              }
-              required
-            />
-
-            <SelectApi
-              name="localizacao_diferenciada_id"
-              label="Localização diferenciada"
-              options={
-                opcoes.localizacoesDiferenciadas
-              }
-            />
-
-            <SelectApi
-              name="comunidade_indigena_id"
-              label="Comunidade indígena"
-              options={
-                opcoes.comunidadesIndigenas
-              }
-            />
-          </div>
-
-          <h2>Outros dados</h2>
-
-          <div className="form-grid">
-            <SelectApi name="nacionalidade_id" label="Nacionalidade" options={opcoesPaises} required />
-
-            <SelectApi name="pais_origem_id" label="País de origem" options={opcoesPaises} />
-
-            <label>
-              Ano de chegada ao Brasil
-
-              <input
-                name="ano_chegada_brasil"
-                type="number"
-                placeholder="Ano"
-              />
-            </label>
-
-            <SelectApi name="municipio_nascimento_id" label="Município de nascimento" options={opcoesMunicipios} />
-
-            <SelectApi name="municipio_endereco_id" label="Município do endereço" options={opcoesMunicipios} required />
-
-            <label>
-              Cartão SUS
-
-              <input
-                name="cartao_sus"
-                placeholder="Cartão SUS"
-                inputMode="numeric"
-              />
-            </label>
-          </div>
-
+        {error && (
+          <p className="form-error" role="alert" style={{ whiteSpace: "pre-line" }}>
+            {error}
+          </p>
+        )}
+        <FormularioDinamicoContainer
+          dominio="servidores"
+          operacao="adicionar"
+          campos={campos}
+          desabilitado={loading || saving}
+          textoSalvar="Cadastrar servidor"
+          textoSalvando="Cadastrando..."
+          onSubmit={submit}
+          onCancel={onBack}
+        >
           <h2>Documentos (opcionais)</h2>
           <p className="muted">Marque os documentos que deseja cadastrar junto com o servidor.</p>
 
@@ -1016,8 +783,8 @@ export default function NovoServidor({
             Incluir identidade
           </label>
           {documentosIncluidos.identidade && <div className="form-grid">
-            <label>Tipo<select name="identidade_tipo" defaultValue="RG"><option value="RG">RG</option><option value="CIN">CIN</option></select></label>
-            <label>Número do RG ou CPF da CIN<input name="identidade_numero" inputMode="numeric" maxLength={30} required /></label>
+            <label>Tipo de identidade<select name="identidade_tipo" value={identidadeTipo} onChange={e => setIdentidadeTipo(e.target.value as "RG" | "CIN")}><option value="RG">RG</option><option value="CIN">CIN</option></select></label>
+            {identidadeTipo === "RG" && <label>Número do RG<input name="identidade_numero" inputMode="numeric" maxLength={30} required /></label>}
             <label>Órgão emissor<input name="identidade_orgao" maxLength={30} required /></label>
             <SelectApi name="identidade_uf_id" label="UF da identidade" options={opcoesEstados} required />
             <label>Data de emissão<input name="identidade_data_emissao" type="date" required /></label>
@@ -1033,37 +800,7 @@ export default function NovoServidor({
             <label>Seção (4 dígitos)<input name="titulo_secao" inputMode="numeric" maxLength={4} required /></label>
           </div>}
 
-          <label>
-            Observação
-
-            <textarea
-              name="observacao"
-              placeholder="Observações"
-              rows={4}
-            />
-          </label>
-
-          <div className="form-actions">
-            <button
-              type="button"
-              className="btn outline"
-              onClick={onBack}
-              disabled={saving}
-            >
-              Cancelar
-            </button>
-
-            <button
-              type="submit"
-              className="btn primary"
-              disabled={saving || loading}
-            >
-              {saving
-                ? "Cadastrando..."
-                : "Cadastrar servidor"}
-            </button>
-          </div>
-        </form>
+        </FormularioDinamicoContainer>
       </div>
     </>
   );

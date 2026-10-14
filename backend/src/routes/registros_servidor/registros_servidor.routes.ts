@@ -3,6 +3,7 @@ import { autorizar } from "@/middlewares/auth.js";
 import { validate } from "@/middlewares/validate.js";
 import { Autorizacoes, autorizacoesPadrao, DocumentosSchemas } from "@/types/crud.types.js";
 import { Router } from "express";
+import z from "zod";
 
 export class RegistrosServidorRoute<TController extends CrudController> {
 
@@ -21,6 +22,8 @@ export class RegistrosServidorRoute<TController extends CrudController> {
         }
 
         this.router = Router({ mergeParams: true });
+
+        this.registrarSchema()
 
         this.registrar();
 
@@ -57,5 +60,43 @@ export class RegistrosServidorRoute<TController extends CrudController> {
             this.controller.deletar
         );
 
+    }
+
+    protected registrarSchema(): void {
+        this.router.get(
+            "/schemas",
+            autorizar(...this.autorizacoes.listar),
+            (req, res, next) => {
+                try {
+                    const operacao = req.query.operacao;
+
+                    if (
+                        operacao !== "adicionar" &&
+                        operacao !== "atualizar"
+                    ) {
+                        res.status(400).json({
+                            erro: "A operação deve ser adicionar ou atualizar"
+                        });
+                        return;
+                    }
+
+                    const schema =
+                        operacao === "adicionar"
+                            ? this.schema.adicionar
+                            : this.schema.atualizar;
+
+                    const jsonSchema = z.toJSONSchema(schema, {
+                        unrepresentable: "any"
+                    });
+
+                    res.json({
+                        operacao,
+                        schema: jsonSchema
+                    });
+                } catch (erro) {
+                    next(erro);
+                }
+            }
+        );
     }
 }

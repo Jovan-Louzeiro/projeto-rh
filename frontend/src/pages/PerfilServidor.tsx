@@ -1,8 +1,11 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState } from "react";
 import type { Servidor } from "../types";
 import { atualizarServidor, type DetalhesServidor, type NovoServidorDados } from "../services/servidores";
 import type { DadosGeograficos } from "../services/localizacao";
 import type { OpcoesServidorCompletas } from "../services/opcoesServidor";
+import { FormularioDinamicoContainer } from "../components/formularios/FormularioDinamicoContainer";
+import type { CampoFormularioConfig } from "../types/json-schema.types";
+import { apiPost, apiPut } from "../services/api";
 import Icon from "../components/Icon";
 import Status from "../components/Status";
 
@@ -12,19 +15,10 @@ type Props = {
   geografia: DadosGeograficos;
   opcoes: OpcoesServidorCompletas;
   onQuinquenios: () => void;
+  onUpdated: () => void;
 };
 
 type Registro = Record<string, unknown>;
-
-function CampoSelect({ name, label, options, value, required = false }: {
-  name: string; label: string; options: { id: string | number; descricao: string }[];
-  value: unknown; required?: boolean;
-}) {
-  return <label>{label}<select name={name} defaultValue={value == null ? "" : String(value)} required={required}>
-    <option value="">Selecione {label.toLowerCase()}</option>
-    {options.map(option => <option key={String(option.id)} value={String(option.id)}>{option.descricao}</option>)}
-  </select></label>;
-}
 
 const dataInput = (value: unknown) => value ? String(value).slice(0, 10) : "";
 
@@ -49,24 +43,66 @@ function Info({ label, value }: { label: string; value: unknown }) {
   return <div className="info"><small>{label}</small><strong>{valor(value)}</strong></div>;
 }
 
-function Documento({ titulo, item, campos, formatar }: { titulo: string; item: unknown; campos: [string, string, boolean?][]; formatar?: (key: string, value: unknown) => unknown }) {
-  if (!item || typeof item !== "object") {
-    return <div className="info"><small>{titulo}</small><strong>Não cadastrado</strong></div>;
+function Documento({ idServidor, recurso, titulo, item, campos, configuracoes, onSaved, formatar }: {
+  idServidor: string | number;
+  recurso: "certidao" | "cnh" | "ctps" | "identidade" | "tituloEleitor";
+  titulo: string;
+  item: unknown;
+  campos: [string, string, boolean?][];
+  configuracoes: Record<string, CampoFormularioConfig>;
+  onSaved: (dados: Record<string, unknown>) => void;
+  formatar?: (key: string, value: unknown) => unknown;
+}) {
+  const [editando, setEditando] = useState(false);
+  const existente = Boolean(item && typeof item === "object");
+  const registro = existente ? item as Registro : {};
+  const valoresIniciais = Object.fromEntries(
+    Object.entries(registro).map(([chave, value]) => [
+      chave,
+      configuracoes[chave]?.type === "date" ? dataInput(value) : value,
+    ]),
+  );
+
+  async function salvar(dados: Record<string, unknown>) {
+    const endpoint = `/api/servidores/${encodeURIComponent(String(idServidor))}/${recurso}`;
+    if (existente) {
+      await apiPut(endpoint, dados);
+    } else {
+      await apiPost(endpoint, dados);
+    }
+    onSaved(dados);
+    setEditando(false);
   }
-  const registro = item as Registro;
+
   return <section className="document-profile">
-    <h4>{titulo}</h4>
-    <div className="info-grid">
-      {campos.map(([chave, nome, isData]) => <Info key={chave} label={nome} value={isData ? data(registro[chave]) : formatar ? formatar(chave, registro[chave]) : registro[chave]} />)}
+    <div className="section-heading">
+      <h4>{titulo}</h4>
+      {!editando && <button type="button" className="btn outline" onClick={() => { setEditando(true); }}>
+        {existente ? "Editar" : "Cadastrar"}
+      </button>}
     </div>
+    {editando ? <>
+      <FormularioDinamicoContainer
+        key={`${recurso}-${existente ? "atualizar" : "adicionar"}`}
+        dominio={recurso}
+        idServidor={idServidor}
+        operacao={existente ? "atualizar" : "adicionar"}
+        valoresIniciais={valoresIniciais}
+        campos={configuracoes}
+        textoSalvar={existente ? "Salvar alterações" : "Cadastrar"}
+        textoSalvando="Salvando..."
+        onSubmit={salvar}
+        onCancel={() => setEditando(false)}
+      />
+    </> : existente ? <div className="info-grid">
+      {campos.map(([chave, nome, isData]) => <Info key={chave} label={nome} value={isData ? data(registro[chave]) : formatar ? formatar(chave, registro[chave]) : registro[chave]} />)}
+    </div> : <p className="muted">Não cadastrado</p>}
   </section>;
 }
 
-export default function PerfilServidor({ servidor, detalhes, geografia, opcoes, onQuinquenios }: Props) {
+export default function PerfilServidor({ servidor, detalhes, geografia, opcoes, onQuinquenios, onUpdated }: Props) {
   const [registro, setRegistro] = useState<Registro>(detalhes as Registro);
   const [editando, setEditando] = useState(false);
-  const [salvando, setSalvando] = useState(false);
-  const [erroEdicao, setErroEdicao] = useState("");
   const [salvo, setSalvo] = useState(false);
   useEffect(() => setRegistro(detalhes as Registro), [detalhes]);
   const pais = (id: unknown) => geografia.paises.find(item => item.id_pais === Number(id))?.nome ?? "—";
@@ -84,89 +120,155 @@ export default function PerfilServidor({ servidor, detalhes, geografia, opcoes, 
     opcoes[nome].find(item => String(item.id) === String(id))?.descricao ?? "—";
   const situacao = dominio("situacoes", registro.situacao_id);
 
-  async function salvarEdicao(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    const texto = (name: string) => String(form.get(name) ?? "").trim();
-    const id = (name: string) => {
-      const raw = texto(name);
-      return raw ? Number(raw) : undefined;
-    };
-    const digitos = (name: string) => {
-      const raw = texto(name).replace(/\D/g, "");
-      return raw || undefined;
-    };
-
-    const dados: NovoServidorDados = {
-      ativo: form.get("ativo") === "on",
-      nome_completo: texto("nome_completo"),
-      // O schema marca nome_social como opcional, mas exige pelo menos 1 caractere
-      // quando enviado; valor vazio deve ser omitido do PATCH.
-      nome_social: texto("nome_social") || undefined,
-      cpf: digitos("cpf"),
-      nis_pis: digitos("nis_pis"),
-      data_nascimento: texto("data_nascimento"),
-      nacionalidade_id: id("nacionalidade_id"),
-      pais_origem_id: id("pais_origem_id"),
-      ano_chegada_brasil: id("ano_chegada_brasil"),
-      municipio_nascimento_id: id("municipio_nascimento_id"),
-      cpf_mae: digitos("cpf_mae"),
-      nome_mae: texto("nome_mae"),
-      cpf_pai: digitos("cpf_pai"),
-      nome_pai: texto("nome_pai"),
-      estado_civil_id: id("estado_civil_id"),
-      uniao_estavel: form.get("uniao_estavel") === "on",
-      sexo_id: id("sexo_id"),
-      genero_id: id("genero_id"),
-      racacor_id: id("racacor_id"),
-      comunidade_indigena_id: id("comunidade_indigena_id"),
-      cep: digitos("cep"),
-      logradouro: texto("logradouro"),
-      numero: texto("numero"),
-      complemento: texto("complemento"),
-      bairro: texto("bairro"),
-      municipio_endereco_id: id("municipio_endereco_id"),
-      zona_endereco_id: id("zona_endereco_id"),
-      localizacao_diferenciada_id: id("localizacao_diferenciada_id"),
-      cartao_sus: digitos("cartao_sus"),
-      situacao_id: id("situacao_id"),
-      escolaridade_id: id("escolaridade_id"),
-      tipo_ensino_medio_cursado_id: id("tipo_ensino_medio_cursado_id"),
-      observacao: texto("observacao"),
-    };
-
-    setSalvando(true);
-    setErroEdicao("");
+  async function salvarEdicao(dados: Record<string, unknown>) {
     setSalvo(false);
-    try {
-      // O JSON não deve conter campos opcionais vazios/undefined que o Zod
-      // validaria como valores informados.
-      const payload = Object.fromEntries(
-        Object.entries(dados).filter(([, value]) => value !== undefined),
-      ) as NovoServidorDados;
-      await atualizarServidor(servidor.id, payload);
-      const enviados = payload;
-      setRegistro(current => ({ ...current, ...enviados }));
-      setEditando(false);
-      setSalvo(true);
-    } catch (error) {
-      setErroEdicao(error instanceof Error ? error.message : "Não foi possível salvar as alterações.");
-    } finally {
-      setSalvando(false);
-    }
+    const camposNumericosTexto = new Set(["cpf", "cpf_mae", "cpf_pai", "nis_pis", "cep", "cartao_sus"]);
+    const payload = Object.fromEntries(
+      Object.entries(dados).map(([nome, valor]) => [
+        nome,
+        camposNumericosTexto.has(nome) && valor !== undefined && valor !== null
+          ? String(valor).replace(/\D/g, "")
+          : valor,
+      ]),
+    ) as NovoServidorDados;
+    await atualizarServidor(servidor.id, payload);
+    setRegistro(current => ({ ...current, ...payload }));
+    setEditando(false);
+    setSalvo(true);
+    onUpdated();
   }
 
-  const opcoesPaises = geografia.paises.map(item => ({ id: item.id_pais, descricao: item.gentilico ? `${item.gentilico} (${item.nome})` : item.nome }));
+  const opcoesPaises = geografia.paises.map(item => ({
+    value: item.id_pais,
+    label: item.gentilico ? `${item.gentilico} (${item.nome})` : item.nome,
+  }));
   const opcoesMunicipios = geografia.municipios.map(item => {
-    const uf = geografia.estados.find(estado => estado.id_estado === item.estado_id)?.uf;
-    return { id: item.id_municipio, descricao: `${item.nome}${uf ? ` - ${uf}` : ""}` };
+    const uf = geografia.estados.find(estadoItem => estadoItem.id_estado === item.estado_id)?.uf;
+    return { value: item.id_municipio, label: `${item.nome}${uf ? ` - ${uf}` : ""}` };
   });
-  const opcoesEstados = geografia.estados.map(item => ({ id: item.id_estado, descricao: `${item.nome} (${item.uf})` }));
+  const opcoesCampos: Record<string, CampoFormularioConfig> = {
+    ativo: { title: "Servidor ativo" },
+    nome_completo: { title: "Nome completo" },
+    nome_social: { title: "Nome social" },
+    cpf: { title: "CPF", inputMode: "numeric", maxLength: 14 },
+    nis_pis: { title: "NIS/PIS", inputMode: "numeric", maxLength: 11 },
+    data_nascimento: { title: "Data de nascimento", type: "date" },
+    nacionalidade_id: { title: "Nacionalidade", type: "select", options: opcoesPaises },
+    pais_origem_id: { title: "País de origem", type: "select", options: opcoesPaises },
+    municipio_nascimento_id: { title: "Município de nascimento", type: "select", options: opcoesMunicipios },
+    sexo_id: { title: "Sexo", type: "select", options: opcoes.sexos.map(item => ({ value: item.id, label: item.descricao })) },
+    genero_id: { title: "Gênero", type: "select", options: opcoes.generos.map(item => ({ value: item.id, label: item.descricao })) },
+    racacor_id: { title: "Raça/cor", type: "select", options: opcoes.racasCor.map(item => ({ value: item.id, label: item.descricao })) },
+    estado_civil_id: { title: "Estado civil", type: "select", options: opcoes.estadosCivis.map(item => ({ value: item.id, label: item.descricao })) },
+    uniao_estavel: { title: "União estável" },
+    nome_mae: { title: "Nome da mãe" },
+    cpf_mae: { title: "CPF da mãe", inputMode: "numeric", maxLength: 14 },
+    nome_pai: { title: "Nome do pai" },
+    cpf_pai: { title: "CPF do pai", inputMode: "numeric", maxLength: 14 },
+    ano_chegada_brasil: { title: "Ano de chegada ao Brasil" },
+    cep: { title: "CEP", inputMode: "numeric", maxLength: 9 },
+    logradouro: { title: "Logradouro" },
+    numero: { title: "Número" },
+    complemento: { title: "Complemento" },
+    bairro: { title: "Bairro" },
+    municipio_endereco_id: { title: "Município do endereço", type: "select", options: opcoesMunicipios },
+    zona_endereco_id: { title: "Zona do endereço", type: "select", options: opcoes.zonasEndereco.map(item => ({ value: item.id, label: item.descricao })) },
+    localizacao_diferenciada_id: { title: "Localização diferenciada", type: "select", options: opcoes.localizacoesDiferenciadas.map(item => ({ value: item.id, label: item.descricao })) },
+    comunidade_indigena_id: { title: "Comunidade indígena", type: "select", options: opcoes.comunidadesIndigenas.map(item => ({ value: item.id, label: item.descricao })) },
+    cartao_sus: { title: "Cartão SUS", inputMode: "numeric", maxLength: 15 },
+    situacao_id: { title: "Situação", type: "select", options: opcoes.situacoes.map(item => ({ value: item.id, label: item.descricao })) },
+    escolaridade_id: { title: "Escolaridade", type: "select", options: opcoes.escolaridades.map(item => ({ value: item.id, label: item.descricao })) },
+    tipo_ensino_medio_cursado_id: { title: "Tipo de ensino médio", type: "select", options: opcoes.tiposEnsinoMedio.map(item => ({ value: item.id, label: item.descricao })) },
+    observacao: { title: "Observação", type: "textarea" },
+  };
+  const valoresIniciais = {
+    ...registro,
+    data_nascimento: dataInput(registro.data_nascimento),
+  };
+  const camposDocumento: Record<"certidao" | "cnh" | "ctps" | "identidade" | "tituloEleitor", Record<string, CampoFormularioConfig>> = {
+    certidao: {
+      nova_certidao: { title: "Certidão nova" },
+      matricula: { title: "Matrícula", inputMode: "numeric", maxLength: 32 },
+      tipo_certidao: {
+        title: "Tipo de certidão",
+        options: [
+          { value: "NASCIMENTO", label: "Nascimento" },
+          { value: "CASAMENTO", label: "Casamento" },
+        ],
+      },
+      termo: { title: "Termo", inputMode: "numeric", maxLength: 5, visibleWhen: { field: "nova_certidao", equals: false }, requiredWhen: { field: "nova_certidao", equals: false } },
+      folha: { title: "Folha", inputMode: "numeric", maxLength: 5, visibleWhen: { field: "nova_certidao", equals: false }, requiredWhen: { field: "nova_certidao", equals: false } },
+      livro: { title: "Livro", inputMode: "numeric", maxLength: 5, visibleWhen: { field: "nova_certidao", equals: false }, requiredWhen: { field: "nova_certidao", equals: false } },
+      data_emissao: { title: "Data de emissão", type: "date" },
+    },
+    cnh: {
+      numero: { title: "Número da CNH", inputMode: "numeric", maxLength: 11 },
+      categoria: { title: "Categoria", maxLength: 15 },
+      data_emissao: { title: "Data de emissão", type: "date" },
+      data_validade: { title: "Data de validade", type: "date" },
+    },
+    ctps: {
+      tipo_ctps: {
+        title: "Tipo de CTPS",
+        options: [
+          { value: "ANTIGO", label: "Antiga" },
+          { value: "NOVO", label: "Digital/nova" },
+        ],
+      },
+      numero: { title: "Número", inputMode: "numeric", maxLength: 8, visibleWhen: { field: "tipo_ctps", equals: "ANTIGO" }, requiredWhen: { field: "tipo_ctps", equals: "ANTIGO" } },
+      serie: { title: "Série", inputMode: "numeric", maxLength: 5, visibleWhen: { field: "tipo_ctps", equals: "ANTIGO" }, requiredWhen: { field: "tipo_ctps", equals: "ANTIGO" } },
+      uf_ctps_id: {
+        title: "UF da CTPS",
+        type: "select",
+        visibleWhen: { field: "tipo_ctps", equals: "ANTIGO" },
+        requiredWhen: { field: "tipo_ctps", equals: "ANTIGO" },
+        options: geografia.estados.map(item => ({
+          value: item.id_estado,
+          label: `${item.nome} (${item.uf})`,
+        })),
+      },
+      data_emissao: { title: "Data de emissão", type: "date" },
+    },
+    identidade: {
+      tipo_identidade: {
+        title: "Tipo de identidade",
+        options: [
+          { value: "RG", label: "RG" },
+          { value: "CIN", label: "CIN" },
+        ],
+      },
+      numero: { title: "Número do RG", inputMode: "numeric", maxLength: 30, visibleWhen: { field: "tipo_identidade", equals: "RG" }, requiredWhen: { field: "tipo_identidade", equals: "RG" } },
+      orgao_emissor: { title: "Órgão emissor", maxLength: 30 },
+      rg_uf_id: {
+        title: "UF da identidade",
+        type: "select",
+        options: geografia.estados.map(item => ({
+          value: item.id_estado,
+          label: `${item.nome} (${item.uf})`,
+        })),
+      },
+      rg_data_emissao: { title: "Data de emissão", type: "date" },
+    },
+    tituloEleitor: {
+      numero: { title: "Número", inputMode: "numeric", maxLength: 12 },
+      zona: { title: "Zona eleitoral", inputMode: "numeric", maxLength: 4 },
+      secao: { title: "Seção eleitoral", inputMode: "numeric", maxLength: 4 },
+    },
+  };
+  function atualizarDocumento(recurso: keyof typeof camposDocumento, dados: Record<string, unknown>) {
+    setRegistro(current => ({
+      ...current,
+      [recurso === "tituloEleitor" ? "titulo_eleitor" : recurso]: {
+        ...((current[recurso === "tituloEleitor" ? "titulo_eleitor" : recurso] as Registro | undefined) ?? {}),
+        ...dados,
+      },
+    }));
+  }
 
   return <>
     <div className="page-head">
       <div><h1>Perfil do Servidor</h1><p>Servidores / {String(registro.nome_completo ?? servidor.nome)}</p></div>
-      <button type="button" className="btn primary" onClick={() => { setEditando(value => !value); setErroEdicao(""); setSalvo(false); }}><Icon name="edit" /> {editando ? "Cancelar edição" : "Editar dados"}</button>
+      <button type="button" className="btn primary" onClick={() => { setEditando(value => !value); setSalvo(false); }}><Icon name="edit" /> {editando ? "Cancelar edição" : "Editar dados"}</button>
     </div>
 
     <div className="profile">
@@ -187,61 +289,19 @@ export default function PerfilServidor({ servidor, detalhes, geografia, opcoes, 
         </div>
 
         {salvo && <p className="form-success" role="status">Dados do servidor atualizados.</p>}
-        {editando ? <form onSubmit={salvarEdicao}>
-          <h3 className="section-title">Dados pessoais</h3>
-          <div className="form-grid">
-            <label>Nome completo<input name="nome_completo" defaultValue={valor(registro.nome_completo) === "—" ? "" : String(registro.nome_completo)} required /></label>
-            <label>Nome social<input name="nome_social" defaultValue={String(registro.nome_social ?? "")} /></label>
-            <label>CPF<input name="cpf" defaultValue={String(registro.cpf ?? "")} inputMode="numeric" maxLength={14} required /></label>
-            <label>NIS/PIS<input name="nis_pis" defaultValue={String(registro.nis_pis ?? "")} inputMode="numeric" /></label>
-            <label>Data de nascimento<input name="data_nascimento" type="date" defaultValue={dataInput(registro.data_nascimento)} required /></label>
-            <CampoSelect name="nacionalidade_id" label="Nacionalidade" options={opcoesPaises} value={registro.nacionalidade_id} required />
-            <CampoSelect name="pais_origem_id" label="País de origem" options={opcoesPaises} value={registro.pais_origem_id} />
-            <label>Ano de chegada ao Brasil<input name="ano_chegada_brasil" type="number" defaultValue={String(registro.ano_chegada_brasil ?? "")} /></label>
-            <CampoSelect name="municipio_nascimento_id" label="Município de nascimento" options={opcoesMunicipios} value={registro.municipio_nascimento_id} />
-            <CampoSelect name="sexo_id" label="Sexo" options={opcoes.sexos} value={registro.sexo_id} required />
-            <CampoSelect name="genero_id" label="Gênero" options={opcoes.generos} value={registro.genero_id} />
-            <CampoSelect name="racacor_id" label="Raça/cor" options={opcoes.racasCor} value={registro.racacor_id} required />
-            <CampoSelect name="estado_civil_id" label="Estado civil" options={opcoes.estadosCivis} value={registro.estado_civil_id} />
-            <label className="document-toggle"><input name="uniao_estavel" type="checkbox" defaultChecked={Boolean(registro.uniao_estavel)} /> União estável</label>
-          </div>
-
-          <h3 className="section-title section-spaced">Filiação</h3>
-          <div className="form-grid">
-            <label>Nome da mãe<input name="nome_mae" defaultValue={String(registro.nome_mae ?? "")} required /></label>
-            <label>CPF da mãe<input name="cpf_mae" defaultValue={String(registro.cpf_mae ?? "")} inputMode="numeric" /></label>
-            <label>Nome do pai<input name="nome_pai" defaultValue={String(registro.nome_pai ?? "")} required /></label>
-            <label>CPF do pai<input name="cpf_pai" defaultValue={String(registro.cpf_pai ?? "")} inputMode="numeric" /></label>
-          </div>
-
-          <h3 className="section-title section-spaced">Endereço</h3>
-          <div className="form-grid">
-            <label>CEP<input name="cep" defaultValue={String(registro.cep ?? "")} inputMode="numeric" maxLength={9} required /></label>
-            <label>Logradouro<input name="logradouro" defaultValue={String(registro.logradouro ?? "")} required /></label>
-            <label>Número<input name="numero" defaultValue={String(registro.numero ?? "")} /></label>
-            <label>Complemento<input name="complemento" defaultValue={String(registro.complemento ?? "")} /></label>
-            <label>Bairro<input name="bairro" defaultValue={String(registro.bairro ?? "")} required /></label>
-            <CampoSelect name="municipio_endereco_id" label="Município do endereço" options={opcoesMunicipios} value={registro.municipio_endereco_id} required />
-            <CampoSelect name="zona_endereco_id" label="Zona do endereço" options={opcoes.zonasEndereco} value={registro.zona_endereco_id} required />
-            <CampoSelect name="localizacao_diferenciada_id" label="Localização diferenciada" options={opcoes.localizacoesDiferenciadas} value={registro.localizacao_diferenciada_id} />
-            <CampoSelect name="comunidade_indigena_id" label="Comunidade indígena" options={opcoes.comunidadesIndigenas} value={registro.comunidade_indigena_id} />
-            <label>Cartão SUS<input name="cartao_sus" defaultValue={String(registro.cartao_sus ?? "")} inputMode="numeric" /></label>
-          </div>
-
-          <h3 className="section-title section-spaced">Dados funcionais e educação</h3>
-          <div className="form-grid">
-            <CampoSelect name="situacao_id" label="Situação" options={opcoes.situacoes} value={registro.situacao_id} required />
-            <CampoSelect name="escolaridade_id" label="Escolaridade" options={opcoes.escolaridades} value={registro.escolaridade_id} />
-            <CampoSelect name="tipo_ensino_medio_cursado_id" label="Tipo de ensino médio" options={opcoes.tiposEnsinoMedio} value={registro.tipo_ensino_medio_cursado_id} />
-            <label className="document-toggle"><input name="ativo" type="checkbox" defaultChecked={registro.ativo !== false} /> Servidor ativo</label>
-            <label className="full-col">Observação<textarea name="observacao" defaultValue={String(registro.observacao ?? "")} rows={3} /></label>
-          </div>
-          {erroEdicao && <p className="form-error" role="alert" style={{ whiteSpace: "pre-line" }}>{erroEdicao}</p>}
-          <div className="form-actions">
-            <button type="button" className="btn outline" onClick={() => setEditando(false)} disabled={salvando}>Cancelar</button>
-            <button type="submit" className="btn primary" disabled={salvando}>{salvando ? "Salvando..." : "Salvar alterações"}</button>
-          </div>
-        </form> : <>
+        {editando ? <>
+          <FormularioDinamicoContainer
+          key={`servidor-editar-${servidor.id}`}
+          dominio="servidores"
+          operacao="atualizar"
+          valoresIniciais={valoresIniciais}
+          campos={opcoesCampos}
+          textoSalvar="Salvar alterações"
+          textoSalvando="Salvando..."
+          onSubmit={salvarEdicao}
+          onCancel={() => setEditando(false)}
+        />
+        </> : <>
         <h3 className="section-title">Dados pessoais</h3>
         <div className="info-grid">
           <Info label="Nome completo" value={registro.nome_completo} />
@@ -283,11 +343,11 @@ export default function PerfilServidor({ servidor, detalhes, geografia, opcoes, 
         </div>
 
         <h3 className="section-title section-spaced">Documentos</h3>
-        <Documento titulo="Certidão" item={registro.certidao} campos={[["tipo_certidao", "Tipo"], ["nova_certidao", "Modelo novo"], ["matricula", "Matrícula"], ["termo", "Termo"], ["folha", "Folha"], ["livro", "Livro"], ["data_emissao", "Data de emissão", true]]} />
-        <Documento titulo="CNH" item={registro.cnh} campos={[["numero", "Número"], ["categoria", "Categoria"], ["data_emissao", "Data de emissão", true], ["data_validade", "Validade", true]]} />
-        <Documento titulo="CTPS" item={registro.ctps} campos={[["tipo_ctps", "Tipo"], ["numero", "Número"], ["serie", "Série"], ["uf_ctps_id", "UF"], ["data_emissao", "Data de emissão", true]]} formatar={(key, value) => key === "uf_ctps_id" ? estado(value) : value} />
-        <Documento titulo="Identidade" item={registro.identidade} campos={[["tipo_identidade", "Tipo"], ["numero", "Número"], ["orgao_emissor", "Órgão emissor"], ["rg_uf_id", "UF"], ["rg_data_emissao", "Data de emissão", true]]} formatar={(key, value) => key === "rg_uf_id" ? estado(value) : value} />
-        <Documento titulo="Título de eleitor" item={registro.titulo_eleitor} campos={[["numero", "Número"], ["zona", "Zona"], ["secao", "Seção"]]} />
+        <Documento idServidor={servidor.id} recurso="certidao" titulo="Certidão" item={registro.certidao} configuracoes={camposDocumento.certidao} onSaved={dados => { atualizarDocumento("certidao", dados); onUpdated(); }} campos={[["tipo_certidao", "Tipo"], ["nova_certidao", "Modelo novo"], ["matricula", "Matrícula"], ["termo", "Termo"], ["folha", "Folha"], ["livro", "Livro"], ["data_emissao", "Data de emissão", true]]} />
+        <Documento idServidor={servidor.id} recurso="cnh" titulo="CNH" item={registro.cnh} configuracoes={camposDocumento.cnh} onSaved={dados => { atualizarDocumento("cnh", dados); onUpdated(); }} campos={[["numero", "Número"], ["categoria", "Categoria"], ["data_emissao", "Data de emissão", true], ["data_validade", "Validade", true]]} />
+        <Documento idServidor={servidor.id} recurso="ctps" titulo="CTPS" item={registro.ctps} configuracoes={camposDocumento.ctps} onSaved={dados => { atualizarDocumento("ctps", dados); onUpdated(); }} campos={[["tipo_ctps", "Tipo"], ["numero", "Número"], ["serie", "Série"], ["uf_ctps_id", "UF"], ["data_emissao", "Data de emissão", true]]} formatar={(key, value) => key === "uf_ctps_id" ? estado(value) : value} />
+        <Documento idServidor={servidor.id} recurso="identidade" titulo="Identidade" item={registro.identidade} configuracoes={camposDocumento.identidade} onSaved={dados => { atualizarDocumento("identidade", dados); onUpdated(); }} campos={[["tipo_identidade", "Tipo"], ["numero", "Número"], ["orgao_emissor", "Órgão emissor"], ["rg_uf_id", "UF"], ["rg_data_emissao", "Data de emissão", true]]} formatar={(key, value) => key === "rg_uf_id" ? estado(value) : value} />
+        <Documento idServidor={servidor.id} recurso="tituloEleitor" titulo="Título de eleitor" item={registro.titulo_eleitor} configuracoes={camposDocumento.tituloEleitor} onSaved={dados => { atualizarDocumento("tituloEleitor", dados); onUpdated(); }} campos={[["numero", "Número"], ["zona", "Zona"], ["secao", "Seção"]]} />
         </>}
       </div>
     </div>

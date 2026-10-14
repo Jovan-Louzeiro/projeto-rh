@@ -5,7 +5,7 @@ import { RegistrosServidorServices } from "@/services/registros_servidor/registr
 export class DocumentosCadastraisServices<TCreate, TUpdate> extends RegistrosServidorServices<TCreate, TUpdate> {
 
     constructor(prismaModel: prismaModel, nome: string) {
-        super(prismaModel, nome);
+        super(prismaModel, nome, "servidor_id");
     }
 
 }

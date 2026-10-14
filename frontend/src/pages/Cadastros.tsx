@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Icon from "../components/Icon";
+import { FormularioDinamicoContainer } from "../components/formularios/FormularioDinamicoContainer";
 import {
   atualizarRegistroCadastro,
   criarRegistroCadastro,
@@ -9,6 +10,7 @@ import {
   type RegistroCadastro,
   type RecursoCadastro,
 } from "../services/cadastros";
+import type { CampoFormularioConfig } from "../types/json-schema.types";
 
 type Relacoes = { paises: RegistroCadastro[]; estados: RegistroCadastro[] };
 
@@ -19,7 +21,6 @@ export default function Cadastros() {
   const [selecionado, setSelecionado] = useState<RegistroCadastro | null>(null);
   const [busca, setBusca] = useState("");
   const [loading, setLoading] = useState(true);
-  const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState("");
   const [sucesso, setSucesso] = useState("");
   const [excluindoId, setExcluindoId] = useState<string | number | null>(null);
@@ -64,44 +65,6 @@ export default function Cadastros() {
     setSucesso("");
   }
 
-  async function salvar(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    const dados: RegistroCadastro = {};
-    for (const campo of recurso.fields) {
-      const value = form.get(campo.name);
-      if (campo.type === "checkbox") {
-        dados[campo.name] = value === "on";
-        continue;
-      }
-      const texto = String(value ?? "").trim();
-      // Senha vazia em edição significa manter a senha atual.
-      if (!texto && (campo.name === "senha" || (!campo.required && campo.type !== "select"))) continue;
-      if (!texto && campo.type === "select") continue;
-      dados[campo.name] = campo.type === "number" ? Number(texto) : texto;
-    }
-
-    setSalvando(true);
-    setErro("");
-    setSucesso("");
-    try {
-      if (selecionado) {
-        const id = selecionado[recurso.idKey] as string | number;
-        await atualizarRegistroCadastro(recurso, id, dados);
-        setSucesso(`${recurso.label} atualizado com sucesso.`);
-      } else {
-        await criarRegistroCadastro(recurso, dados);
-        setSucesso(`${recurso.label} cadastrado com sucesso.`);
-      }
-      setSelecionado(null);
-      setVersao(value => value + 1);
-    } catch (error) {
-      setErro(error instanceof Error ? error.message : "Não foi possível salvar o cadastro.");
-    } finally {
-      setSalvando(false);
-    }
-  }
-
   async function excluir(item: RegistroCadastro) {
     const id = item[recurso.idKey] as string | number;
     if (!window.confirm(`Excluir permanentemente “${tituloPrincipal(item)}”?`)) return;
@@ -131,7 +94,37 @@ export default function Cadastros() {
     });
   }
 
+  const configuracoesCampos: Record<string, CampoFormularioConfig> = Object.fromEntries(
+    recurso.fields.map(campo => [
+      campo.name,
+      {
+        title: campo.label,
+        ...(campo.type && campo.type !== "checkbox" ? { type: campo.type } : {}),
+        ...(campo.type === "select" ? { options: opcoesCampo(campo) } : {}),
+        ...(campo.name === "ativo" ? { defaultValue: true } : {}),
+        ...(campo.type === "password" && selecionado
+          ? { placeholder: "Deixe vazio para manter a senha atual" }
+          : {}),
+      },
+    ]),
+  );
+
   const tituloPrincipal = (item: RegistroCadastro) => String(item.descricao ?? item.nome ?? item.email ?? item[recurso.idKey] ?? "Registro");
+
+  async function salvar(dados: RegistroCadastro) {
+    setErro("");
+    setSucesso("");
+    if (selecionado) {
+      const id = selecionado[recurso.idKey] as string | number;
+      await atualizarRegistroCadastro(recurso, id, dados);
+      setSucesso(`${recurso.label} atualizado com sucesso.`);
+    } else {
+      await criarRegistroCadastro(recurso, dados);
+      setSucesso(`${recurso.label} cadastrado com sucesso.`);
+    }
+    setSelecionado(null);
+    setVersao(value => value + 1);
+  }
 
   return <>
     <div className="page-head">
@@ -162,12 +155,31 @@ export default function Cadastros() {
 
     {selecionado !== null && <div className="card cadastro-admin-form">
       <div className="section-heading"><h2>Editar {recurso.label}</h2><button className="btn outline" type="button" onClick={() => setSelecionado(null)}>Fechar</button></div>
-      <CadastroForm key={`${recurso.path}-${String(selecionado[recurso.idKey])}`} recurso={recurso} registro={selecionado} opcoesCampo={opcoesCampo} salvando={salvando} onSubmit={salvar} onCancel={() => setSelecionado(null)} />
+      <FormularioDinamicoContainer
+        key={`${recurso.path}-${String(selecionado[recurso.idKey])}`}
+        dominio={recurso.path}
+        operacao="atualizar"
+        valoresIniciais={selecionado}
+        campos={configuracoesCampos}
+        textoSalvar="Salvar alterações"
+        textoSalvando="Salvando..."
+        onSubmit={salvar}
+        onCancel={() => setSelecionado(null)}
+      />
     </div>}
 
     {selecionado === null && <div className="card cadastro-admin-form">
       <div className="section-heading"><h2>Novo {recurso.label}</h2></div>
-      <CadastroForm key={`${recurso.path}-novo`} recurso={recurso} registro={null} opcoesCampo={opcoesCampo} salvando={salvando} onSubmit={salvar} onCancel={() => setSelecionado(null)} />
+      <FormularioDinamicoContainer
+        key={`${recurso.path}-novo`}
+        dominio={recurso.path}
+        operacao="adicionar"
+        campos={configuracoesCampos}
+        textoSalvar="Cadastrar"
+        textoSalvando="Salvando..."
+        onSubmit={salvar}
+        onCancel={() => setSelecionado(null)}
+      />
     </div>}
 
     <div className="card table-card">
@@ -193,27 +205,6 @@ export default function Cadastros() {
       </table></div>
     </div>
   </>;
-}
-
-function CadastroForm({ recurso, registro, opcoesCampo, salvando, onSubmit, onCancel }: {
-  recurso: RecursoCadastro;
-  registro: RegistroCadastro | null;
-  opcoesCampo: (campo: RecursoCadastro["fields"][number]) => { value: string; label: string }[];
-  salvando: boolean;
-  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
-  onCancel: () => void;
-}) {
-  return <form onSubmit={onSubmit}>
-    <div className="form-grid">
-      {recurso.fields.map(campo => {
-        const value = registro?.[campo.name];
-        if (campo.type === "checkbox") return <label className="document-toggle" key={campo.name}><input type="checkbox" name={campo.name} defaultChecked={registro ? value !== false : true} /> {campo.label}</label>;
-        if (campo.type === "select") return <label key={campo.name}>{campo.label}<select name={campo.name} defaultValue={value == null ? "" : String(value)} required={campo.required}><option value="">Selecione</option>{opcoesCampo(campo).map(option => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>;
-        return <label key={campo.name}>{campo.label}<input name={campo.name} type={campo.type ?? "text"} defaultValue={campo.type === "password" ? "" : String(value ?? "")} required={campo.name === "senha" && registro ? false : campo.required} maxLength={campo.maxLength} minLength={campo.type === "password" && !registro ? 3 : undefined} autoComplete={campo.type === "password" ? "new-password" : undefined} placeholder={campo.type === "password" && registro ? "Deixe vazio para manter a senha atual" : undefined} /></label>;
-      })}
-    </div>
-    <div className="form-actions"><button type="button" className="btn outline" onClick={onCancel} disabled={salvando}>Cancelar</button><button type="submit" className="btn primary" disabled={salvando}>{salvando ? "Salvando..." : registro ? "Salvar alterações" : "Cadastrar"}</button></div>
-  </form>;
 }
 
 function Message({ children }: { children: string }) {

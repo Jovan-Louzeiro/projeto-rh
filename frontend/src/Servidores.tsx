@@ -3,10 +3,7 @@ import type { Servidor } from "./types";
 /**
  * URL base da API
  */
-const apiUrl = (
-  import.meta.env.VITE_API_URL ??
-  "http://192.168.18.218:3000"
-).replace(/\/$/, "");
+const apiUrl = (import.meta.env.VITE_API_URL ?? "").replace(/\/$/, "");
 
 /**
  * Endpoint de servidores
