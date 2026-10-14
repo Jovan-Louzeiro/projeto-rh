@@ -2,7 +2,7 @@
 
 const API_URL = (
   import.meta.env.VITE_API_URL ??
-  "https://projeto-rh-sj48.onrender.com"
+  "http://192.168.18.218:3000"
 ).replace(/\/$/, "");
 
 const TOKEN_KEY = "rh_access_token";

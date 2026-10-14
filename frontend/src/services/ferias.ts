@@ -3,7 +3,7 @@ import type { Ferias } from "../types";
 
 const apiUrl = (
   import.meta.env.VITE_API_URL ??
-  "https://projeto-rh-sj48.onrender.com"
+  "http://192.168.18.218:3000"
 ).replace(/\/$/, "");
 
 const endpoint = `${apiUrl}/api/ferias`;
