@@ -1,14 +1,14 @@
 import { isValid, parse } from "date-fns";
 import z, { ZodType } from "zod";
 import { validarCpf } from "@/utils/validators.js";
-
 export class CrudSchemas {
+    
     public params: ZodType;
 
     constructor(params?: ZodType) {
         this.params = params ?? this.getParams();
     }
-
+    
     getParams(): z.ZodType {
         return z.strictObject({
             id: z.coerce
@@ -31,7 +31,21 @@ export class CrudSchemas {
             .positive(`O id do ${nome} deve ser positivo`);
     }
 
+    stringSchema(
+        nome: string,
+        minimo?: number,
+        maximo?: number
+    ): z.ZodString;
+
+    stringSchema(
+        nome: string,
+        minimo: number | undefined,
+        maximo: number | undefined,
+        opcional: true
+    ): z.ZodOptional<z.ZodString>;
+
     stringSchema(nome: string, minimo?: number, maximo?: number, opcional = false) {
+
 
         let schema = z
             .string(`O ${nome} deve ser uma String`)

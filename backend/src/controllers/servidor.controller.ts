@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import type { Request, Response } from "express";
 import { ServidorService } from "@/services/servidor.service.js";
 import { CrudController } from "@/controllers/crud.controller.js";
 
@@ -14,7 +14,7 @@ export class ServidorController extends CrudController{
 
     detalharDocumentos = async (req: Request, res: Response) => {
 
-        const id = Number(req.params[this.parametroId])
+        const id = Number(req.params[this.parametroId.procurar])
 
         const resposta = await this.servidorService.detalhar(id);
 

@@ -7,11 +7,7 @@ export class ContatoService<TCreate, TUpdate> extends RegistrosServidorServices<
         super(
             prisma.contato,
             "Contato",
-            {
-                procurar: "id_contato",
-                deletar: "id_contato",
-                atualizar: "id_contato"
-            }
+            "id_contato"
         )
     }
 

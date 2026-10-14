@@ -2,10 +2,11 @@ import { prisma } from "@/lib/prisma.js";
 
 import { DocumentosCadastraisServices } from "@/services/registros_servidor/documentos_cadastrais/documentosCadastrais.service.js";
 
-import {
+import type {
     CertidaoCreate,
     CertidaoUpdate
 } from "@/schemas/registros_servidor/documentos_cadastrais/certidao.schemas.js";
+
 export class CertidaoService extends DocumentosCadastraisServices<CertidaoCreate, CertidaoUpdate> {
 
     constructor() {
@@ -15,7 +16,7 @@ export class CertidaoService extends DocumentosCadastraisServices<CertidaoCreate
         );
     }
 
-    async atualizar(id: number, usuario: string, data: CertidaoUpdate) {
+    async atualizar(usuario: string, id: number,  data: CertidaoUpdate) {
 
         if (data.nova_certidao) {
             data.termo = null;
@@ -23,6 +24,6 @@ export class CertidaoService extends DocumentosCadastraisServices<CertidaoCreate
             data.livro = null;
         }
 
-        return super.atualizar(id, usuario, data);
+        return super.atualizar(usuario, id, data);
     }
 }

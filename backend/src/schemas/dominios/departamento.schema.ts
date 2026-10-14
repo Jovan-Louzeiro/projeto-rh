@@ -1,3 +1,4 @@
+import z from "zod";
 import { DominioSchemas } from "@/schemas/dominios/dominos.schema.js";
 
 export class DepartamentoSchemas extends DominioSchemas {
@@ -22,3 +23,11 @@ export class DepartamentoSchemas extends DominioSchemas {
             );
     }
 }
+
+export type DepartamentoCreate = z.infer<
+    DepartamentoSchemas["adicionar"]
+>
+
+export type DepartamentoUpdate = z.infer<
+    DepartamentoSchemas["atualizar"]
+>

@@ -144,3 +144,11 @@ export class ServidorSchemas extends CrudSchemas {
 
     }
 }
+
+export type ServidorCreate = z.infer<
+    ServidorSchemas["adicionar"]
+>
+
+export type ServidorUpdate = z.infer<
+    ServidorSchemas["atualizar"]
+>

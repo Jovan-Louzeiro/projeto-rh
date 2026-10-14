@@ -1,19 +1,16 @@
 import { RegistrosServidorController } from "@/controllers/registros_servidor/registrosServidor.controller.js";
-import { obterUsuario } from "@/middlewares/auth.js";
 import { ContatoService } from "@/services/registros_servidor/contato.service.js";
-import { Request, Response } from "express";
-import { number } from "zod";
+import type { Request, Response } from "express";
+import type { ContatoCreate, ContatoUpdate } from "@/schemas/registros_servidor/contato.schemas.js";
 
-export class ContatoController extends RegistrosServidorController<ContatoService<any, any>> {
+export class ContatoController extends RegistrosServidorController<
+    ContatoService<ContatoCreate, ContatoUpdate>
+> {
 
     constructor() {
         super(
-            new ContatoService(),
-            {
-                procurar: "id",
-                atualizar: "id",
-                deletar: "id",
-            }
+            new ContatoService<ContatoCreate, ContatoUpdate>(),
+            "id"
         );
     }
 
@@ -21,7 +18,7 @@ export class ContatoController extends RegistrosServidorController<ContatoServic
         const id_servidor = Number(req.params.idServidor);
 
         const resposta =
-            await this.service.listarPorUsuario(id_servidor);
+            await this.service.listarPorServidor(id_servidor);
 
         return res.json(resposta);
     };

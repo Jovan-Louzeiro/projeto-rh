@@ -29,3 +29,11 @@ export class MunicipioSchema extends CrudSchemas {
             );
     }
 }
+
+export type MunicipioCreate = z.infer<
+    MunicipioSchema["adicionar"]
+>
+
+export type MunicipioUpdate = z.infer<
+    MunicipioSchema["atualizar"]
+>

@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma.js";
-import { CtpsCreate, CtpsUpdate } from "@/schemas/registros_servidor/documentos_cadastrais/ctps.schemas.js";
+import type { CtpsCreate, CtpsUpdate } from "@/schemas/registros_servidor/documentos_cadastrais/ctps.schemas.js";
 import { DocumentosCadastraisServices } from "@/services/registros_servidor/documentos_cadastrais/documentosCadastrais.service.js";
 
 export class CtpsService extends DocumentosCadastraisServices<CtpsCreate, CtpsUpdate>{
@@ -11,7 +11,7 @@ export class CtpsService extends DocumentosCadastraisServices<CtpsCreate, CtpsUp
         )
     }
 
-    async atualizar(id: number, usuario: string, data: CtpsUpdate){
+    async atualizar(usuario: string, id: number,  data: CtpsUpdate){
         
         if(data.tipo_ctps == "NOVO"){
             data.numero = null,
@@ -19,7 +19,7 @@ export class CtpsService extends DocumentosCadastraisServices<CtpsCreate, CtpsUp
             data.uf_ctps_id = null
         }
 
-        return super.atualizar(id, usuario, data)
+        return super.atualizar(usuario, id, data)
     }
 
 }

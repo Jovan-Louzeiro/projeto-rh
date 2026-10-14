@@ -32,3 +32,11 @@ export class EstadoSchemas extends CrudSchemas{
     }
 
 }
+
+export type EstadoCreate = z.infer<
+    EstadoSchemas["adicionar"]
+>
+
+export type EstadoUpdate = z.infer<
+    EstadoSchemas["atualizar"]
+>

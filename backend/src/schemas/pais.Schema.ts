@@ -30,3 +30,11 @@ export class PaisSchemas extends CrudSchemas{
     }
 
 }
+
+export type PaisCreate = z.infer<
+    PaisSchemas["adicionar"]
+>
+
+export type PaisUpdate = z.infer<
+    PaisSchemas["atualizar"]
+>

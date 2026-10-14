@@ -27,3 +27,11 @@ export class TituloEleitorSchemas extends DocumentosCadastraisSchema {
         this.atualizar = baseSchema;
     }
 }
+
+export type TituloEleitorCreate = z.infer<
+    TituloEleitorSchemas["adicionar"]
+>
+
+export type TituloEleitorUpdate = z.infer<
+    TituloEleitorSchemas["atualizar"]
+>

@@ -22,3 +22,11 @@ export class CnhSchemas extends DocumentosCadastraisSchema {
         this.atualizar = baseSchema;
     }
 }
+
+export type CnhCreate = z.infer<
+    CnhSchemas["adicionar"]
+>
+
+export type CnhUpdate = z.infer<
+    CnhSchemas["atualizar"]
+>

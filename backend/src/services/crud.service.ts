@@ -5,11 +5,11 @@ export type ParametrosController = {
     procurar?: string;
     atualizar?: string;
     deletar?: string;
-};
+} | string;
 
 export class CRUDServices<TCreate, TUpdate> {
 
-    protected readonly idField: Required<ParametrosController>
+    protected readonly idField: Required<Exclude<ParametrosController, string>>;
 
     constructor(
         protected readonly prismaModel: prismaModel,
@@ -21,7 +21,13 @@ export class CRUDServices<TCreate, TUpdate> {
             procurar: "id",
             atualizar: "id",
             deletar: "id",
-            ...parametros
+            ...(typeof parametros === "string"
+                ? {
+                    procurar: parametros,
+                    atualizar: parametros,
+                    deletar: parametros,
+                }
+                : parametros),
         }
 
     }
@@ -57,7 +63,7 @@ export class CRUDServices<TCreate, TUpdate> {
         })
     }
 
-    async atualizar(id: number, usuario: string, data: TUpdate, idField=this.idField.atualizar) {
+    async atualizar(usuario: string, id: number, data: TUpdate, idField=this.idField.atualizar) {
 
         await this.procurar(id, idField)
 

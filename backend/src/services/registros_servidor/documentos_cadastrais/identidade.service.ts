@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma.js";
-import { IdentidadeCreate, IdentidadeUpdate } from "@/schemas/registros_servidor/documentos_cadastrais/identidade.schemas.js";
+import type { IdentidadeCreate, IdentidadeUpdate } from "@/schemas/registros_servidor/documentos_cadastrais/identidade.schemas.js";
 import { DocumentosCadastraisServices } from "@/services/registros_servidor/documentos_cadastrais/documentosCadastrais.service.js";
 
 export class IdentidadeService extends DocumentosCadastraisServices<IdentidadeCreate, IdentidadeUpdate>{
@@ -11,7 +11,7 @@ export class IdentidadeService extends DocumentosCadastraisServices<IdentidadeCr
         )
     }
 
-    async atualizar (id: number, usuario: string, data: IdentidadeUpdate){
+    async atualizar (usuario: string, id: number, data: IdentidadeUpdate){
 
         console.log(data)
         
@@ -21,7 +21,7 @@ export class IdentidadeService extends DocumentosCadastraisServices<IdentidadeCr
 
         console.log(data)
 
-        return super.atualizar(id, usuario, data)
+        return super.atualizar(usuario, id, data)
     }
 
 }

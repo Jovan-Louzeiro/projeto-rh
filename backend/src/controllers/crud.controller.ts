@@ -6,12 +6,14 @@ export type ParametrosController = {
     procurar?: string;
     atualizar?: string;
     deletar?: string;
-};
+} | string;
 
-export class CrudController< TService extends CRUDServices<any, any> = CRUDServices<any, any>>{
+export class CrudController<
+    TService extends CRUDServices<any, any> = CRUDServices<any, any>
+>{
     
     nome: string
-    protected readonly parametroId: Required<ParametrosController>;
+    protected readonly parametroId: Required<Exclude<ParametrosController, string>>;
 
     constructor(
         protected readonly service: TService,
@@ -21,8 +23,15 @@ export class CrudController< TService extends CRUDServices<any, any> = CRUDServi
             procurar: "id",
             atualizar: "id",
             deletar: "id",
-            ...parametros
+            ...(typeof parametros === "string"
+                ? {
+                    procurar: parametros,
+                    atualizar: parametros,
+                    deletar: parametros,
+                }
+                : parametros),
         }
+
         this.nome = service.nome
     }
 
@@ -62,7 +71,7 @@ export class CrudController< TService extends CRUDServices<any, any> = CRUDServi
 
         const usuario = obterUsuario(req)
 
-        const resposta = await this.service.atualizar( id, usuario.nome, req.body);
+        const resposta = await this.service.atualizar( usuario.nome, id, req.body);
 
         return res.json({
             mensagem: `${this.nome} atualizado com sucesso`,

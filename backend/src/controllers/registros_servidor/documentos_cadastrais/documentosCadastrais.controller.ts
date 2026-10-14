@@ -1,12 +1,15 @@
-import { DocumentosCadastraisServices } from "@/services/registros_servidor/documentos_cadastrais/documentosCadastrais.service.js";
+import type { DocumentosCadastraisServices } from "@/services/registros_servidor/documentos_cadastrais/documentosCadastrais.service.js";
 import { RegistrosServidorController } from "@/controllers/registros_servidor/registrosServidor.controller.js";
 
-export class DocumentosCadastraisController extends RegistrosServidorController {
+export class DocumentosCadastraisController<
+    TService extends DocumentosCadastraisServices<any, any> =
+        DocumentosCadastraisServices<any, any>
+> extends RegistrosServidorController<TService> {
 
-    constructor(DocumentoService: DocumentosCadastraisServices<any, any>) {
+    constructor(documentoService: TService) {
 
         super(
-            DocumentoService,
+            documentoService,
             {
                 procurar: "idServidor",
                 atualizar: "idServidor",

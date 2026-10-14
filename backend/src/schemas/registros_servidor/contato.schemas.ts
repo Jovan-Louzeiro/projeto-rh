@@ -68,3 +68,11 @@ export class ContatoSchema extends RegistrosServidorSchema {
 this.atualizar = contatoSchema;
     }
 }
+
+export type ContatoCreate = z.infer<
+    ContatoSchema["adicionar"]
+>
+
+export type ContatoUpdate = z.infer<
+    ContatoSchema["atualizar"]
+>

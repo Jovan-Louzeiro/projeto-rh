@@ -1,17 +1,21 @@
-import { Request, Response } from "express";
-import { DocumentosCadastraisServices } from "@/services/registros_servidor/documentos_cadastrais/documentosCadastrais.service.js";
-import { CrudController, ParametrosController } from "@/controllers/crud.controller.js";
-import { RegistrosServidorServices } from "@/services/registros_servidor/registrosServidor.service.js";
+import type { Request, Response } from "express";
+import { CrudController } from "@/controllers/crud.controller.js";
+import type { ParametrosController } from "@/controllers/crud.controller.js";
 import { obterUsuario } from "@/middlewares/auth.js";
 import { CRUDServices } from "@/services/crud.service.js";
 
-export class RegistrosServidorController<TService extends CRUDServices<any, any>> extends CrudController<TService> {
+export class RegistrosServidorController<
+    TService extends CRUDServices<any, any>
+> extends CrudController<TService> {
 
     constructor(
         registroServidorService: TService,
         parametroId?: ParametrosController
     ) {
-        super(registroServidorService, parametroId);
+        super(
+            registroServidorService,
+            parametroId
+        );
     }
 
     adicionar = async (req: Request, res: Response) => {

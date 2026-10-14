@@ -15,7 +15,7 @@ export class RegistrosServidorServices<TCreate, TUpdate> extends CRUDServices<TC
     constructor(
         prismaModel: prismaModel,
         nome: string,
-        parametros?: ParametrosController
+        parametros?: ParametrosController | string
     ){
         super(
             prismaModel,
@@ -31,7 +31,7 @@ export class RegistrosServidorServices<TCreate, TUpdate> extends CRUDServices<TC
         return super.adicionar(usuario, data);
     }
 
-    async listarPorUsuario(id_servidor: number){
+    async listarPorServidor(id_servidor: number){
 
         await new ServidorService().procurar(id_servidor, "id_servidor");
 
