@@ -1,34 +1,14 @@
 import { prismaModel } from "@/types/crud.types.js";
 import { RegistroNaoEncontradoError } from "@/errors/dominios.errors.js";
 
-export type ParametrosController = {
-    procurar?: string;
-    atualizar?: string;
-    deletar?: string;
-} | string;
 
 export class CRUDServices<TCreate, TUpdate> {
-
-    protected readonly idField: Required<Exclude<ParametrosController, string>>;
 
     constructor(
         protected readonly prismaModel: prismaModel,
         public readonly nome: string,
-        parametros: ParametrosController = {}
+        protected idField: string
     ) {
-
-        this.idField = {
-            procurar: "id",
-            atualizar: "id",
-            deletar: "id",
-            ...(typeof parametros === "string"
-                ? {
-                    procurar: parametros,
-                    atualizar: parametros,
-                    deletar: parametros,
-                }
-                : parametros),
-        }
 
     }
 
@@ -40,7 +20,7 @@ export class CRUDServices<TCreate, TUpdate> {
     });
 }
 
-    async procurar(id: number, idField=this.idField.procurar) {
+    async procurar(id: number, idField=this.idField) {
         const resultado = await this.prismaModel.findUnique({
             where: {
                 [idField]: id
@@ -63,13 +43,13 @@ export class CRUDServices<TCreate, TUpdate> {
         })
     }
 
-    async atualizar(usuario: string, id: number, data: TUpdate, idField=this.idField.atualizar) {
+    async atualizar(usuario: string, id: number, data: TUpdate, idField=this.idField) {
 
-        await this.procurar(id, idField)
+        await this.procurar(id)
 
         console.log(`${this.nome} id:${id} foi atualizado por ${usuario}`)
 
-        return this.prismaModel.update({
+        return await this.prismaModel.update({
             where: {
                 [idField]: id
             },
@@ -78,7 +58,7 @@ export class CRUDServices<TCreate, TUpdate> {
 
     }
 
-    async deletar(id: number, usuario: string, idField=this.idField.deletar) {
+    async deletar(id: number, usuario: string, idField=this.idField) {
         await this.procurar(id)
 
         console.log(`${this.nome} id:${id} foi apagado por ${usuario}`)

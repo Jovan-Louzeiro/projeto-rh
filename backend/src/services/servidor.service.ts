@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma.js";
 import type { ServidorCreate, ServidorUpdate } from "@/schemas/servidor.schemas.js";
 import { RegistroNaoEncontradoError } from "@/errors/dominios.errors.js";
 import { CRUDServices } from "@/services/crud.service.js";
+import { includes } from "zod";
 
 export class ServidorService extends CRUDServices<ServidorCreate, ServidorUpdate>{
 
@@ -11,6 +12,17 @@ export class ServidorService extends CRUDServices<ServidorCreate, ServidorUpdate
             "Servidor",
             "id_servidor"
         )
+    }
+
+    async contarServidoresAtivos(){
+
+        const resultado = await prisma.servidor.count({
+            where: {
+                ativo: true
+            }
+        })
+
+        return resultado
     }
 
     async detalhar(id: number){
@@ -23,7 +35,8 @@ export class ServidorService extends CRUDServices<ServidorCreate, ServidorUpdate
                         cnh: true,
                         ctps: true,
                         identidade: true,
-                        titulo_eleitor: true
+                        titulo_eleitor: true,
+                        contatos: true
                     }
                 })
         
@@ -42,6 +55,7 @@ export class ServidorService extends CRUDServices<ServidorCreate, ServidorUpdate
             ctps,
             identidade,
             titulo_eleitor,
+            contatos,
             ...dadosServidor
         } = data
 
@@ -67,7 +81,19 @@ export class ServidorService extends CRUDServices<ServidorCreate, ServidorUpdate
 
                 titulo_eleitor: titulo_eleitor
                     ? {create: titulo_eleitor}
+                    : undefined,
+
+                contatos: contatos
+                    ? {create: contatos}
                     : undefined
+            },
+            includes: {
+                certidao: true,
+                cnh: true,
+                ctps: true,
+                identidade: true,
+                titulo_eleitor: true,
+                contatos: true
             }
         })
 

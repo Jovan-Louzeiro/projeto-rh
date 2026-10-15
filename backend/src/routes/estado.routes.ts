@@ -2,12 +2,15 @@ import { EstadoController } from "@/controllers/estado.controller.js";
 import { EstadoSchemas } from "@/schemas/estado.schema.js";
 import { CrudRoutes } from "@/routes/crud.routes.js";
 
-export class EstadoRouter extends CrudRoutes<EstadoSchemas>{
+export class EstadoRouter extends CrudRoutes<EstadoController>{
 
     constructor(){
         super(
-            new EstadoController(),
-            new EstadoSchemas()
+            new EstadoController()
         )
+
+        this.registrarSchema()
+        this.registrarRotasCrud()
+
     }
 }

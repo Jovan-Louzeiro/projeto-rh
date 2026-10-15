@@ -5,8 +5,7 @@ import { DominiosRoutes } from "@/routes/dominios/dominio-base.routes.js";
 export class LocalizacaoDiferenciadaRouter extends DominiosRoutes{
     constructor(){
         super(
-            new LocalizacaoDiferenciadaController(),
-            new DominioSchemas(50)
+            new LocalizacaoDiferenciadaController()
     )
     }
 }

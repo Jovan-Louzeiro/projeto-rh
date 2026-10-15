@@ -1,9 +1,12 @@
 import { EstadoService } from "@/services/estado.service.js";
 import { CrudController } from "@/controllers/crud.controller.js";
-import type { EstadoCreate, EstadoUpdate } from "@/schemas/estado.schema.js";
+import { EstadoCreate, EstadoSchemas, EstadoUpdate } from "@/schemas/estado.schema.js";
 
-export class EstadoController extends CrudController<EstadoService<EstadoCreate, EstadoUpdate>>{
+export class EstadoController extends CrudController<EstadoService, EstadoSchemas>{
     constructor(){
-        super(new EstadoService<EstadoCreate, EstadoUpdate>())
+        super(
+            new EstadoService(),
+            new EstadoSchemas()
+        )
     }
 }

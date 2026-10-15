@@ -5,8 +5,7 @@ import { DominiosRoutes } from "@/routes/dominios/dominio-base.routes.js";
 export class RacaCorRouter extends DominiosRoutes{
     constructor(){
         super(
-            new RacaCorController(),
-            new DominioSchemas(10)
+            new RacaCorController()
     )
     }
 }

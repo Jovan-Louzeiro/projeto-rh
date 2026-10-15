@@ -5,8 +5,7 @@ import { DominiosRoutes } from "@/routes/dominios/dominio-base.routes.js";
 export class TipoVinculoRouter extends DominiosRoutes{
     constructor(){
         super(
-            new TipoVinculoController(),
-            new DominioSchemas(50)
+            new TipoVinculoController()
     )
     }
 }

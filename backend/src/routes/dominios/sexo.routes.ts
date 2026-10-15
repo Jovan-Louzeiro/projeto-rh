@@ -5,8 +5,7 @@ import { DominiosRoutes } from "@/routes/dominios/dominio-base.routes.js";
 export class SexoRouter extends DominiosRoutes{
     constructor(){
         super(
-            new SexoController(),
-            new DominioSchemas(10)
+            new SexoController()
     )
     }
 }

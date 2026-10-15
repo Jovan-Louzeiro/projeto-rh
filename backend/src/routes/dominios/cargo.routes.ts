@@ -6,7 +6,6 @@ export class CargoRouter extends DominiosRoutes{
     constructor(){
         super(
             new CargoController(),
-            new DominioSchemas(50)
     )
     }
 }

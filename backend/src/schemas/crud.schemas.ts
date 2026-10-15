@@ -1,14 +1,32 @@
 import { isValid, parse } from "date-fns";
 import z, { ZodType } from "zod";
 import { validarCpf } from "@/utils/validators.js";
+import type { ParamsDictionary } from "express-serve-static-core";
 export class CrudSchemas {
-    
+
     public params: ZodType;
+
+    public adicionar: ZodType;
+    public atualizar: ZodType;
 
     constructor(params?: ZodType) {
         this.params = params ?? this.getParams();
+
+        this.adicionar = z.object()
+
+        this.atualizar = z.object()
     }
-    
+
+    parseParams(parametros: ParamsDictionary) {
+        return z.record(
+            z.string(),
+            z.coerce
+                .number()
+                .int("O ID deve ser um número inteiro")
+                .positive("O ID deve ser positivo")
+        ).parse(parametros);
+    }
+
     getParams(): z.ZodType {
         return z.strictObject({
             id: z.coerce

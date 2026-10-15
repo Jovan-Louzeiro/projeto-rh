@@ -3,23 +3,24 @@ import { autorizar } from "@/middlewares/auth.js";
 import { validate } from "@/middlewares/validate.js";
 import { ServidorSchemas } from "@/schemas/servidor.schemas.js";
 import { CrudRoutes } from "@/routes/crud.routes.js";
-import { CertidaoRouter } from "@/routes/registros_servidor/documentos_cadastrais/certidao.routes.js";
-import { CnhRouter } from "@/routes/registros_servidor/documentos_cadastrais/cnh.routes.js";
-import { CtpsRouter } from "@/routes/registros_servidor/documentos_cadastrais/ctps.routes.js";
-import { IdentidadeRouter } from "@/routes/registros_servidor/documentos_cadastrais/identidade.routes.js";
-import { TituloEleitorRouter } from "@/routes/registros_servidor/documentos_cadastrais/tituloEleitor.routes.js";
-import { ContatoRouter } from "@/routes/registros_servidor/contato.routes.js";
+import { CertidaoRouter } from "@/routes/documentos/certidao.routes.js";
+import { CnhRouter } from "@/routes/documentos/cnh.routes.js";
+import { CtpsRouter } from "@/routes/documentos/ctps.routes.js";
+import { IdentidadeRouter } from "@/routes/documentos/identidade.routes.js";
+import { TituloEleitorRouter } from "@/routes/documentos/tituloEleitor.routes.js";
+import { ContatoRouter } from "@/routes/contato.routes.js";
 
-export class ServidorRouter extends CrudRoutes<ServidorSchemas>{
+export class ServidorRouter extends CrudRoutes<ServidorController>{
 
-    constructor(private readonly servidorController = new ServidorController){
+    constructor(){
         super(
-            servidorController,
-            new ServidorSchemas(),
+            new ServidorController(),
             undefined,
             "idServidor"
         )
 
+        this.registrarRotasCrud()
+        
         this.registrosServidor()
 
         this.outrosMetodos()
@@ -27,11 +28,17 @@ export class ServidorRouter extends CrudRoutes<ServidorSchemas>{
     }
 
     private outrosMetodos(): void {
+
         this.router.get(
-            `/:${this.parametroId}/detalharDocumentos`,
+            `/contarServidoresAtivos`,
             autorizar(...this.autorizacoes.procurar),
-            validate(this.schema.params, "params"),
-            this.servidorController.detalharDocumentos
+            this.controller.contarServidoresAtivos
+        )
+
+        this.router.get(
+            `/:${this.parametroId}/detalhar`,
+            autorizar(...this.autorizacoes.procurar),
+            this.controller.detalhar
         )
     }
 

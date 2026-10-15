@@ -5,8 +5,7 @@ import { DominiosRoutes } from "@/routes/dominios/dominio-base.routes.js";
 export class ZonaEnderecoRouter extends DominiosRoutes{
     constructor(){
         super(
-            new ZonaEnderecoController(),
-            new DominioSchemas(10)
+            new ZonaEnderecoController()
     )
     }
 }

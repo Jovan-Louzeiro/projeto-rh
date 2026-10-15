@@ -5,8 +5,7 @@ import { DominiosRoutes } from "@/routes/dominios/dominio-base.routes.js";
 export class TipoEnsinoMedioCursadoRouter extends DominiosRoutes{
     constructor(){
         super(
-            new TipoEnsinoMedioCursadoController(),
-            new DominioSchemas(50)
+            new TipoEnsinoMedioCursadoController()
     )
     }
 }

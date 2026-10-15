@@ -5,8 +5,7 @@ import { DominiosRoutes } from "@/routes/dominios/dominio-base.routes.js";
 export class GeneroRouter extends DominiosRoutes{
     constructor(){
         super(
-            new GeneroController(),
-            new DominioSchemas(20)
+            new GeneroController()
     )
     }
 }

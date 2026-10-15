@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma.js";
 import { DominioServices } from "@/services/dominios/dominios.service.js";
 
-export class SexoService<TCreate, TUpdate> extends DominioServices<TCreate, TUpdate> {
+export class SexoService extends DominioServices{
     constructor(){
         super(
             prisma.sexo,

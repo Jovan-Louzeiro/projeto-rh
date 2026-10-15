@@ -1,15 +1,15 @@
 import { PaisService } from "@/services/pais.service.js";
 import { CrudController } from "@/controllers/crud.controller.js";
+import { PaisSchemas } from "@/schemas/pais.Schema.js";
 
-export class PaisController extends CrudController{
-
-    private paisService: PaisService
+export class PaisController extends CrudController<PaisService, PaisSchemas>{
 
     constructor(){
-        const service = new PaisService()
 
-        super(service)
+        super(
+            new PaisService(),
+            new PaisSchemas()
+        )
 
-        this.paisService = service
     }
 }

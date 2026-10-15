@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/prisma.js"
+import { EstadoCreate, EstadoUpdate } from "@/schemas/estado.schema.js"
 import { CRUDServices } from "@/services/crud.service.js"
 
-export class EstadoService <TCreate, TUpdate> extends CRUDServices <TCreate, TUpdate>{
+export class EstadoService extends CRUDServices <EstadoCreate, EstadoUpdate>{
 
     constructor(){
         super(

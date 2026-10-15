@@ -5,8 +5,7 @@ import { DominiosRoutes } from "@/routes/dominios/dominio-base.routes.js";
 export class EscolaridadeRouter extends DominiosRoutes{
     constructor(){
         super(
-            new EscolaridadeController(),
-            new DominioSchemas(50)
+            new EscolaridadeController()
     )
     }
 }

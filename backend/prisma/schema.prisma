@@ -325,12 +325,12 @@ model ServidorCursoFormacaoContinuada {
 model Contato {
   id_contato   Int         @id @default(autoincrement())
   tipo_contato TipoContato
-  contato      String      @unique @db.VarChar(150)
+  contato      String      @db.VarChar(150)
   principal    Boolean     @default(false)
   ativo        Boolean     @default(true)
 
   servidor_id Int
-  servidor    Servidor @relation(fields: [servidor_id], references: [id_servidor])
+  servidor    Servidor @relation(fields: [servidor_id], references: [id_servidor], onDelete: Cascade)
 }
 
 model HistoricoFuncional {

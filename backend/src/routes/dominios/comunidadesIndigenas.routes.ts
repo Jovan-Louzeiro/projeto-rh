@@ -6,7 +6,6 @@ export class comunidadeIndigenaRoutes extends DominiosRoutes{
     constructor(){
         super(
             new ComunidadeIndigenaController(),
-            new DominioSchemas(50)
         )
     }
 }

@@ -1,18 +1,17 @@
-import { Router } from "express";
+import { Request, Response, Router } from "express";
 import { Autorizacoes, autorizacoesPadrao, CrudSchema } from "@/types/crud.types.js";
 import { autorizar } from "@/middlewares/auth.js";
 import { validate } from "@/middlewares/validate.js";
 import { CrudController } from "@/controllers/crud.controller.js";
 import z from "zod";
 
-export class CrudRoutes<TSchema extends CrudSchema> {
+export class CrudRoutes<TController extends CrudController<any, any>> {
 
     public readonly router: Router;
     protected readonly autorizacoes: Autorizacoes;
 
     constructor(
-        protected controller: CrudController,
-        protected readonly schema: TSchema,
+        protected controller: TController,
         autorizacoes?: Partial<Autorizacoes>,
         protected readonly parametroId = "id"
     ) {
@@ -21,88 +20,92 @@ export class CrudRoutes<TSchema extends CrudSchema> {
             ...autorizacoes
         }
 
-        this.router = Router();
 
-        this.registrarSchema();
+        this.router = Router({ mergeParams: true });
 
-        this.registrar();
+        this.registrarPermissoes()
     }
 
-    protected registrar(): void {
+    protected registrarRotasCrud(): void {
+
+        this.registrarListar()
+        this.registrarProcurar()
+        this.registrarAdicionar()
+        this.registrarAtualizar()
+        this.registrarDeletar()
+
+    }
+
+    protected registrarListar(): void {
 
         this.router.get(
             "/",
             autorizar(...this.autorizacoes.listar),
             this.controller.listar
         );
+    }
+
+    protected registrarProcurar(): void {
 
         this.router.get(
             `/:${this.parametroId}`,
             autorizar(...this.autorizacoes.procurar),
-            validate(this.schema.params, "params"),
-            this.controller.procurar
+            this.controller.procurarContato
         );
+
+    }
+
+    protected registrarAdicionar() {
 
         this.router.post(
             "/",
             autorizar(...this.autorizacoes.adicionar),
-            validate(this.schema.adicionar, "body"),
             this.controller.adicionar
         );
+
+    }
+
+
+    protected registrarAtualizar() {
 
         this.router.patch(
             `/:${this.parametroId}`,
             autorizar(...this.autorizacoes.atualizar),
-            validate(this.schema.params, "params"),
-            validate(this.schema.atualizar, "body"),
             this.controller.atualizar
         );
+
+    }
+
+    protected registrarDeletar() {
 
         this.router.delete(
             `/:${this.parametroId}`,
             autorizar(...this.autorizacoes.deletar),
-            validate(this.schema.params, "params"),
             this.controller.deletar
         );
     }
 
-
-    protected registrarSchema(): void {
+    protected registrarSchema(rotaSchema = "/schemas"): void {
         this.router.get(
-            "/schemas",
+            rotaSchema,
             autorizar(...this.autorizacoes.listar),
-            (req, res, next) => {
-                try {
-                    const operacao = req.query.operacao;
-
-                    if (
-                        operacao !== "adicionar" &&
-                        operacao !== "atualizar"
-                    ) {
-                        res.status(400).json({
-                            erro: "A operação deve ser adicionar ou atualizar"
-                        });
-                        return;
-                    }
-
-                    const schema =
-                        operacao === "adicionar"
-                            ? this.schema.adicionar
-                            : this.schema.atualizar;
-
-                    const jsonSchema = z.toJSONSchema(schema, {
-                        unrepresentable: "any"
-                    });
-
-                    res.json({
-                        operacao,
-                        schema: jsonSchema
-                    });
-                } catch (erro) {
-                    next(erro);
-                }
-            }
-        );
+            this.controller.registrarSchema
+        )
     }
+
+    protected registrarPermissoes(rotaPermissoes = "/permissoes"): void{
+
+        this.router.get(
+            rotaPermissoes,
+            autorizar("ADMIN", "RH"),
+            (req: Request, res: Response)=>{
+                return res.status(200).json(
+                    this.autorizacoes
+                )
+            }
+        )
+
+    }
+
 
 }

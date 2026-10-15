@@ -2,20 +2,15 @@ import { PaisController } from "@/controllers/pais.controller.js";
 import { PaisSchemas } from "@/schemas/pais.Schema.js";
 import { CrudRoutes } from "@/routes/crud.routes.js";
 
-export class PaisRoutes extends CrudRoutes<PaisSchemas>{
-
-    private paisController: PaisController
+export class PaisRoutes extends CrudRoutes<PaisController>{
     
-
     constructor(){
 
-        const controller = new PaisController()
-
         super(
-            controller,
-            new PaisSchemas()
+            new PaisController()
         )
 
-        this.paisController = controller
+        this.registrarSchema()
+        this.registrarRotasCrud()
     }
 }

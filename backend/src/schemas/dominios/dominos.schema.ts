@@ -32,3 +32,11 @@ export class DominioSchemas extends CrudSchemas {
             );
     }
 }
+
+export type DominioCreate = z.infer<
+    DominioSchemas["adicionar"]
+>
+
+export type DominioUpdate = z.infer<
+    DominioSchemas["atualizar"]
+>
