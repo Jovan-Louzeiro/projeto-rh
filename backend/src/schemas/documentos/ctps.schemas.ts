@@ -8,6 +8,8 @@ export class CtpsSchemas extends DocumentosSchema {
 
     public readonly atualizar;
 
+    public readonly schemaServidor;
+
     constructor() {
 
         super();
@@ -26,10 +28,12 @@ export class CtpsSchemas extends DocumentosSchema {
             uf_ctps_id: this.idExternoSchema("UF").optional().nullish(),
 
             data_emissao: this.dataSchema("Data de emissão"),
-            
-            servidor_id: this.idExternoSchema("Id do Servidor")
 
         });
+
+        const schemaAdicionar = baseSchema.extend({
+            servidor_id: this.idExternoSchema("Id do Servidor")
+        })
 
         const validarCtps = (
             data: z.infer<typeof baseSchema>,
@@ -96,9 +100,11 @@ export class CtpsSchemas extends DocumentosSchema {
             }
         };
 
-        this.adicionar = baseSchema.superRefine(validarCtps);
+        this.adicionar = schemaAdicionar.superRefine(validarCtps);
 
-        this.atualizar = baseSchema.superRefine(validarCtps);
+        this.atualizar = schemaAdicionar.superRefine(validarCtps);
+
+        this.schemaServidor = baseSchema.superRefine(validarCtps);
     }
 }
 

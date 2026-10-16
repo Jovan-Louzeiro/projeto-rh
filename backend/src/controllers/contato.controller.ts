@@ -19,9 +19,9 @@ export class ContatoController extends CrudController<ContatoService<any, any>, 
 
         const params = this.validarParams(req.params)
 
-        const {id_servidor} = params
+        const {idServidor} = params
 
-        const resposta = await this.service.listarPorServidor(id_servidor);
+        const resposta = await this.service.listarPorServidor(idServidor);
 
         return res.json(resposta);
     };
@@ -45,7 +45,7 @@ export class ContatoController extends CrudController<ContatoService<any, any>, 
 
         const usuario = obterUsuario(req)
 
-        const resposta = await this.service.adicionar(usuario.name, body)
+        const resposta = await this.service.adicionar(usuario.nome, body)
 
         return res.status(201).json({
             mensagem: `${this.nome} cadastrado com sucesso`,

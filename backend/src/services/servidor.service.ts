@@ -87,7 +87,7 @@ export class ServidorService extends CRUDServices<ServidorCreate, ServidorUpdate
                     ? {create: contatos}
                     : undefined
             },
-            includes: {
+            include: {
                 certidao: true,
                 cnh: true,
                 ctps: true,

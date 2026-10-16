@@ -5,6 +5,7 @@ export class CertidaoSchemas extends DocumentosSchema {
 
     public readonly adicionar;
     public readonly atualizar;
+    public readonly schemaServidor;
 
     constructor() {
         super();
@@ -25,8 +26,10 @@ export class CertidaoSchemas extends DocumentosSchema {
 
             livro: this.numeroSchema("Livro", 5).nullish(),
 
-            data_emissao: this.dataSchema("Data de emissão"),
+            data_emissao: this.dataSchema("Data de emissão")
+        });
 
+        const schemaAdicionar = baseSchema.extend({
             servidor_id: this.idExternoSchema("Id do Servidor")
         });
 
@@ -97,15 +100,9 @@ export class CertidaoSchemas extends DocumentosSchema {
             }
         };
 
-        /*
-         * POST
-         */
-        this.adicionar = baseSchema.superRefine(validarCertidao);
-
-        /*
-         * PUT
-         */
-        this.atualizar = baseSchema.superRefine(validarCertidao);
+        this.adicionar = schemaAdicionar.superRefine(validarCertidao);
+        this.atualizar = schemaAdicionar.superRefine(validarCertidao);
+        this.schemaServidor = baseSchema.superRefine(validarCertidao);
     }
 
 

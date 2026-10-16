@@ -129,12 +129,12 @@ export class ServidorSchemas extends CrudSchemas {
 
         this.adicionar = baseSchema.extend({
 
-            certidao: documentos.certidao.adicionar.optional(),
-            cnh: documentos.cnh.adicionar.optional(),
-            ctps: documentos.ctps.adicionar.optional(),
-            identidade: documentos.identidade.adicionar.optional(),
-            titulo_eleitor: documentos.titulo_eleitor.adicionar.optional(),
-            contatos:  z.array(contatos.adicionar.optional())
+            certidao: documentos.certidao.schemaServidor.optional(),
+            cnh: documentos.cnh.schemaServidor.optional(),
+            ctps: documentos.ctps.schemaServidor.optional(),
+            identidade: documentos.identidade.schemaServidor.optional(),
+            titulo_eleitor: documentos.titulo_eleitor.schemaServidor.optional(),
+            contatos:  z.array(contatos.adicionar)
 
         })
 

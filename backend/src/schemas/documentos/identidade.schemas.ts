@@ -9,6 +9,8 @@ export class IdentidadeSchemas extends DocumentosSchema {
 
     public readonly atualizar;
 
+    public readonly schemaServidor;
+
     constructor() {
 
         super();
@@ -43,9 +45,11 @@ export class IdentidadeSchemas extends DocumentosSchema {
                 "Data de Emissão"
             ),
 
-            servidor_id: this.idExternoSchema("Id do Servidor")
-
         });
+
+        const schemaAdicionar = baseSchema.extend({
+            servidor_id: this.idExternoSchema("Id do Servidor")
+        })
 
         const validarIdentidade = (
             data: z.infer<typeof baseSchema>,
@@ -76,9 +80,11 @@ export class IdentidadeSchemas extends DocumentosSchema {
             }
         };
 
-        this.adicionar = baseSchema.superRefine(validarIdentidade);
+        this.adicionar = schemaAdicionar.superRefine(validarIdentidade);
 
-        this.atualizar = baseSchema.superRefine(validarIdentidade);
+        this.atualizar = schemaAdicionar.superRefine(validarIdentidade);
+
+        this.schemaServidor = baseSchema.superRefine(validarIdentidade)
     }
 }
 

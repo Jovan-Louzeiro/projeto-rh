@@ -6,6 +6,7 @@ export class CnhSchemas extends DocumentosSchema {
 
     public readonly adicionar;
     public readonly atualizar;
+    public readonly schemaServidor;
 
     constructor() {
         super();
@@ -21,6 +22,8 @@ export class CnhSchemas extends DocumentosSchema {
         this.adicionar = baseSchema;
 
         this.atualizar = baseSchema;
+
+        this.schemaServidor = baseSchema.partial({servidor_id: true})
     }
 }
 
