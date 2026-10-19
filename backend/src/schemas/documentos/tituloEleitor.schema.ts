@@ -23,7 +23,7 @@ export class TituloEleitorSchemas extends DocumentosSchema {
 
             secao: this.numeroSchema("Seção eleitoral", 4),
 
-            servidor_id: this.idExternoSchema("Id do Servidor")
+            servidor_id: z.number()
 
         });
 

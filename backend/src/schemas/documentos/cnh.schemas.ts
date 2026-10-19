@@ -1,4 +1,4 @@
-import z from "zod";
+import z, { number } from "zod";
 
 import { DocumentosSchema } from "@/schemas/documentos/documentos.schemas.js";
 
@@ -16,7 +16,7 @@ export class CnhSchemas extends DocumentosSchema {
             categoria: this.stringSchema("Categoria", 1, 15),
             data_emissao: this.dataSchema("Data de emissão"),
             data_validade: this.dataSchema("Data de validade"),
-            servidor_id: this.idExternoSchema("Id do Servidor")
+            servidor_id: z.number()
         });
 
         this.adicionar = baseSchema;

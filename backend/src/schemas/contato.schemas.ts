@@ -3,25 +3,13 @@ import { CrudSchemas } from "@/schemas/crud.schemas.js";
 import z from "zod";
 
 export class ContatoSchema extends CrudSchemas {
+    
     public readonly adicionar;
     public readonly atualizar;
 
     constructor() {
 
-        const params = z.object({
-            idServidor: z.coerce
-                .number("Parâmetro inválido")
-                .int("O ID deve ser um número inteiro")
-                .positive("O ID deve ser positivo"),
-
-            id: z.coerce
-                .number("Parâmetro inválido")
-                .int("O ID deve ser um número inteiro")
-                .positive("O ID deve ser positivo")
-                .optional()
-        });
-
-        super(params)
+        super()
 
 
         const camposBase = {

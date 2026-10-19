@@ -14,15 +14,7 @@ export class ServidorSchemas extends CrudSchemas {
 
     constructor() {
 
-        const params = z.strictObject({
-            idServidor: z.coerce
-                .number("Parâmetro inválido")
-                .int("O ID deve ser um número inteiro")
-                .positive("O ID deve ser positivo")
-        });
-
-
-        super(params)
+        super()
 
         const documentos = {
             certidao: new CertidaoSchemas(),

@@ -336,9 +336,6 @@ model Contato {
 model HistoricoFuncional {
   id_historico_funcional Int @id @default(autoincrement())
 
-  servidor_id Int
-  servidor    Servidor @relation(fields: [servidor_id], references: [id_servidor])
-
   matricula_id Int
   matricula    Matricula @relation(fields: [matricula_id], references: [id_matricula])
 
@@ -483,8 +480,6 @@ model Servidor {
   // Dados Funcionais
   situacao_id Int
   situacao    Situacao @relation(fields: [situacao_id], references: [id_situacao])
-
-  historicos_funcionais HistoricoFuncional[]
 
   escolaridade_id Int?
   escolaridade    Escolaridade? @relation(fields: [escolaridade_id], references: [id_escolaridade])

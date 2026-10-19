@@ -9,6 +9,7 @@ import { CtpsRouter } from "@/routes/documentos/ctps.routes.js";
 import { IdentidadeRouter } from "@/routes/documentos/identidade.routes.js";
 import { TituloEleitorRouter } from "@/routes/documentos/tituloEleitor.routes.js";
 import { ContatoRouter } from "@/routes/contato.routes.js";
+import { MatriculaRouter } from "@/routes/matricula.routes.js";
 
 export class ServidorRouter extends CrudRoutes<ServidorController>{
 
@@ -55,6 +56,8 @@ export class ServidorRouter extends CrudRoutes<ServidorController>{
         this.router.use(`/:${this.parametroId}/tituloEleitor`, new TituloEleitorRouter().router)
 
         this.router.use(`/:${this.parametroId}/contatos`, new ContatoRouter().router)
+
+        this.router.use(`/:${this.parametroId}/matriculas`, new MatriculaRouter().router)
     }
 
 }

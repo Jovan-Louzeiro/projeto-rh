@@ -1,20 +1,18 @@
 import { isValid, parse } from "date-fns";
-import z, { ZodType } from "zod";
+import z, { ZodAny, ZodObject, ZodPipe, ZodType } from "zod";
 import { validarCpf } from "@/utils/validators.js";
 import type { ParamsDictionary } from "express-serve-static-core";
 export class CrudSchemas {
-
-    public params: ZodType;
 
     public adicionar: ZodType;
     public atualizar: ZodType;
 
     constructor(params?: ZodType) {
-        this.params = params ?? this.getParams();
 
         this.adicionar = z.object()
 
         this.atualizar = z.object()
+        
     }
 
     parseParams(parametros: ParamsDictionary) {
@@ -105,16 +103,30 @@ export class CrudSchemas {
             );
     }
 
-    numeroSchema(nome: string, quantidade: number) {
-        return z
+    // Transforma remove as pontuações da string
+    numeroSchema(nome: string, quantidade?: number, maximo?: number) {
+        let schema = z
             .string(`O ${nome} deve ser em formato de string`)
             .transform(valor => valor.replace(/\D/g, ""))
-            .refine(
-                valor => new RegExp(`^\\d{${quantidade}}$`).test(valor),
+
+        // Obriga o dado a ter uma quantidade exata de caracteres
+        if (quantidade !== undefined) {
+            schema = schema.refine(
+                valor => valor.length === quantidade,
                 {
                     message: `O ${nome} deve conter exatamente ${quantidade} números`
                 }
             )
+        }
+
+        // Indica o maximo de caracteres que a string pode ter
+        if (maximo !== undefined) {
+            schema = schema.refine(valor => valor.length <= maximo && valor.length > 0, {
+                message: `O ${nome} deve conter entre 0 e ${maximo} caracteres`
+            })
+        }
+
+        return schema
     }
 
     booleanSchema(nome: string, opcional = false) {
@@ -135,5 +147,28 @@ export class CrudSchemas {
             .refine(validarCpf, {
                 message: `O ${nome} informado é inválido`
             })
+    }
+
+    // Obriga o schema a ter o campo servidor_id ao schema
+    adicionarSevidorId<T extends z.ZodRawShape>(
+        schema: z.ZodObject<T>
+    ) {
+        return schema.extend({
+            servidor_id: this.idExternoSchema("Servidor Id").nonoptional()
+        });
+    }
+
+    // Transforma o schema para PATCH
+    transformarPatch<T extends z.ZodRawShape>(
+        schema: z.ZodObject<T>
+    ) {
+        return schema
+            .partial()
+            .refine(
+                (data) => Object.keys(data).length > 0,
+                {
+                    message: "É necessário informar pelo menos um campo para atualizar",
+                }
+            );
     }
 }
