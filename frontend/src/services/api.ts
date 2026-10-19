@@ -1,6 +1,7 @@
 // frontend/src/services/api.ts
 
-const API_URL = (import.meta.env.VITE_API_URL ?? "").replace(/\/$/, "");
+const API_URL_CONFIGURADA = (import.meta.env.VITE_API_URL ?? "").replace(/\/$/, "");
+const API_URL = import.meta.env.DEV ? "" : API_URL_CONFIGURADA;
 
 const TOKEN_KEY = "rh_access_token";
 

@@ -15,6 +15,7 @@ const chavesId = [
   "id_departamento", "id_tipo_vinculo", "id_escolaridade",
   "id_tipo_ensino_medio_cursado", "id_zona_endereco",
   "id_localizacao_diferenciada", "id_comunidade_indigena", "id_situacao",
+  "id_funcao",
 ];
 
 async function listar(rota: string, signal?: AbortSignal): Promise<OpcaoServidor[]> {
@@ -38,6 +39,7 @@ export const listarRacasCor = (signal?: AbortSignal) => listar("racacor", signal
 export const listarEstadosCivis = (signal?: AbortSignal) => listar("estadoCivil", signal);
 export const listarCargos = (signal?: AbortSignal) => listar("cargo", signal);
 export const listarDepartamentos = (signal?: AbortSignal) => listar("departamento", signal);
+export const listarFuncoes = (signal?: AbortSignal) => listar("funcao", signal);
 export const listarTiposVinculo = (signal?: AbortSignal) => listar("tipoVinculo", signal);
 export const listarEscolaridades = (signal?: AbortSignal) => listar("escolaridade", signal);
 export const listarTiposEnsinoMedio = (signal?: AbortSignal) => listar("tipoEnsinoMedioCursado", signal);
@@ -52,6 +54,7 @@ export type OpcoesServidorCompletas = {
   racasCor: OpcaoServidor[];
   estadosCivis: OpcaoServidor[];
   cargos: OpcaoServidor[];
+  funcoes: OpcaoServidor[];
   departamentos: OpcaoServidor[];
   tiposVinculo: OpcaoServidor[];
   escolaridades: OpcaoServidor[];
@@ -63,15 +66,15 @@ export type OpcoesServidorCompletas = {
 };
 
 export async function carregarOpcoesServidor(signal?: AbortSignal): Promise<OpcoesServidorCompletas> {
-  const [sexos, generos, racasCor, estadosCivis, cargos, departamentos, tiposVinculo,
+  const [sexos, generos, racasCor, estadosCivis, cargos, funcoes, departamentos, tiposVinculo,
     escolaridades, tiposEnsinoMedio, zonasEndereco, localizacoesDiferenciadas,
     comunidadesIndigenas, situacoes] = await Promise.all([
     listarSexos(signal), listarGeneros(signal), listarRacasCor(signal), listarEstadosCivis(signal),
-    listarCargos(signal), listarDepartamentos(signal), listarTiposVinculo(signal),
+    listarCargos(signal), listarFuncoes(signal), listarDepartamentos(signal), listarTiposVinculo(signal),
     listarEscolaridades(signal), listarTiposEnsinoMedio(signal), listarZonasEndereco(signal),
     listarLocalizacoesDiferenciadas(signal), listarComunidadesIndigenas(signal), listarSituacoes(signal),
   ]);
-  return { sexos, generos, racasCor, estadosCivis, cargos, departamentos, tiposVinculo,
+  return { sexos, generos, racasCor, estadosCivis, cargos, funcoes, departamentos, tiposVinculo,
     escolaridades, tiposEnsinoMedio, zonasEndereco, localizacoesDiferenciadas,
     comunidadesIndigenas, situacoes };
 }

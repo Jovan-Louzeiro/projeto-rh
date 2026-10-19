@@ -1,4 +1,5 @@
 import {
+  useRef,
   useEffect,
   useState,
 } from "react";
@@ -24,6 +25,7 @@ import {
   listarZonasEndereco,
   type OpcaoServidor,
 } from "../services/opcoesServidor";
+import type { TipoContato } from "../services/registrosServidor";
 
 import Icon from "../components/Icon";
 import { carregarDadosGeograficos, type DadosGeograficos } from "../services/localizacao";
@@ -48,6 +50,13 @@ type Opcoes = {
   localizacoesDiferenciadas: OpcaoServidor[];
   comunidadesIndigenas: OpcaoServidor[];
   situacoes: OpcaoServidor[];
+};
+
+type ContatoFormulario = {
+  id: number;
+  tipo: TipoContato;
+  valor: string;
+  principal: boolean;
 };
 
 const opcoesVazias: Opcoes = {
@@ -92,6 +101,8 @@ export default function NovoServidor({
   const [certidaoNova, setCertidaoNova] = useState(true);
   const [ctpsAntiga, setCtpsAntiga] = useState(true);
   const [identidadeTipo, setIdentidadeTipo] = useState<"RG" | "CIN">("RG");
+  const [contatos, setContatos] = useState<ContatoFormulario[]>([]);
+  const proximoContatoId = useRef(0);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -369,6 +380,13 @@ export default function NovoServidor({
           }
         : undefined,
 
+      contatos: contatos.map(({ tipo, valor, principal }) => ({
+        tipo_contato: tipo,
+        contato: tipo === "EMAIL" ? valor.trim() : valor.replace(/\D/g, ""),
+        principal,
+        ativo: true,
+      })),
+
       cnh: documentosIncluidos.cnh
         ? {
             numero: numeroDocumento("cnh_numero"),
@@ -422,6 +440,22 @@ export default function NovoServidor({
     if (!dados.nome_completo) {
       setError(
         "Informe o nome completo do servidor."
+      );
+      setSaving(false);
+      return;
+    }
+
+    const contatoInvalido = contatos.find(({ tipo, valor }) => {
+      const limpo = valor.trim();
+      return tipo === "EMAIL"
+        ? !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(limpo)
+        : limpo.replace(/\D/g, "").length !== (tipo === "TELEFONE_MOVEL" ? 11 : 10);
+    });
+    if (contatoInvalido) {
+      setError(
+        contatoInvalido.tipo === "EMAIL"
+          ? "Informe um endereço de e-mail válido para cada contato."
+          : `Informe um telefone com DDD e ${contatoInvalido.tipo === "TELEFONE_MOVEL" ? "11" : "10"} dígitos.`,
       );
       setSaving(false);
       return;
@@ -554,32 +588,6 @@ export default function NovoServidor({
      */
 
     try {
-      console.log(
-        "===================================="
-      );
-
-      console.log(
-        "POST /api/servidores"
-      );
-
-      console.log(
-        "Dados enviados:",
-        dados
-      );
-
-      console.log(
-        "JSON:",
-        JSON.stringify(
-          dados,
-          null,
-          2
-        )
-      );
-
-      console.log(
-        "===================================="
-      );
-
       await cadastrarServidor(dados);
 
       onBack();
@@ -695,6 +703,7 @@ export default function NovoServidor({
     ctps: { hidden: true },
     identidade: { hidden: true },
     titulo_eleitor: { hidden: true },
+    contatos: { hidden: true },
   };
 
   return (
@@ -734,8 +743,85 @@ export default function NovoServidor({
           onSubmit={submit}
           onCancel={onBack}
         >
-          <h2>Documentos (opcionais)</h2>
-          <p className="muted">Marque os documentos que deseja cadastrar junto com o servidor.</p>
+          <section className="novo-servidor-contatos">
+            <div className="section-heading">
+              <div>
+                <h2>Contatos</h2>
+                <p className="muted">Opcional. Você também pode cadastrar contatos depois.</p>
+              </div>
+              <button
+                type="button"
+                className="btn outline"
+                onClick={() => {
+                  const id = proximoContatoId.current++;
+                  setContatos(items => [...items, {
+                    id,
+                    tipo: "TELEFONE_MOVEL",
+                    valor: "",
+                    principal: items.length === 0,
+                  }]);
+                }}
+              >
+                <Icon name="add" /> Adicionar contato
+              </button>
+            </div>
+            {contatos.map(contato => (
+              <div className="form-grid novo-servidor-contato" key={contato.id}>
+                <label>
+                  Tipo de contato
+                  <select
+                    value={contato.tipo}
+                    onChange={event => {
+                      const tipo = event.target.value as TipoContato;
+                      setContatos(items => items.map(item =>
+                        item.id === contato.id ? { ...item, tipo, valor: "" } : item,
+                      ));
+                    }}
+                  >
+                    <option value="TELEFONE_MOVEL">Celular</option>
+                    <option value="TELEFONE_FIXO">Telefone fixo</option>
+                    <option value="EMAIL">E-mail</option>
+                  </select>
+                </label>
+                <label>
+                  {contato.tipo === "EMAIL" ? "E-mail" : "Telefone com DDD"}
+                  <input
+                    type={contato.tipo === "EMAIL" ? "email" : "tel"}
+                    inputMode={contato.tipo === "EMAIL" ? "email" : "numeric"}
+                    maxLength={contato.tipo === "EMAIL" ? 150 : contato.tipo === "TELEFONE_MOVEL" ? 11 : 10}
+                    value={contato.valor}
+                    onChange={event => setContatos(items => items.map(item =>
+                      item.id === contato.id ? { ...item, valor: event.target.value } : item,
+                    ))}
+                    placeholder={contato.tipo === "EMAIL"
+                      ? "nome@exemplo.com"
+                      : contato.tipo === "TELEFONE_MOVEL" ? "DDD + 9 dígitos" : "DDD + 8 dígitos"}
+                    required
+                  />
+                </label>
+                <label className="document-toggle">
+                  <input
+                    type="checkbox"
+                    checked={contato.principal}
+                    onChange={event => setContatos(items => items.map(item =>
+                      item.id === contato.id ? { ...item, principal: event.target.checked } : item,
+                    ))}
+                  />
+                  Contato principal
+                </label>
+                <button
+                  type="button"
+                  className="btn outline"
+                  onClick={() => setContatos(items => items.filter(item => item.id !== contato.id))}
+                >
+                  Remover
+                </button>
+              </div>
+            ))}
+          </section>
+
+          <h2 className="full-col">Documentos (opcionais)</h2>
+          <p className="muted full-col">Marque os documentos que deseja cadastrar junto com o servidor.</p>
 
           <label className="document-toggle">
             <input type="checkbox" checked={documentosIncluidos.certidao} onChange={e => setDocumentosIncluidos(v => ({ ...v, certidao: e.target.checked }))} />

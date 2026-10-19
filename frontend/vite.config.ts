@@ -8,12 +8,15 @@ export default defineConfig(({ mode }) => {
     server: {
       proxy: {
         ...(env.VITE_API_URL
-          ? {
-              "/sexos": {
-                target: env.VITE_API_URL,
-                changeOrigin: true,
-              },
-            }
+          ? Object.fromEntries(
+              ["/api", "/sexos"].map((path) => [
+                path,
+                {
+                  target: env.VITE_API_URL,
+                  changeOrigin: true,
+                },
+              ]),
+            )
           : {}),
       },
     },

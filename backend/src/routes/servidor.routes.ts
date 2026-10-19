@@ -20,6 +20,8 @@ export class ServidorRouter extends CrudRoutes<ServidorController>{
             "idServidor"
         )
 
+        this.registrarSchema()
+
         this.registrarRotasCrud()
         
         this.registrosServidor()

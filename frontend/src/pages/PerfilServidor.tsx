@@ -8,6 +8,7 @@ import type { CampoFormularioConfig } from "../types/json-schema.types";
 import { apiPost, apiPut } from "../services/api";
 import Icon from "../components/Icon";
 import Status from "../components/Status";
+import RegistrosServidor from "../components/RegistrosServidor";
 
 type Props = {
   servidor: Servidor;
@@ -348,6 +349,9 @@ export default function PerfilServidor({ servidor, detalhes, geografia, opcoes, 
         <Documento idServidor={servidor.id} recurso="ctps" titulo="CTPS" item={registro.ctps} configuracoes={camposDocumento.ctps} onSaved={dados => { atualizarDocumento("ctps", dados); onUpdated(); }} campos={[["tipo_ctps", "Tipo"], ["numero", "Número"], ["serie", "Série"], ["uf_ctps_id", "UF"], ["data_emissao", "Data de emissão", true]]} formatar={(key, value) => key === "uf_ctps_id" ? estado(value) : value} />
         <Documento idServidor={servidor.id} recurso="identidade" titulo="Identidade" item={registro.identidade} configuracoes={camposDocumento.identidade} onSaved={dados => { atualizarDocumento("identidade", dados); onUpdated(); }} campos={[["tipo_identidade", "Tipo"], ["numero", "Número"], ["orgao_emissor", "Órgão emissor"], ["rg_uf_id", "UF"], ["rg_data_emissao", "Data de emissão", true]]} formatar={(key, value) => key === "rg_uf_id" ? estado(value) : value} />
         <Documento idServidor={servidor.id} recurso="tituloEleitor" titulo="Título de eleitor" item={registro.titulo_eleitor} configuracoes={camposDocumento.tituloEleitor} onSaved={dados => { atualizarDocumento("tituloEleitor", dados); onUpdated(); }} campos={[["numero", "Número"], ["zona", "Zona"], ["secao", "Seção"]]} />
+
+        <h3 className="section-title section-spaced">Contatos e vínculos funcionais</h3>
+        <RegistrosServidor idServidor={servidor.id} opcoes={opcoes} />
         </>}
       </div>
     </div>

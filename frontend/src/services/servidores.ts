@@ -66,6 +66,13 @@ export type Servidor = {
 export type NovoServidorDados = {
   nome_completo: string;
 
+  contatos?: {
+    tipo_contato: "TELEFONE_FIXO" | "TELEFONE_MOVEL" | "EMAIL";
+    contato: string;
+    principal?: boolean;
+    ativo?: boolean;
+  }[];
+
   cpf?: string;
   rg?: string;
 
@@ -370,7 +377,7 @@ export async function detalharServidor(
   const id = normalizarId(idServidor);
 
   return apiGet<DetalhesServidor>(
-    `/api/servidores/${id}/detalharDocumentos`,
+    `/api/servidores/${id}/detalhar`,
     {
       signal,
     },

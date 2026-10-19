@@ -2,9 +2,7 @@ import type {
   OperacaoFormulario,
   SchemaFormularioResponse,
 } from "../types/json-schema.types";
-import { getAuthHeaders } from "./api";
-
-const API_URL = import.meta.env.VITE_API_URL;
+import { apiGet } from "./api";
 
 export async function buscarSchema(
   dominio: string,
@@ -14,22 +12,9 @@ export async function buscarSchema(
   const caminho = idServidor === undefined
     ? `/api/${dominio}`
     : `/api/servidores/${encodeURIComponent(String(idServidor))}/${dominio}`;
-  const resposta = await fetch(
-    `${API_URL}${caminho}/schemas?operacao=${operacao}`,
-    {
-      method: "GET",
-      headers: {
-        ...getAuthHeaders(),
-        "Content-Type": "application/json",
-      },
-    }
+  const resultado = await apiGet<unknown>(
+    `${caminho}/schemas?operacao=${operacao}`,
   );
-
-  if (!resposta.ok) {
-    throw new Error(`Erro ao buscar schema: ${resposta.status}`);
-  }
-
-  const resultado: unknown = await resposta.json();
   if (
     !resultado ||
     typeof resultado !== "object" ||

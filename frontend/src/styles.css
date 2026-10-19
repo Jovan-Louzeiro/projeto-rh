@@ -648,6 +648,77 @@ select:focus-visible {
     border-radius: 10px;
 }
 
+.registro-lista {
+    display: grid;
+    gap: 10px;
+}
+
+.registro-item,
+.historico-item {
+    padding: 13px;
+    border: 1px solid #edf1ee;
+    border-radius: 9px;
+    background: #fff;
+}
+
+.registro-item p {
+    margin: 5px 0 0;
+    color: #829089;
+    font-size: 11px;
+}
+
+.registro-item-cabecalho,
+.registro-acoes {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.registro-acoes {
+    justify-content: flex-end;
+    flex-wrap: wrap;
+}
+
+.registro-acoes .btn,
+.section-heading .btn {
+    padding: 7px 10px;
+    font-size: 11px;
+}
+
+.historico-funcional {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid #edf1ee;
+}
+
+.historico-funcional h5 {
+    margin: 0;
+    color: #31433a;
+    font-size: 13px;
+}
+
+.historico-item .registro-acoes {
+    margin-top: 10px;
+}
+
+.registro-form .checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.registro-form .checkbox-row input {
+    width: 16px;
+    height: 16px;
+    accent-color: #078b4c;
+}
+
+.registro-form button:disabled {
+    cursor: wait;
+    opacity: .65;
+}
+
 .document-profile h4 {
     margin: 0 0 12px;
     color: #31433a;
@@ -856,6 +927,30 @@ select:focus-visible {
     max-width: 920px;
 }
 
+.novo-servidor-contatos {
+    grid-column: 1 / -1;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #edf1ee;
+}
+
+.novo-servidor-contato {
+    grid-column: 1 / -1;
+    align-items: end;
+    margin: 12px 0;
+    padding: 12px;
+    background: #f8fbf9;
+    border: 1px solid #edf1ee;
+    border-radius: 9px;
+}
+
+.novo-servidor-contato .document-toggle {
+    margin: 0;
+}
+
+.novo-servidor-contato > .btn {
+    justify-self: start;
+}
+
 .form-actions {
     display: flex;
     justify-content: flex-end;
@@ -1037,6 +1132,17 @@ select:focus-visible {
     background: transparent;
     color: #718078;
     font-size: 18px
+}
+
+@media (max-width: 720px) {
+    .registro-item-cabecalho {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .registro-acoes {
+        justify-content: flex-start;
+    }
 }
 
 .login-screen {
