@@ -27,9 +27,9 @@ export class MatriculaController extends CrudController<MatriculaService, Matric
 
     procurarMatriculaServidor = async (req: Request, res: Response) => {
 
-        const {idServidor, id} = this.validarParams(req.params)
+        const {idServidor, idMatricula} = this.validarParams(req.params)
 
-        const resposta = await this.service.procurarMatriculaServidor(id, idServidor)
+        const resposta = await this.service.procurarMatriculaServidor(idMatricula, idServidor)
 
         return res.json(resposta)
     }
@@ -55,7 +55,7 @@ export class MatriculaController extends CrudController<MatriculaService, Matric
 
     atualizarMatricula = async(req: Request, res: Response) => {
 
-        const {idServidor, id} = this.validarParams(req.params)
+        const {idServidor, idMatricula} = this.validarParams(req.params)
 
         req.body.servidor_id = idServidor
 
@@ -63,7 +63,7 @@ export class MatriculaController extends CrudController<MatriculaService, Matric
 
         const usuario = obterUsuario(req);
 
-        const resposta = await this.service.atualizarMatricula(usuario.nome, id, data);
+        const resposta = await this.service.atualizarMatricula(usuario.nome, idMatricula, data);
 
         return res.json({
             mensagem: `${this.nome} atualizado com sucesso`,
@@ -73,11 +73,11 @@ export class MatriculaController extends CrudController<MatriculaService, Matric
 
     deletarMatricula = async(req: Request, res: Response) => {
 
-        const {idServidor, id} = this.validarParams(req.params)
+        const {idServidor, idMatricula} = this.validarParams(req.params)
 
         const usuario = obterUsuario(req)
 
-        const resposta = await this.service.deletarMatricula(usuario.nome, idServidor, id)
+        const resposta = await this.service.deletarMatricula(usuario.nome, idServidor, idMatricula)
 
         return res.json({
             mensagem: `${this.nome} Excluído com sucesso`,

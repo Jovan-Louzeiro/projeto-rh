@@ -50,7 +50,7 @@ export class CrudRoutes<TController extends CrudController<any, any>> {
         this.router.get(
             `/:${this.parametroId}`,
             autorizar(...this.autorizacoes.procurar),
-            this.controller.procurarContato
+            this.controller.procurar
         );
 
     }

@@ -12,11 +12,14 @@ export class CRUDServices<TCreate, TUpdate> {
 
     }
 
-    async listar(mostrarTudo?: boolean) {
+    async listar(mostrarTudo?: boolean, idField=this.idField) {
     return await this.prismaModel.findMany({
         where: {
             ...(!mostrarTudo && { ativo: true }),
-        }
+        },
+        orderBy: [
+            { [idField]: "asc" }
+        ]
     });
 }
 
@@ -45,7 +48,7 @@ export class CRUDServices<TCreate, TUpdate> {
 
     async atualizar(usuario: string, id: number, data: TUpdate, idField=this.idField) {
 
-        await this.procurar(id)
+        await this.procurar(id, idField)
 
         console.log(`${this.nome} id:${id} foi atualizado por ${usuario}`)
 
@@ -59,6 +62,7 @@ export class CRUDServices<TCreate, TUpdate> {
     }
 
     async deletar(id: number, usuario: string, idField=this.idField) {
+
         await this.procurar(id)
 
         console.log(`${this.nome} id:${id} foi apagado por ${usuario}`)

@@ -43,7 +43,7 @@ export class CrudController<TService extends CRUDServices<any, any>, TSchema ext
         return res.json(resposta);
     }
 
-    procurarContato = async (req: Request, res: Response) => {
+    procurar = async (req: Request, res: Response) => {
 
         const { id } = this.validarParams(req.params)
 

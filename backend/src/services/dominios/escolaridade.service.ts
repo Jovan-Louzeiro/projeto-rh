@@ -6,7 +6,7 @@ export class EscolaridadeService<TCreate, TUpdate> extends DominioServices<TCrea
         super(
             prisma.escolaridade,
             "Escolaridade",
-            "id_comunidade_indigena"
+            "id_escolaridade"
         )
     }
 }

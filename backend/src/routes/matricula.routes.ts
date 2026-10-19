@@ -1,6 +1,7 @@
 import { MatriculaController } from "@/controllers/matricula.controller.js";
 import { autorizar } from "@/middlewares/auth.js";
 import { CrudRoutes } from "@/routes/crud.routes.js";
+import { HistoricoFuncionalRouter } from "@/routes/historicoFuncional.routes.js";
 
 export class MatriculaRouter extends CrudRoutes<MatriculaController> {
 
@@ -12,6 +13,7 @@ export class MatriculaRouter extends CrudRoutes<MatriculaController> {
 
         this.registrarSchema()
         this.registrar()
+        this.registrarHistoricoFuncional()
 
     }
 
@@ -24,7 +26,7 @@ export class MatriculaRouter extends CrudRoutes<MatriculaController> {
         );
 
         this.router.get(
-            "/:id",
+            "/:idMatricula",
             autorizar(...this.autorizacoes.procurar),
             this.controller.procurarMatriculaServidor
         );
@@ -36,15 +38,21 @@ export class MatriculaRouter extends CrudRoutes<MatriculaController> {
         );
 
         this.router.put(
-            "/:id",
+            "/:idMatricula",
             autorizar(...this.autorizacoes.atualizar),
             this.controller.atualizarMatricula
         );
 
         this.router.delete(
-            "/:id",
+            "/:idMatricula",
             autorizar(...this.autorizacoes.deletar),
             this.controller.deletarMatricula
         );
+    }
+
+    registrarHistoricoFuncional(){
+
+        this.router.use("/:idMatricula/historicoFuncional", new HistoricoFuncionalRouter().router)
+
     }
 }
