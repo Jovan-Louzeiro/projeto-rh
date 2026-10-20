@@ -41,7 +41,7 @@ export class ServidorRouter extends CrudRoutes<ServidorController>{
         this.router.get(
             `/:${this.parametroId}/detalhar`,
             autorizar(...this.autorizacoes.procurar),
-            this.controller.detalhar
+            this.controller.detalharServidor
         )
     }
 

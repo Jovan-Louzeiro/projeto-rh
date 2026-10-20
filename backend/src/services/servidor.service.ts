@@ -3,6 +3,7 @@ import type { ServidorCreate, ServidorUpdate } from "@/schemas/servidor.schemas.
 import { RegistroNaoEncontradoError } from "@/errors/dominios.errors.js";
 import { CRUDServices } from "@/services/crud.service.js";
 import { includes } from "zod";
+import { Prisma } from "#/generated/prisma/client.js";
 
 export class ServidorService extends CRUDServices<ServidorCreate, ServidorUpdate>{
 
@@ -12,6 +13,18 @@ export class ServidorService extends CRUDServices<ServidorCreate, ServidorUpdate
             "Servidor",
             "id_servidor"
         )
+    }
+
+    async listarServidores(filtros: Prisma.ServidorWhereInput){
+
+        const resultados = this.prismaModel.findMany({
+            
+            where: filtros
+
+        })
+
+        return resultados
+        
     }
 
     async contarServidoresAtivos(){
@@ -25,7 +38,7 @@ export class ServidorService extends CRUDServices<ServidorCreate, ServidorUpdate
         return resultado
     }
 
-    async detalhar(id: number){
+    async detalharServidor(id: number){
         const resultado = await this.prismaModel.findUnique({
                     where: {
                         id_servidor: id

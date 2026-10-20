@@ -8,6 +8,7 @@ import type {
   CampoFormularioConfig,
   JsonSchema,
   OperacaoFormulario,
+  SecaoFormularioConfig,
 } from "../../types/json-schema.types";
 
 type Props = {
@@ -16,6 +17,7 @@ type Props = {
   operacao: OperacaoFormulario;
   valoresIniciais?: Record<string, unknown>;
   campos?: Record<string, CampoFormularioConfig>;
+  secoes?: SecaoFormularioConfig[];
   textoSalvar?: string;
   textoSalvando?: string;
   desabilitado?: boolean;
@@ -30,6 +32,7 @@ export function FormularioDinamicoContainer({
   operacao,
   valoresIniciais,
   campos,
+  secoes,
   textoSalvar,
   textoSalvando,
   desabilitado,
@@ -91,6 +94,7 @@ export function FormularioDinamicoContainer({
       schema={schema}
       valoresIniciais={valoresIniciais}
       campos={campos}
+      secoes={secoes}
       textoSalvar={textoSalvar}
       textoSalvando={textoSalvando}
       desabilitado={desabilitado}

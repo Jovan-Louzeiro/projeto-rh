@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Children, isValidElement, useState } from "react";
 import type {
   FormEvent,
   ChangeEvent,
@@ -9,12 +9,14 @@ import type {
   CampoFormularioConfig,
   JsonSchema,
   JsonSchemaProperty,
+  SecaoFormularioConfig,
 } from "../../types/json-schema.types";
 
 type Props = {
   schema: JsonSchema;
   valoresIniciais?: Record<string, unknown>;
   campos?: Record<string, CampoFormularioConfig>;
+  secoes?: SecaoFormularioConfig[];
   textoSalvar?: string;
   textoSalvando?: string;
   desabilitado?: boolean;
@@ -27,6 +29,7 @@ export function FormularioDinamico({
   schema,
   valoresIniciais = {},
   campos = {},
+  secoes,
   textoSalvar = "Salvar",
   textoSalvando = "Enviando...",
   desabilitado = false,
@@ -76,6 +79,42 @@ export function FormularioDinamico({
     return schema.required?.includes(nome) ?? false;
   }
 
+  function campoDesabilitado(nome: string): boolean {
+    const configuracao = campos[nome];
+    return Boolean(configuracao?.disabled)
+      || Boolean(configuracao?.disabledWhen?.some(condicao =>
+        String(dados[condicao.field] ?? "") === String(condicao.equals),
+      ));
+  }
+
+  function formatarCpf(valor: string): string {
+    const numeros = valor.replace(/\D/g, "").slice(0, 11);
+    if (numeros.length <= 3) return numeros;
+    if (numeros.length <= 6) return `${numeros.slice(0, 3)}.${numeros.slice(3)}`;
+    if (numeros.length <= 9) return `${numeros.slice(0, 3)}.${numeros.slice(3, 6)}.${numeros.slice(6)}`;
+    return `${numeros.slice(0, 3)}.${numeros.slice(3, 6)}.${numeros.slice(6, 9)}-${numeros.slice(9)}`;
+  }
+
+  function gerarCpf(): string {
+    let digitos: number[];
+    do {
+      digitos = Array.from({ length: 9 }, () => Math.floor(Math.random() * 10));
+    } while (digitos.every(digito => digito === digitos[0]));
+
+    const calcularDigito = (numeros: number[]) => {
+      const soma = numeros.reduce(
+        (total, numero, indice) => total + numero * (numeros.length + 1 - indice),
+        0,
+      );
+      const resto = (soma * 10) % 11;
+      return resto === 10 ? 0 : resto;
+    };
+
+    const primeiroDigito = calcularDigito(digitos);
+    const segundoDigito = calcularDigito([...digitos, primeiroDigito]);
+    return formatarCpf([...digitos, primeiroDigito, segundoDigito].join(""));
+  }
+
   function atualizarCampo(
     nome: string,
     evento: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
@@ -90,13 +129,31 @@ export function FormularioDinamico({
         ? evento.target.value === ""
           ? ""
           : Number(evento.target.value)
-        : evento.target.value;
+        : campos[nome]?.formato === "cpf"
+          ? formatarCpf(evento.target.value)
+          : evento.target.value;
 
-    setDados((anteriores) => ({
-      ...anteriores,
-      [nome]: valor,
-    }));
+    setDados((anteriores) => {
+      const novosDados = { ...anteriores, [nome]: valor };
+      campos[nome]?.setValueWhen?.forEach(definirValor => {
+        if (String(valor) === String(definirValor.equals)) {
+          novosDados[definirValor.targetField] = definirValor.value;
+        }
+      });
+      return novosDados;
+    });
     setErrosCampos((anteriores) => {
+      if (!anteriores[nome]) return anteriores;
+      const proximos = { ...anteriores };
+      delete proximos[nome];
+      return proximos;
+    });
+    setErroGeral("");
+  }
+
+  function preencherCpfDeTeste(nome: string) {
+    setDados(anteriores => ({ ...anteriores, [nome]: gerarCpf() }));
+    setErrosCampos(anteriores => {
       if (!anteriores[nome]) return anteriores;
       const proximos = { ...anteriores };
       delete proximos[nome];
@@ -206,42 +263,68 @@ export function FormularioDinamico({
     const rotulo = configuracao?.title ?? campo.title ?? nome;
     const erroCampo = errosCampos[nome];
     const idErro = `${nome}-erro`;
+    const marcadorObrigatorio = obrigatorio
+      ? <span className="campo-obrigatorio" aria-label="obrigatório"> *</span>
+      : null;
+    const campoClassName = configuracao?.tamanho === "compacto" ? "campo-compacto" : undefined;
 
     if (tipo === "boolean") {
+      if (configuracao?.estilo === "toggle") {
+        const marcado = Boolean(valor);
+        return (
+          <label className={`cadastro-switch${campoClassName ? ` ${campoClassName}` : ""}`} key={nome}>
+            <span className="cadastro-switch-titulo">{rotulo}{marcadorObrigatorio}</span>
+            <input
+              name={nome}
+              type="checkbox"
+              role="switch"
+              checked={marcado}
+              disabled={campoDesabilitado(nome)}
+              aria-checked={marcado}
+              aria-invalid={Boolean(erroCampo)}
+              aria-describedby={erroCampo ? idErro : undefined}
+              onChange={(evento) => atualizarCampo(nome, evento)}
+            />
+            <span className="cadastro-switch-trilho" aria-hidden="true"><span /></span>
+            <span className="cadastro-switch-estado">{marcado ? "Ligado" : "Desligado"}</span>
+            {erroCampo && <small className="form-field-error" id={idErro} role="alert">{erroCampo}</small>}
+          </label>
+        );
+      }
+
       return (
-        <label className="document-toggle" key={nome}>
+        <label className={`document-toggle${campoClassName ? ` ${campoClassName}` : ""}`} key={nome}>
           <input
             name={nome}
             type="checkbox"
             checked={Boolean(valor)}
-            disabled={configuracao?.disabled}
+            disabled={campoDesabilitado(nome)}
             aria-invalid={Boolean(erroCampo)}
             aria-describedby={erroCampo ? idErro : undefined}
             onChange={(evento) => atualizarCampo(nome, evento)}
           />
           {" "}{rotulo}
-          {obrigatorio ? " *" : ""}
+          {marcadorObrigatorio}
           {erroCampo && <small className="form-field-error" id={idErro} role="alert">{erroCampo}</small>}
         </label>
       );
     }
 
     return (
-      <label key={nome}>
-          {rotulo}
-          {obrigatorio ? " *" : ""}
+      <label className={campoClassName} key={nome}>
+        <span>{rotulo}{marcadorObrigatorio}</span>
         {tipoInput === "select" ? (
           <select
             id={nome}
             name={nome}
             value={String(valor)}
             required={obrigatorio}
-            disabled={configuracao?.disabled}
+            disabled={campoDesabilitado(nome)}
             aria-invalid={Boolean(erroCampo)}
             aria-describedby={erroCampo ? idErro : undefined}
             onChange={(evento) => atualizarCampo(nome, evento)}
           >
-            <option value="">Selecione</option>
+            <option value="">--------</option>
             {opcoes?.map((opcao) => (
               <option key={String(opcao.value)} value={String(opcao.value)}>
                 {opcao.label}
@@ -256,31 +339,62 @@ export function FormularioDinamico({
             required={obrigatorio}
             minLength={configuracao?.minLength ?? campo.minLength}
             maxLength={configuracao?.maxLength ?? campo.maxLength}
-            disabled={configuracao?.disabled}
+            disabled={campoDesabilitado(nome)}
             aria-invalid={Boolean(erroCampo)}
             aria-describedby={erroCampo ? idErro : undefined}
             onChange={(evento) => atualizarCampo(nome, evento)}
           />
         ) : (
+          configuracao?.formato === "cpf" ? (
+            <div className="campo-com-acao">
+              <input
+                id={nome}
+                name={nome}
+                type={tipoInput}
+                value={String(valor)}
+                required={obrigatorio}
+                minLength={configuracao?.minLength ?? campo.minLength}
+                maxLength={configuracao?.maxLength ?? campo.maxLength}
+                pattern={campo.pattern}
+                placeholder={configuracao?.placeholder}
+                inputMode={configuracao?.inputMode}
+                disabled={campoDesabilitado(nome)}
+                aria-invalid={Boolean(erroCampo)}
+                aria-describedby={erroCampo ? idErro : undefined}
+                onChange={(evento) => atualizarCampo(nome, evento)}
+              />
+              <button
+                type="button"
+                className="btn outline gerar-cpf"
+                onClick={() => preencherCpfDeTeste(nome)}
+                disabled={campoDesabilitado(nome) || desabilitado || enviando}
+                aria-label={`Gerar CPF de teste para ${rotulo}`}
+                title="Gerar CPF válido para testes"
+              >
+                Gerar CPF
+              </button>
+            </div>
+          ) : (
           <input
             id={nome}
             name={nome}
             type={tipoInput}
             value={String(valor)}
             required={obrigatorio}
-            min={campo.minimum}
-            max={campo.maximum}
+            min={configuracao?.minimum ?? campo.minimum}
+            max={configuracao?.maximum ?? campo.maximum}
             minLength={configuracao?.minLength ?? campo.minLength}
             maxLength={configuracao?.maxLength ?? campo.maxLength}
             pattern={campo.pattern}
             placeholder={configuracao?.placeholder}
             inputMode={configuracao?.inputMode}
             autoComplete={configuracao?.type === "password" ? "new-password" : undefined}
-            disabled={configuracao?.disabled}
+            disabled={campoDesabilitado(nome)}
             aria-invalid={Boolean(erroCampo)}
             aria-describedby={erroCampo ? idErro : undefined}
             onChange={(evento) => atualizarCampo(nome, evento)}
           />
+          )
         )}
         {erroCampo && tipo !== "boolean" && <small className="form-field-error" id={idErro} role="alert">{erroCampo}</small>}
         {campo.description && <small>{campo.description}</small>}
@@ -288,14 +402,77 @@ export function FormularioDinamico({
     );
   }
 
+  const propriedadesVisiveis = Object.entries(schema.properties ?? {})
+    .filter(([nome]) => campoVisivel(nome));
+  const camposPorSecao = new Set(secoes?.flatMap(secao =>
+    secao.campos.filter((campo): campo is string => typeof campo === "string"),
+  ) ?? []);
+  const camposSemSecao = propriedadesVisiveis.filter(([nome]) => !camposPorSecao.has(nome));
+  const conteudosSecao = new Map<string, ReactNode>();
+  const conteudosNaoAssociados: ReactNode[] = [];
+  Children.toArray(children).forEach(conteudo => {
+    if (isValidElement<{ "data-cadastro-secao"?: string }>(conteudo)
+      && conteudo.props["data-cadastro-secao"]) {
+      conteudosSecao.set(conteudo.props["data-cadastro-secao"], conteudo);
+      return;
+    }
+    conteudosNaoAssociados.push(conteudo);
+  });
+
   return (
     <form onSubmit={enviarFormulario}>
       {erroGeral && <p className="form-error" role="alert">{erroGeral}</p>}
-      <div className="form-grid">
-        {Object.entries(schema.properties ?? {}).filter(([nome]) => campoVisivel(nome)).map(([nome, campo]) =>
-          renderizarCampo(nome, campo)
-        )}
-        {children}
+      <div className={`form-grid${secoes ? " form-grid-secoes" : ""}`}>
+        {secoes ? (
+          <>
+            {secoes.map(secao => {
+              const camposDaSecao = secao.campos.some(item =>
+                typeof item === "string" && propriedadesVisiveis.some(([nome]) => nome === item),
+              );
+              const conteudo = secao.conteudo ?? conteudosSecao.get(secao.titulo);
+              if (!camposDaSecao && !conteudo) return null;
+
+              return (
+                <section className="cadastro-form-section full-col" key={secao.titulo}>
+                  <div className="cadastro-form-section-heading">
+                    <div>
+                      <h2>{secao.titulo}</h2>
+                    </div>
+                  </div>
+                  <div className="form-grid">
+                    {secao.campos.map(item => {
+                      if (typeof item !== "string") {
+                        return (
+                          <label className={`campo-visual${item.tamanho === "compacto" ? " campo-compacto" : ""}`} key={item.visual}>
+                            {item.visual}
+                            <input value="-" readOnly aria-label={`${item.visual}, apenas visual`} />
+                          </label>
+                        );
+                      }
+
+                      const campo = propriedadesVisiveis.find(([nome]) => nome === item);
+                      return campo ? renderizarCampo(campo[0], campo[1]) : null;
+                    })}
+                  </div>
+                  {conteudo}
+                </section>
+              );
+            })}
+            {camposSemSecao.length > 0 && (
+              <section className="cadastro-form-section full-col">
+                <div className="cadastro-form-section-heading">
+                  <div>
+                    <h2>Informações adicionais</h2>
+                  </div>
+                </div>
+                <div className="form-grid">
+                  {camposSemSecao.map(([nome, campo]) => renderizarCampo(nome, campo))}
+                </div>
+              </section>
+            )}
+          </>
+        ) : propriedadesVisiveis.map(([nome, campo]) => renderizarCampo(nome, campo))}
+        {conteudosNaoAssociados}
       </div>
 
       <div className="form-actions">

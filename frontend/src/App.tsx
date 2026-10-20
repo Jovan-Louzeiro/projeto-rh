@@ -5,6 +5,7 @@ import {
   Outlet,
   Route,
   Routes,
+  useLocation,
   useNavigate,
   useParams,
 } from "react-router-dom";
@@ -365,6 +366,9 @@ function ServidoresRoute() {
       onProfile={(servidor) =>
         navigate(`/servidores/${servidor.id}`)
       }
+      onEdit={(servidor) =>
+        navigate(`/servidores/${servidor.id}`, { state: { editar: true } })
+      }
       onNew={() =>
         navigate("/servidores/novo")
       }
@@ -682,7 +686,12 @@ function DetalheRequerimentoRoute() {
 
 function PerfilRoute() {
   const { id } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
+  const iniciarEdicao = typeof location.state === "object"
+    && location.state !== null
+    && "editar" in location.state
+    && location.state.editar === true;
 
   const [perfil, setPerfil] = useState<{
     servidor: Servidor;
@@ -753,6 +762,7 @@ function PerfilRoute() {
       detalhes={perfil.detalhes}
       geografia={perfil.geografia}
       opcoes={perfil.opcoes}
+      iniciarEdicao={iniciarEdicao}
       onUpdated={() => setVersaoPerfil(versao => versao + 1)}
       onQuinquenios={() =>
         navigate("/quinquenios")

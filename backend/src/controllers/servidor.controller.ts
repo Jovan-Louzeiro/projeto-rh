@@ -66,11 +66,11 @@ export class ServidorController extends CrudController<ServidorService, Servidor
 
     }
 
-    detalhar = async (req: Request, res: Response) => {
+    detalharServidor = async (req: Request, res: Response) => {
 
         const {idServidor} = this.validarParams(req.params)
 
-        const resposta = await this.service.detalhar(idServidor);
+        const resposta = await this.service.detalharServidor(idServidor);
 
         return res.json(resposta);
 

@@ -27,7 +27,12 @@ import type {
   TipoContato,
 } from "../services/registrosServidor";
 
-type Props = { idServidor: string | number; opcoes: OpcoesServidorCompletas };
+type Props = {
+  idServidor: string | number;
+  opcoes: OpcoesServidorCompletas;
+  ocultarTituloContatos?: boolean;
+  onUpdated?: () => void;
+};
 type FormTarget =
   | { tipo: "contato"; item?: Contato }
   | { tipo: "matricula"; item?: Matricula }
@@ -41,13 +46,22 @@ const formatDate = (value: string | null | undefined) => {
 const optionLabel = (options: OpcaoServidor[], id: number | null) =>
   options.find(option => String(option.id) === String(id))?.descricao ?? "Não informado";
 
-export default function RegistrosServidor({ idServidor, opcoes }: Props) {
+export default function RegistrosServidor({
+  idServidor,
+  opcoes,
+  ocultarTituloContatos = false,
+  onUpdated,
+}: Props) {
   const [contatos, setContatos] = useState<Contato[]>([]);
   const [matriculas, setMatriculas] = useState<Matricula[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
   const [form, setForm] = useState<FormTarget | null>(null);
   const [atualizacao, setAtualizacao] = useState(0);
+  const atualizarRegistros = () => {
+    setAtualizacao(value => value + 1);
+    onUpdated?.();
+  };
 
   useEffect(() => {
     const controller = new AbortController();
@@ -72,7 +86,7 @@ export default function RegistrosServidor({ idServidor, opcoes }: Props) {
     if (!window.confirm(`Excluir o contato ${item.contato}?`)) return;
     try {
       await excluirContato(idServidor, item.id_contato);
-      setAtualizacao(value => value + 1);
+      atualizarRegistros();
     } catch (error) {
       setErro(error instanceof Error ? error.message : "Não foi possível excluir o contato.");
     }
@@ -82,14 +96,14 @@ export default function RegistrosServidor({ idServidor, opcoes }: Props) {
     if (!window.confirm(`Excluir a matrícula ${item.numero}? O histórico funcional associado também poderá ser removido.`)) return;
     try {
       await excluirMatricula(idServidor, item.id_matricula);
-      setAtualizacao(value => value + 1);
+      atualizarRegistros();
     } catch (error) {
       setErro(error instanceof Error ? error.message : "Não foi possível excluir a matrícula.");
     }
   }
 
   return (
-    <div className="registro-servidor">
+    <div className={`registro-servidor${ocultarTituloContatos ? " registro-servidor-sem-titulo" : ""}`}>
       {erro && <div className="form-error" role="alert">
         {erro}
         <button type="button" className="btn outline" onClick={() => setAtualizacao(value => value + 1)}>Recarregar dados</button>
@@ -97,7 +111,7 @@ export default function RegistrosServidor({ idServidor, opcoes }: Props) {
       {carregando ? <p className="table-message">Carregando contatos e matrículas...</p> : <>
         <section className="document-profile">
           <div className="section-heading">
-            <h4>Contatos</h4>
+            {!ocultarTituloContatos && <h4>Contatos</h4>}
             <button type="button" className="btn primary" onClick={() => setForm({ tipo: "contato" })}>
               <Icon name="add" /> Novo contato
             </button>
@@ -135,11 +149,12 @@ export default function RegistrosServidor({ idServidor, opcoes }: Props) {
                   idServidor={idServidor}
                   matricula={item}
                   opcoes={opcoes}
+                  atualizacao={atualizacao}
                   onEdit={() => setForm({ tipo: "matricula", item })}
                   onDelete={() => void removerMatricula(item)}
                   onNewHistorico={() => setForm({ tipo: "historico", matricula: item })}
                   onEditHistorico={historico => setForm({ tipo: "historico", matricula: item, item: historico })}
-                  onHistoricoChanged={() => setAtualizacao(value => value + 1)}
+                  onHistoricoChanged={atualizarRegistros}
                 />
               ))}
             </div>
@@ -152,7 +167,7 @@ export default function RegistrosServidor({ idServidor, opcoes }: Props) {
         target={form}
         opcoes={opcoes}
         onClose={() => setForm(null)}
-        onSaved={() => setAtualizacao(value => value + 1)}
+        onSaved={atualizarRegistros}
       />}
     </div>
   );
@@ -162,6 +177,7 @@ function MatriculaItem({
   idServidor,
   matricula,
   opcoes,
+  atualizacao,
   onEdit,
   onDelete,
   onNewHistorico,
@@ -171,6 +187,7 @@ function MatriculaItem({
   idServidor: string | number;
   matricula: Matricula;
   opcoes: OpcoesServidorCompletas;
+  atualizacao: number;
   onEdit: () => void;
   onDelete: () => void;
   onNewHistorico: () => void;
@@ -178,6 +195,35 @@ function MatriculaItem({
   onHistoricoChanged: () => void;
 }) {
   const [expandido, setExpandido] = useState(false);
+  const [historicoRecente, setHistoricoRecente] = useState<HistoricoFuncional | null>(null);
+  const [carregandoHistorico, setCarregandoHistorico] = useState(true);
+  const [erroHistorico, setErroHistorico] = useState("");
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setCarregandoHistorico(true);
+    setErroHistorico("");
+    listarHistoricoFuncional(idServidor, matricula.id_matricula, controller.signal)
+      .then(items => {
+        const maisRecente = [...items].sort((a, b) =>
+          b.data_inicio.localeCompare(a.data_inicio)
+          || b.id_historico_funcional - a.id_historico_funcional,
+        )[0] ?? null;
+        setHistoricoRecente(maisRecente);
+      })
+      .catch(error => {
+        if (!controller.signal.aborted) {
+          setErroHistorico(error instanceof Error
+            ? error.message
+            : "Não foi possível carregar o histórico funcional.");
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setCarregandoHistorico(false);
+      });
+    return () => controller.abort();
+  }, [idServidor, matricula.id_matricula, atualizacao]);
+
   return (
     <article className="registro-item registro-matricula">
       <div className="registro-item-cabecalho">
@@ -192,6 +238,24 @@ function MatriculaItem({
             {expandido ? "Ocultar histórico" : "Ver histórico"}
           </button>
         </div>
+      </div>
+      <div className="matricula-historico-recente">
+        <h5>Histórico funcional mais recente</h5>
+        {carregandoHistorico ? <p className="muted">Carregando histórico...</p> : erroHistorico ? (
+          <p className="form-error" role="alert">
+            {erroHistorico}
+            <button type="button" className="btn outline" onClick={onHistoricoChanged}>Recarregar</button>
+          </p>
+        ) : historicoRecente ? (
+          <div className="info-grid">
+            <Info label="Cargo" value={optionLabel(opcoes.cargos, historicoRecente.cargo_id)} />
+            <Info label="Função" value={optionLabel(opcoes.funcoes, historicoRecente.funcao_id)} />
+            <Info label="Departamento" value={optionLabel(opcoes.departamentos, historicoRecente.departamento_id)} />
+            <Info label="Vínculo" value={optionLabel(opcoes.tiposVinculo, historicoRecente.tipo_vinculo_id)} />
+            <Info label="Situação" value={optionLabel(opcoes.situacoes, historicoRecente.situacao_id)} />
+            <Info label="Período" value={`${formatDate(historicoRecente.data_inicio)} – ${formatDate(historicoRecente.data_fim)}`} />
+          </div>
+        ) : <p className="muted">Nenhum período funcional registrado.</p>}
       </div>
       {expandido && <HistoricoMatricula
         idServidor={idServidor}

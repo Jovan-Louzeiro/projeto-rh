@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 export type JsonSchemaProperty = {
   type?: string | string[];
   title?: string;
@@ -44,8 +46,21 @@ export type CampoFormularioConfig = {
   inputMode?: "text" | "numeric" | "decimal" | "tel" | "search" | "email" | "url";
   minLength?: number;
   maxLength?: number;
+  minimum?: number;
+  maximum?: number;
   hidden?: boolean;
   disabled?: boolean;
+  disabledWhen?: { field: string; equals: unknown }[];
+  formato?: "cpf";
+  estilo?: "toggle";
+  setValueWhen?: { equals: unknown; targetField: string; value: unknown }[];
+  tamanho?: "compacto";
   visibleWhen?: { field: string; equals: unknown };
   requiredWhen?: { field: string; equals: unknown };
+};
+
+export type SecaoFormularioConfig = {
+  titulo: string;
+  campos: (string | { visual: string; tamanho?: "compacto" })[];
+  conteudo?: ReactNode;
 };

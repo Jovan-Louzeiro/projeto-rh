@@ -1,35 +1,28 @@
 import { CrudSchemas } from "@/schemas/crud.schemas.js";
 import z from "zod";
 
-export class MatriculaSchemas extends CrudSchemas{
+export class MatriculaSchemas extends CrudSchemas {
 
-    public readonly adicionar;
-    public readonly atualizar;
+    public baseSchema = z.strictObject({
 
-    constructor(){
+        ativo:
+            this.ativoSchema(),
+
+        numero:
+            this.numeroSchema("Numero da Matrícula", undefined, 50),
+
+        admissao:
+            this.dataSchema("Admissão"),
+
+        servidor_id: z
+            .number()
+    })
+
+    public adicionar = this.baseSchema.extend({
         
-        super()
+    })
 
-        const baseSchema = z.strictObject({
-
-            ativo: 
-                this.ativoSchema(),
-
-            numero: 
-                this.numeroSchema("Numero da Matrícula", undefined, 50),
-            
-            admissao:
-                this.dataSchema("Admissão"),
-
-            servidor_id: z
-                .number()
-        })
-
-        this.adicionar = baseSchema
-
-        this.atualizar = baseSchema
-
-    }
+    public atualizar = this.baseSchema
 
 }
 

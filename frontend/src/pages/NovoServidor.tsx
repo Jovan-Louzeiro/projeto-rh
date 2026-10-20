@@ -59,6 +59,17 @@ type ContatoFormulario = {
   principal: boolean;
 };
 
+type TipoDocumento = "certidao" | "cnh" | "ctps" | "identidade" | "tituloEleitor";
+type DocumentoFormulario = { id: number; tipo: TipoDocumento };
+
+const tiposDocumento: { tipo: TipoDocumento; titulo: string }[] = [
+  { tipo: "certidao", titulo: "Certidão" },
+  { tipo: "cnh", titulo: "CNH" },
+  { tipo: "ctps", titulo: "CTPS" },
+  { tipo: "identidade", titulo: "Identidade" },
+  { tipo: "tituloEleitor", titulo: "Título de eleitor" },
+];
+
 const opcoesVazias: Opcoes = {
   sexos: [],
   generos: [],
@@ -91,18 +102,20 @@ export default function NovoServidor({
   const [opcoes, setOpcoes] =
     useState<Opcoes>(opcoesVazias);
   const [geografia, setGeografia] = useState(dadosGeograficosVazios);
-  const [documentosIncluidos, setDocumentosIncluidos] = useState({
-    certidao: false,
-    cnh: false,
-    ctps: false,
-    identidade: false,
-    tituloEleitor: false,
-  });
+  const [documentos, setDocumentos] = useState<DocumentoFormulario[]>([]);
   const [certidaoNova, setCertidaoNova] = useState(true);
   const [ctpsAntiga, setCtpsAntiga] = useState(true);
   const [identidadeTipo, setIdentidadeTipo] = useState<"RG" | "CIN">("RG");
   const [contatos, setContatos] = useState<ContatoFormulario[]>([]);
   const proximoContatoId = useRef(0);
+  const proximoDocumentoId = useRef(0);
+  const documentosIncluidos = {
+    certidao: documentos.some(documento => documento.tipo === "certidao"),
+    cnh: documentos.some(documento => documento.tipo === "cnh"),
+    ctps: documentos.some(documento => documento.tipo === "ctps"),
+    identidade: documentos.some(documento => documento.tipo === "identidade"),
+    tituloEleitor: documentos.some(documento => documento.tipo === "tituloEleitor"),
+  };
 
   useEffect(() => {
     const controller = new AbortController();
@@ -629,9 +642,7 @@ export default function NovoServidor({
           disabled={loading}
         >
           <option value="">
-            {loading
-              ? "Carregando..."
-              : `Selecione ${label.toLowerCase()}`}
+            --------
           </option>
 
           {options.map((opcao) => (
@@ -659,32 +670,112 @@ export default function NovoServidor({
     id: estado.id_estado,
     descricao: `${estado.nome} (${estado.uf})`,
   }));
+  const normalizarOpcao = (valor: string) => valor.normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+  const paisBrasileiro = geografia.paises.find(pais =>
+    normalizarOpcao(pais.nome) === "brasil"
+    || normalizarOpcao(pais.gentilico).includes("brasileir"),
+  );
+  const idPaisBrasileiro = paisBrasileiro?.id_pais;
+  const opcaoIndigena = opcoes.racasCor.find(opcao =>
+    normalizarOpcao(opcao.descricao).includes("indigena"),
+  );
+  const opcaoCasado = opcoes.estadosCivis.find(opcao =>
+    normalizarOpcao(opcao.descricao).includes("casad"),
+  );
+  const racasNaoIndigenas = opcoes.racasCor.filter(opcao => opcao.id !== opcaoIndigena?.id);
   const configurarOpcoes = (itens: OpcaoServidor[]) => ({
     type: "select" as const,
     disabled: loading,
     options: itens.map(item => ({ value: item.id, label: item.descricao })),
   });
   const campos: Record<string, CampoFormularioConfig> = {
-    ativo: { title: "Servidor ativo", defaultValue: true },
+    ativo: { title: "Servidor ativo", defaultValue: true, estilo: "toggle" },
     nome_completo: { title: "Nome completo", placeholder: "Nome completo" },
     nome_social: { title: "Nome social", placeholder: "Nome social" },
-    cpf: { title: "CPF", placeholder: "CPF", inputMode: "numeric", maxLength: 14 },
+    cpf: { title: "CPF", placeholder: "000.000.000-00", inputMode: "numeric", maxLength: 14, formato: "cpf" },
     nis_pis: { title: "NIS/PIS", placeholder: "NIS/PIS", inputMode: "numeric", maxLength: 11 },
     data_nascimento: { title: "Data de nascimento", type: "date" },
-    nacionalidade_id: { title: "Nacionalidade", ...configurarOpcoes(opcoesPaises) },
-    pais_origem_id: { title: "País de origem", ...configurarOpcoes(opcoesPaises) },
-    ano_chegada_brasil: { title: "Ano de chegada ao Brasil", type: "number", placeholder: "Ano" },
+    nacionalidade_id: {
+      title: "Nacionalidade",
+      ...configurarOpcoes(opcoesPaises),
+      setValueWhen: idPaisBrasileiro === undefined ? [] : [{
+          equals: idPaisBrasileiro,
+          targetField: "pais_origem_id",
+          value: idPaisBrasileiro,
+        }, {
+          equals: idPaisBrasileiro,
+          targetField: "ano_chegada_brasil",
+          value: "",
+        }],
+    },
+    pais_origem_id: {
+      title: "País de origem",
+      ...configurarOpcoes(opcoesPaises),
+      disabledWhen: idPaisBrasileiro === undefined ? [] : [
+        { field: "nacionalidade_id", equals: idPaisBrasileiro },
+      ],
+    },
+    ano_chegada_brasil: {
+      title: "Ano de chegada ao Brasil",
+      type: "number",
+      placeholder: "AAAA",
+      minimum: 1500,
+      maximum: 9999,
+      tamanho: "compacto",
+      disabledWhen: idPaisBrasileiro === undefined ? [] : [
+        { field: "nacionalidade_id", equals: idPaisBrasileiro },
+      ],
+    },
     municipio_nascimento_id: { title: "Município de nascimento", ...configurarOpcoes(opcoesMunicipios) },
-    cpf_mae: { title: "CPF da mãe", placeholder: "CPF da mãe", inputMode: "numeric", maxLength: 14 },
+    cpf_mae: { title: "CPF da mãe", placeholder: "000.000.000-00", inputMode: "numeric", maxLength: 14, formato: "cpf" },
     nome_mae: { title: "Nome da mãe", placeholder: "Nome da mãe" },
-    cpf_pai: { title: "CPF do pai", placeholder: "CPF do pai", inputMode: "numeric", maxLength: 14 },
+    cpf_pai: { title: "CPF do pai", placeholder: "000.000.000-00", inputMode: "numeric", maxLength: 14, formato: "cpf" },
     nome_pai: { title: "Nome do pai", placeholder: "Nome do pai" },
-    estado_civil_id: { title: "Estado civil", ...configurarOpcoes(opcoes.estadosCivis) },
-    uniao_estavel: { title: "União estável" },
+    estado_civil_id: {
+      title: "Estado civil",
+      ...configurarOpcoes(opcoes.estadosCivis),
+      setValueWhen: [
+        { equals: "", targetField: "uniao_estavel", value: false },
+        ...(opcaoCasado ? [{
+          equals: opcaoCasado.id,
+          targetField: "uniao_estavel",
+          value: false,
+        }] : []),
+      ],
+    },
+    uniao_estavel: {
+      title: "União estável",
+      disabledWhen: [
+        { field: "estado_civil_id", equals: "" },
+        ...(opcaoCasado ? [{ field: "estado_civil_id", equals: opcaoCasado.id }] : []),
+      ],
+    },
     sexo_id: { title: "Sexo", ...configurarOpcoes(opcoes.sexos) },
     genero_id: { title: "Gênero", ...configurarOpcoes(opcoes.generos) },
-    racacor_id: { title: "Raça/cor", ...configurarOpcoes(opcoes.racasCor) },
-    comunidade_indigena_id: { title: "Comunidade indígena", ...configurarOpcoes(opcoes.comunidadesIndigenas) },
+    racacor_id: {
+      title: "Raça/cor",
+      ...configurarOpcoes(opcoes.racasCor),
+      setValueWhen: racasNaoIndigenas.map(opcao => ({
+        equals: opcao.id,
+        targetField: "comunidade_indigena_id",
+        value: "",
+      })),
+    },
+    comunidade_indigena_id: {
+      title: "Povo indígena",
+      ...configurarOpcoes(opcoes.comunidadesIndigenas),
+      disabledWhen: opcaoIndigena
+        ? [
+            { field: "racacor_id", equals: "" },
+            ...racasNaoIndigenas.map(opcao => ({ field: "racacor_id", equals: opcao.id })),
+          ]
+        : [
+            { field: "racacor_id", equals: "" },
+            ...opcoes.racasCor.map(opcao => ({ field: "racacor_id", equals: opcao.id })),
+          ],
+    },
     cep: { title: "CEP", placeholder: "CEP", inputMode: "numeric", maxLength: 9 },
     logradouro: { title: "Logradouro", placeholder: "Rua, avenida..." },
     numero: { title: "Número", placeholder: "Número" },
@@ -705,15 +796,63 @@ export default function NovoServidor({
     titulo_eleitor: { hidden: true },
     contatos: { hidden: true },
   };
+  const secoes = [
+    {
+      titulo: "Identificação",
+      campos: [
+        "nome_completo", "nome_social", "sexo_id", "genero_id",
+        "racacor_id",
+        "comunidade_indigena_id", "cpf", "nis_pis",
+        { visual: "Matrícula", tamanho: "compacto" as const },
+        "estado_civil_id", "uniao_estavel", "ativo",
+      ],
+    },
+    {
+      titulo: "Nascimento",
+      campos: [
+        "data_nascimento", "nacionalidade_id", "pais_origem_id", "ano_chegada_brasil",
+        { visual: "UF de nascimento", tamanho: "compacto" as const },
+        "municipio_nascimento_id",
+      ],
+    },
+    {
+      titulo: "Filiação",
+      campos: ["cpf_mae", "nome_mae", "cpf_pai", "nome_pai"],
+    },
+    {
+      titulo: "Documentos",
+      campos: [],
+    },
+    {
+      titulo: "Endereço Residencial",
+      campos: [
+        "cep", "logradouro", "numero", "complemento", "bairro",
+        { visual: "UF", tamanho: "compacto" as const },
+        "municipio_endereco_id", "zona_endereco_id", "localizacao_diferenciada_id",
+      ],
+    },
+    {
+      titulo: "Contatos",
+      campos: [],
+    },
+    {
+      titulo: "Formação",
+      campos: [
+        "escolaridade_id", "tipo_ensino_medio_cursado_id",
+        "situacao_id", "cartao_sus", "observacao",
+      ],
+    },
+  ];
 
   return (
     <>
       <div className="page-head">
         <div>
+          <span className="cadastro-eyebrow">Gestão de pessoas</span>
           <h1>Novo Servidor</h1>
 
           <p>
-            Cadastre os dados pessoais do servidor.
+            Preencha os dados por categoria. Os campos obrigatórios estão indicados no formulário.
           </p>
         </div>
 
@@ -728,6 +867,12 @@ export default function NovoServidor({
       </div>
 
       <div className="card cadastro-servidor">
+        <div className="cadastro-intro">
+          <span className="cadastro-intro-icon"><Icon name="user-add" /></span>
+          <div>
+            <strong>Cadastro de servidor</strong>
+          </div>
+        </div>
         {error && (
           <p className="form-error" role="alert" style={{ whiteSpace: "pre-line" }}>
             {error}
@@ -737,18 +882,15 @@ export default function NovoServidor({
           dominio="servidores"
           operacao="adicionar"
           campos={campos}
+          secoes={secoes}
           desabilitado={loading || saving}
           textoSalvar="Cadastrar servidor"
           textoSalvando="Cadastrando..."
           onSubmit={submit}
           onCancel={onBack}
         >
-          <section className="novo-servidor-contatos">
+          <section className="novo-servidor-contatos" data-cadastro-secao="Contatos">
             <div className="section-heading">
-              <div>
-                <h2>Contatos</h2>
-                <p className="muted">Opcional. Você também pode cadastrar contatos depois.</p>
-              </div>
               <button
                 type="button"
                 className="btn outline"
@@ -820,72 +962,104 @@ export default function NovoServidor({
             ))}
           </section>
 
-          <h2 className="full-col">Documentos (opcionais)</h2>
-          <p className="muted full-col">Marque os documentos que deseja cadastrar junto com o servidor.</p>
-
-          <label className="document-toggle">
-            <input type="checkbox" checked={documentosIncluidos.certidao} onChange={e => setDocumentosIncluidos(v => ({ ...v, certidao: e.target.checked }))} />
-            Incluir certidão
-          </label>
-          {documentosIncluidos.certidao && <div className="form-grid">
-            <label>Tipo de certidão<select name="certidao_tipo" defaultValue="NASCIMENTO"><option value="NASCIMENTO">Nascimento</option><option value="CASAMENTO">Casamento</option></select></label>
-            <label>Modelo<select name="certidao_nova" value={String(certidaoNova)} onChange={e => setCertidaoNova(e.target.value === "true")}><option value="true">Nova</option><option value="false">Antiga</option></select></label>
-            <label>Matrícula (32 dígitos)<input name="certidao_matricula" inputMode="numeric" maxLength={32} required /></label>
-            <label>Data de emissão<input name="certidao_data_emissao" type="date" required /></label>
-            {!certidaoNova && <>
-              <label>Termo (5 dígitos)<input name="certidao_termo" inputMode="numeric" maxLength={5} required /></label>
-              <label>Folha (5 dígitos)<input name="certidao_folha" inputMode="numeric" maxLength={5} required /></label>
-              <label>Livro (5 dígitos)<input name="certidao_livro" inputMode="numeric" maxLength={5} required /></label>
-            </>}
-          </div>}
-
-          <label className="document-toggle">
-            <input type="checkbox" checked={documentosIncluidos.cnh} onChange={e => setDocumentosIncluidos(v => ({ ...v, cnh: e.target.checked }))} />
-            Incluir CNH
-          </label>
-          {documentosIncluidos.cnh && <div className="form-grid">
-            <label>Número da CNH (11 dígitos)<input name="cnh_numero" inputMode="numeric" maxLength={11} required /></label>
-            <label>Categoria<input name="cnh_categoria" maxLength={15} required /></label>
-            <label>Data de emissão<input name="cnh_data_emissao" type="date" required /></label>
-            <label>Data de validade<input name="cnh_data_validade" type="date" required /></label>
-          </div>}
-
-          <label className="document-toggle">
-            <input type="checkbox" checked={documentosIncluidos.ctps} onChange={e => setDocumentosIncluidos(v => ({ ...v, ctps: e.target.checked }))} />
-            Incluir CTPS
-          </label>
-          {documentosIncluidos.ctps && <div className="form-grid">
-            <label>Tipo de CTPS<select name="ctps_tipo" value={ctpsAntiga ? "ANTIGO" : "NOVO"} onChange={e => setCtpsAntiga(e.target.value === "ANTIGO")}><option value="ANTIGO">Antiga</option><option value="NOVO">Digital/nova</option></select></label>
-            {ctpsAntiga && <>
-              <label>Número (CTPS antiga)<input name="ctps_numero" inputMode="numeric" maxLength={8} required /></label>
-              <label>Série (CTPS antiga)<input name="ctps_serie" inputMode="numeric" maxLength={5} required /></label>
-              <SelectApi name="ctps_uf_id" label="UF da CTPS" options={opcoesEstados} required />
-            </>}
-            <label>Data de emissão<input name="ctps_data_emissao" type="date" required /></label>
-          </div>}
-
-          <label className="document-toggle">
-            <input type="checkbox" checked={documentosIncluidos.identidade} onChange={e => setDocumentosIncluidos(v => ({ ...v, identidade: e.target.checked }))} />
-            Incluir identidade
-          </label>
-          {documentosIncluidos.identidade && <div className="form-grid">
-            <label>Tipo de identidade<select name="identidade_tipo" value={identidadeTipo} onChange={e => setIdentidadeTipo(e.target.value as "RG" | "CIN")}><option value="RG">RG</option><option value="CIN">CIN</option></select></label>
-            {identidadeTipo === "RG" && <label>Número do RG<input name="identidade_numero" inputMode="numeric" maxLength={30} required /></label>}
-            <label>Órgão emissor<input name="identidade_orgao" maxLength={30} required /></label>
-            <SelectApi name="identidade_uf_id" label="UF da identidade" options={opcoesEstados} required />
-            <label>Data de emissão<input name="identidade_data_emissao" type="date" required /></label>
-          </div>}
-
-          <label className="document-toggle">
-            <input type="checkbox" checked={documentosIncluidos.tituloEleitor} onChange={e => setDocumentosIncluidos(v => ({ ...v, tituloEleitor: e.target.checked }))} />
-            Incluir título de eleitor
-          </label>
-          {documentosIncluidos.tituloEleitor && <div className="form-grid">
-            <label>Número (12 dígitos)<input name="titulo_numero" inputMode="numeric" maxLength={12} required /></label>
-            <label>Zona eleitoral (4 dígitos)<input name="titulo_zona" inputMode="numeric" maxLength={4} required /></label>
-            <label>Seção (4 dígitos)<input name="titulo_secao" inputMode="numeric" maxLength={4} required /></label>
-          </div>}
-
+          <section className="cadastro-documentos" data-cadastro-secao="Documentos">
+            <div className="section-heading cadastro-documentos-heading">
+              {documentos.length < tiposDocumento.length && (
+                <button
+                  type="button"
+                  className="btn outline"
+                  onClick={() => {
+                    const tipo = tiposDocumento.find(opcao =>
+                      !documentos.some(documento => documento.tipo === opcao.tipo),
+                    )?.tipo;
+                    if (!tipo) return;
+                    setDocumentos(items => [...items, {
+                      id: proximoDocumentoId.current++,
+                      tipo,
+                    }]);
+                  }}
+                >
+                  <Icon name="add" /> Adicionar documento
+                </button>
+              )}
+            </div>
+            {documentos.length === 0 && (
+              <p className="cadastro-documentos-vazio">Nenhum documento adicionado.</p>
+            )}
+            {documentos.map(documento => (
+              <div className="cadastro-documento-item" key={documento.id}>
+                <div className="cadastro-documento-item-heading">
+                  <label>
+                    Tipo de documento
+                    <select
+                      value={documento.tipo}
+                      onChange={event => {
+                        const tipo = event.target.value as TipoDocumento;
+                        setDocumentos(items => items.map(item =>
+                          item.id === documento.id ? { ...item, tipo } : item,
+                        ));
+                      }}
+                    >
+                      {tiposDocumento.map(opcao => (
+                        <option
+                          key={opcao.tipo}
+                          value={opcao.tipo}
+                          disabled={documentos.some(item => item.id !== documento.id && item.tipo === opcao.tipo)}
+                        >
+                          {opcao.titulo}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button
+                    type="button"
+                    className="btn outline cadastro-documento-remover"
+                    onClick={() => setDocumentos(items => items.filter(item => item.id !== documento.id))}
+                  >
+                    Remover
+                  </button>
+                </div>
+                {documento.tipo === "certidao" && <div className="form-grid">
+                  <label>Tipo de certidão<select name="certidao_tipo" defaultValue="NASCIMENTO"><option value="NASCIMENTO">Nascimento</option><option value="CASAMENTO">Casamento</option></select></label>
+                  <label>Modelo<select name="certidao_nova" value={String(certidaoNova)} onChange={e => setCertidaoNova(e.target.value === "true")}><option value="true">Nova</option><option value="false">Antiga</option></select></label>
+                  <label>Matrícula (32 dígitos)<input name="certidao_matricula" inputMode="numeric" maxLength={32} required /></label>
+                  <label>Data de emissão<input name="certidao_data_emissao" type="date" required /></label>
+                  {!certidaoNova && <>
+                    <label>Termo (5 dígitos)<input name="certidao_termo" inputMode="numeric" maxLength={5} required /></label>
+                    <label>Folha (5 dígitos)<input name="certidao_folha" inputMode="numeric" maxLength={5} required /></label>
+                    <label>Livro (5 dígitos)<input name="certidao_livro" inputMode="numeric" maxLength={5} required /></label>
+                  </>}
+                </div>}
+                {documento.tipo === "cnh" && <div className="form-grid">
+                  <label>Número da CNH (11 dígitos)<input name="cnh_numero" inputMode="numeric" maxLength={11} required /></label>
+                  <label>Categoria<input name="cnh_categoria" maxLength={15} required /></label>
+                  <label>Data de emissão<input name="cnh_data_emissao" type="date" required /></label>
+                  <label>Data de validade<input name="cnh_data_validade" type="date" required /></label>
+                </div>}
+                {documento.tipo === "ctps" && <div className="form-grid">
+                  <label>Tipo de CTPS<select name="ctps_tipo" value={ctpsAntiga ? "ANTIGO" : "NOVO"} onChange={e => setCtpsAntiga(e.target.value === "ANTIGO")}><option value="ANTIGO">Antiga</option><option value="NOVO">Digital/nova</option></select></label>
+                  {ctpsAntiga && <>
+                    <label>Número (CTPS antiga)<input name="ctps_numero" inputMode="numeric" maxLength={8} required /></label>
+                    <label>Série (CTPS antiga)<input name="ctps_serie" inputMode="numeric" maxLength={5} required /></label>
+                    <SelectApi name="ctps_uf_id" label="UF da CTPS" options={opcoesEstados} required />
+                  </>}
+                  <label>Data de emissão<input name="ctps_data_emissao" type="date" required /></label>
+                </div>}
+                {documento.tipo === "identidade" && <div className="form-grid">
+                  <label>Tipo de identidade<select name="identidade_tipo" value={identidadeTipo} onChange={e => setIdentidadeTipo(e.target.value as "RG" | "CIN")}><option value="RG">RG</option><option value="CIN">CIN</option></select></label>
+                  {identidadeTipo === "RG" && <label>Número do RG<input name="identidade_numero" inputMode="numeric" maxLength={30} required /></label>}
+                  <label>Órgão emissor<input name="identidade_orgao" maxLength={30} required /></label>
+                  <SelectApi name="identidade_uf_id" label="UF da identidade" options={opcoesEstados} required />
+                  <label>Data de emissão<input name="identidade_data_emissao" type="date" required /></label>
+                </div>}
+                {documento.tipo === "tituloEleitor" && <div className="form-grid">
+                  <label>Número (12 dígitos)<input name="titulo_numero" inputMode="numeric" maxLength={12} required /></label>
+                  <label>Zona eleitoral (4 dígitos)<input name="titulo_zona" inputMode="numeric" maxLength={4} required /></label>
+                  <label>Seção (4 dígitos)<input name="titulo_secao" inputMode="numeric" maxLength={4} required /></label>
+                </div>}
+              </div>
+            ))}
+          </section>
         </FormularioDinamicoContainer>
       </div>
     </>
