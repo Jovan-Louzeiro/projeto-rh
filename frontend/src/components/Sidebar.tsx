@@ -1,6 +1,7 @@
 import { NavLink } from "react-router-dom";
 import Icon from "./Icon";
 import PrefeituraLogo from "./PrefeituraLogo";
+import { getCurrentUserName } from "../services/api";
 
 const items = [
   { path: "/dashboard", label: "Dashboard", icon: "home" }, { path: "/servidores", label: "Servidores", icon: "users" }, { path: "/ferias", label: "Férias", icon: "calendar-days" }, { path: "/licencas", label: "Licenças", icon: "file-medical" }, { path: "/contratos", label: "Contratos", icon: "briefcase" }, { path: "/quinquenios", label: "Quinquênios", icon: "trophy" }, { path: "/solicitacoes", label: "Solicitações", icon: "envelope" }, { path: "/requerimentos", label: "Requerimentos", icon: "document-signed" }, { path: "/documentos", label: "Documentos", icon: "folder" }, { path: "/relatorios", label: "Relatórios", icon: "chart-histogram" }, { path: "/cadastros", label: "Cadastros", icon: "list" }, { path: "/configuracoes", label: "Configurações", icon: "settings" },
@@ -13,6 +14,15 @@ type SidebarProps = {
 };
 
 export default function Sidebar({ collapsed, onToggleCollapsed, open = false, onClose }: SidebarProps) {
+  const userName = getCurrentUserName() ?? "Usuário";
+  const initials = userName
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toLocaleUpperCase("pt-BR");
+
   return <>
     <button className={`sidebar-backdrop ${open ? "visible" : ""}`} aria-label="Fechar menu" tabIndex={open ? 0 : -1} onClick={onClose} />
     <aside id="main-navigation" className={`sidebar ${open ? "sidebar-open" : ""}`}>
@@ -25,7 +35,7 @@ export default function Sidebar({ collapsed, onToggleCollapsed, open = false, on
       </div>
       <nav className="sidebar-nav">{items.map(item => <NavLink key={item.path} to={item.path} title={collapsed ? item.label : undefined} aria-label={collapsed ? item.label : undefined} onClick={onClose} className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}><Icon name={item.icon} /><span>{item.label}</span></NavLink>)}</nav>
       <div className="help-box"><strong>Precisa de ajuda?</strong><p>Fale com o suporte do sistema.</p><button className="btn outline full"><Icon name="headset" /> Abrir chamado</button><a href="https://www.flaticon.com/uicons" target="_blank" rel="noreferrer" className="flaticon-credit">Uicons by Flaticon</a></div>
-      <div className="user-mini"><div className="avatar">MS</div><div><strong>Maria Santos</strong><span>Analista de RH</span></div></div>
+      <div className="user-mini"><div className="avatar">{initials}</div><div><strong>{userName}</strong><span>Analista de RH</span></div></div>
     </aside>
   </>;
 }

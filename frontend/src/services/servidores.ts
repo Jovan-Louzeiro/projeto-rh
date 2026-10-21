@@ -58,6 +58,11 @@ export type Servidor = {
   [key: string]: unknown;
 };
 
+type MatriculaServidor = {
+  numero: string;
+  ativo?: boolean;
+};
+
 
 /* =========================================================
    DADOS PARA CADASTRO
@@ -226,7 +231,22 @@ export async function listarServidores(
     },
   );
 
-  return normalizarLista(response).map(adaptarServidor);
+  const servidores = normalizarLista(response);
+
+  return Promise.all(
+    servidores.map(async servidor => {
+      const matriculas = await apiGet<MatriculaServidor[]>(
+        `/api/servidores/${normalizarId(servidor.id_servidor)}/matriculas`,
+        { signal },
+      );
+      const matricula = matriculas.find(item => item.ativo) ?? matriculas[0];
+
+      return adaptarServidor({
+        ...servidor,
+        matricula: matricula?.numero,
+      });
+    }),
+  );
 }
 
 export function adaptarServidor(item: Servidor): ServidorTela {
@@ -238,7 +258,7 @@ export function adaptarServidor(item: Servidor): ServidorTela {
   return {
     id,
     nome: raw.nome_completo ?? "",
-    matricula: String(raw.matricula ?? id),
+    matricula: typeof raw.matricula === "string" ? raw.matricula : "",
     cargo: String(descricao(raw.cargo) ?? raw.cargo_descricao ?? "Não informado"),
     secretaria: String(descricao(raw.departamento) ?? raw.departamento_descricao ?? "Não informado"),
     status: String(descricao(raw.situacao) ?? (raw.ativo === false ? "Inativo" : "Ativo")) as ServidorTela["status"],

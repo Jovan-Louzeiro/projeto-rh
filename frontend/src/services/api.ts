@@ -22,6 +22,26 @@ export function getToken(): string | null {
   return localStorage.getItem(TOKEN_KEY);
 }
 
+export function getCurrentUserName(): string | null {
+  const token = getToken();
+  if (!token) return null;
+
+  try {
+    const payload = token.split(".")[1];
+    if (!payload) return null;
+
+    const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const bytes = Uint8Array.from(atob(base64), (character) => character.charCodeAt(0));
+    const decoded = JSON.parse(new TextDecoder().decode(bytes)) as { nome?: unknown };
+
+    return typeof decoded.nome === "string" && decoded.nome.trim()
+      ? decoded.nome.trim()
+      : null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Salva o token JWT da sessão.
  */

@@ -21,6 +21,8 @@ npm run dev
 Abra o endereço mostrado pelo Vite, normalmente:
 http://localhost:5173
 
+Ao iniciar o servidor de desenvolvimento, o terminal também mostra um QR Code para cada endereço IPv4 local. Escaneie o QR Code com um dispositivo conectado à mesma rede para abrir o frontend.
+
 ## Build de produção
 
 ```bash
