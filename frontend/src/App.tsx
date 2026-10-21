@@ -314,6 +314,31 @@ function Protected({
 }: {
   logged: boolean;
 }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    try {
+      return window.localStorage.getItem("rh_sidebar_collapsed") === "true";
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem("rh_sidebar_collapsed", String(sidebarCollapsed));
+    } catch {
+      // A indisponibilidade do armazenamento não deve impedir a navegação.
+    }
+  }, [sidebarCollapsed]);
+
+  useEffect(() => {
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMenuOpen(false);
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, []);
+
   if (!logged) {
     return (
       <Navigate
@@ -324,11 +349,11 @@ function Protected({
   }
 
   return (
-    <div className="app">
-      <Sidebar />
+    <div className={`app ${sidebarCollapsed ? "sidebar-collapsed" : ""}`}>
+      <Sidebar collapsed={sidebarCollapsed} onToggleCollapsed={() => setSidebarCollapsed(value => !value)} open={menuOpen} onClose={() => setMenuOpen(false)} />
 
       <main className="main">
-        <Header />
+        <Header menuOpen={menuOpen} onMenuToggle={() => setMenuOpen(open => !open)} />
 
         <section className="content">
           <Outlet />

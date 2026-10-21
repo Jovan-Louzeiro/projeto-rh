@@ -1,9 +1,12 @@
 import Icon from "./Icon";
 
-export default function Header() {
+type Props = { onMenuToggle: () => void; menuOpen: boolean };
+
+export default function Header({ onMenuToggle, menuOpen }: Props) {
   return (
     <header className="topbar">
       <div className="mobile-title">RH DIGITAL</div>
+      <button className="menu-toggle" type="button" aria-label={menuOpen ? "Fechar menu" : "Abrir menu"} aria-expanded={menuOpen} aria-controls="main-navigation" onClick={onMenuToggle}><Icon name={menuOpen ? "cross" : "bars"} /></button>
       <div className="search">
         <Icon name="search" />
         <input placeholder="Buscar algo..." />

@@ -1849,6 +1849,102 @@ select:focus-visible {
     margin-bottom: 0;
 }
 
+/* Shared responsive safeguards */
+html { box-sizing: border-box; }
+body { min-width: 320px; }
+.main, .content, .card, .table-card, .form-grid, .profile, .grid-2 { min-width: 0; }
+img, svg, canvas { max-width: 100%; }
+.table-scroll, .table-card { max-width: 100%; }
+.table-scroll { overflow-x: auto; overscroll-behavior-inline: contain; }
+.form-grid input, .form-grid select, .form-grid textarea,
+.cadastro-admin-toolbar input, .cadastro-admin-toolbar select,
+.filters select { min-width: 0; max-width: 100%; }
+.modal { padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); }
+.modal-box { max-width: 100%; max-height: calc(100dvh - 24px); }
+.menu-toggle, .sidebar-backdrop { display: none; }
+.page-head, .section-heading, .detail-status { min-width: 0; }
+.page-head > *, .section-heading > * { min-width: 0; }
+
+@media (min-width: 701px) and (max-width: 1100px) {
+    .content { padding: clamp(18px, 3vw, 28px); }
+    .topbar { padding-inline: clamp(18px, 3vw, 28px); }
+    .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .chart-wrap { gap: 16px; }
+    .donut { width: clamp(110px, 14vw, 145px); height: clamp(110px, 14vw, 145px); }
+    .perfil-servidor-secao .info-grid,
+    .perfil-servidor-documentos .document-profile .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 700px) {
+    .sidebar { display: block; position: fixed; inset: 0 auto 0 0; z-index: 40; width: min(290px, calc(100vw - 48px)); padding: 18px 14px max(18px, env(safe-area-inset-bottom)); transform: translateX(-105%); transition: transform .2s ease; box-shadow: 12px 0 32px rgba(19, 37, 29, .12); }
+    .sidebar.sidebar-open { transform: translateX(0); }
+    .sidebar .brand div:not(.brand-logo), .sidebar .nav-item span, .sidebar .help-box, .sidebar .user-mini div:not(.avatar), .sidebar .badge, .sidebar .new-tag { display: initial; }
+    .sidebar .brand div:not(.brand-logo) { display: block; }
+    .sidebar .nav-item { justify-content: flex-start; }
+    .sidebar-backdrop.visible { display: block; position: fixed; inset: 0; z-index: 39; border: 0; background: rgba(19, 37, 29, .38); }
+    .main { margin: 0; width: 100%; }
+    .topbar { height: auto; min-height: 60px; gap: 10px; padding: max(8px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) 8px max(12px, env(safe-area-inset-left)); }
+    .menu-toggle { display: inline-grid; place-items: center; flex: 0 0 36px; width: 36px; height: 36px; border: 0; border-radius: 8px; background: transparent; color: #34443d; }
+    .menu-toggle { order: -1; }
+    .mobile-title { white-space: nowrap; }
+    .search { width: auto; min-width: 0; flex: 1 1 120px; padding: 8px; }
+    .search input { min-width: 0; }
+    .top-actions { display: none; }
+    .content { padding: 16px max(12px, env(safe-area-inset-right)) 20px max(12px, env(safe-area-inset-left)); }
+    .cards, .grid-2, .report-grid, .form-grid, .info-grid { grid-template-columns: minmax(0, 1fr); }
+    .table-card { overflow-x: auto; }
+    .table-scroll { width: 100%; }
+    .table { min-width: 720px; }
+    .filters, .cadastro-admin-toolbar { align-items: stretch; }
+    .filter-search { min-width: 0; }
+    .page-head, .section-heading, .detail-status { flex-wrap: wrap; }
+    .quick { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .modal { padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left)); }
+    .modal-box { padding: 20px 16px; max-height: calc(100dvh - 16px); }
+    .cadastro-servidor .form-grid { grid-template-columns: minmax(0, 1fr); }
+    .perfil-servidor-secao .info-grid,
+    .perfil-servidor-documentos .document-profile .form-grid { grid-template-columns: minmax(0, 1fr); }
+    .anexo-list li { min-width: 0; flex-wrap: wrap; overflow-wrap: anywhere; }
+    .anexo-list span { margin-left: 0; }
+}
+
+@media (max-width: 360px) {
+    .topbar { gap: 6px; }
+    .mobile-title { font-size: 11px; }
+    .menu-toggle { flex-basis: 32px; width: 32px; }
+    .search { flex-basis: 90px; }
+    .content { padding-inline: 10px; }
+    .cadastro-servidor, .cadastro-form-section { padding: 12px; }
+    .quick { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (min-width: 701px) {
+    .sidebar { width: 235px; transition: width .24s ease; }
+    .main { margin-left: 235px; width: calc(100% - 235px); transition: margin-left .24s ease, width .24s ease; }
+    .sidebar .brand div.brand-name, .sidebar .nav-item span, .sidebar .help-box, .sidebar .user-mini div:not(.avatar) { display: block; }
+    .sidebar .nav-item { justify-content: flex-start; }
+    .badge, .new-tag { display: inline-block; }
+    .sidebar-collapse-toggle { display: inline-grid; place-items: center; position: absolute; top: 20px; right: 8px; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 7px; background: transparent; color: #61716a; }
+    .sidebar-collapse-toggle:hover { background: #f0f8f3; color: #078b4c; }
+    .brand { position: relative; padding-right: 30px; }
+    .app.sidebar-collapsed .sidebar { width: 80px; padding-right: 10px; padding-left: 10px; }
+    .app.sidebar-collapsed .main { margin-left: 80px; width: calc(100% - 80px); }
+    .app.sidebar-collapsed .brand { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: 40px 28px; align-items: center; justify-content: stretch; gap: 6px; padding: 6px 0 18px; }
+    .app.sidebar-collapsed .nav-item span,
+    .app.sidebar-collapsed .help-box,
+    .app.sidebar-collapsed .user-mini > div:not(.avatar) { display: none; }
+    .app.sidebar-collapsed .sidebar .brand > .brand-name { display: none; }
+    .app.sidebar-collapsed .brand-logo { justify-self: center; flex: 0 0 40px; width: 40px; height: 40px; }
+    .app.sidebar-collapsed .sidebar-collapse-toggle { position: static; justify-self: center; width: 28px; height: 28px; }
+    .app.sidebar-collapsed .nav-item { justify-content: center; padding-right: 8px; padding-left: 8px; }
+    .app.sidebar-collapsed .user-mini { justify-content: center; padding-right: 0; padding-left: 0; }
+}
+
+@media (max-width: 700px) {
+    .sidebar-collapse-toggle { display: none; }
+    .sidebar { transition: transform .24s ease; }
+}
+
 .servidores-page-head h1 {
     margin-top: 4px;
 }
