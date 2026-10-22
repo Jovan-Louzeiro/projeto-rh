@@ -4,6 +4,7 @@ import { atualizarServidor, type DetalhesServidor, type NovoServidorDados } from
 import type { DadosGeograficos } from "../services/localizacao";
 import type { OpcoesServidorCompletas } from "../services/opcoesServidor";
 import { FormularioDinamicoContainer } from "../components/formularios/FormularioDinamicoContainer";
+import { criarSchemaLocal } from "../components/formularios/schemaLocal";
 import type { CampoFormularioConfig, SecaoFormularioConfig } from "../types/json-schema.types";
 import { apiPost, apiPut } from "../services/api";
 import Icon from "../components/Icon";
@@ -213,6 +214,7 @@ export default function PerfilServidor({ servidor, detalhes, geografia, opcoes, 
     },
     uniao_estavel: {
       title: "União estável",
+      type: "boolean",
       disabledWhen: [
         { field: "estado_civil_id", equals: "" },
         ...(opcaoCasado ? [{ field: "estado_civil_id", equals: opcaoCasado.id }] : []),
@@ -415,6 +417,7 @@ export default function PerfilServidor({ servidor, detalhes, geografia, opcoes, 
           key={`servidor-editar-${servidor.id}`}
           dominio="servidores"
           operacao="atualizar"
+          schemaLocal={criarSchemaLocal(opcoesCampos, "atualizar")}
           valoresIniciais={valoresIniciais}
           campos={opcoesCampos}
           secoes={secoesPerfil}

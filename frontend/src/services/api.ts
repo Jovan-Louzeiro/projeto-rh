@@ -4,6 +4,7 @@ const API_URL_CONFIGURADA = (import.meta.env.VITE_API_URL ?? "").replace(/\/$/, 
 const API_URL = import.meta.env.DEV ? "" : API_URL_CONFIGURADA;
 
 const TOKEN_KEY = "rh_access_token";
+export const AUTH_EXPIRED_EVENT = "rh:auth-expired";
 
 /**
  * URL base da API.
@@ -22,6 +23,22 @@ export function getToken(): string | null {
   return localStorage.getItem(TOKEN_KEY);
 }
 
+export function getTokenExpiration(): number | null {
+  const token = getToken();
+  if (!token) return null;
+
+  try {
+    const payload = token.split(".")[1];
+    if (!payload) return null;
+    const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const bytes = Uint8Array.from(atob(base64), character => character.charCodeAt(0));
+    const decoded = JSON.parse(new TextDecoder().decode(bytes)) as { exp?: unknown };
+    return typeof decoded.exp === "number" ? decoded.exp * 1000 : null;
+  } catch {
+    return null;
+  }
+}
+
 export function getCurrentUserName(): string | null {
   const token = getToken();
   if (!token) return null;
@@ -37,6 +54,38 @@ export function getCurrentUserName(): string | null {
     return typeof decoded.nome === "string" && decoded.nome.trim()
       ? decoded.nome.trim()
       : null;
+  } catch {
+    return null;
+  }
+}
+
+export type CurrentUserInfo = {
+  id: string | number | null;
+  nome: string | null;
+  permissao: string | null;
+};
+
+export function getCurrentUserInfo(): CurrentUserInfo | null {
+  const token = getToken();
+  if (!token) return null;
+
+  try {
+    const payload = token.split(".")[1];
+    if (!payload) return null;
+
+    const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const bytes = Uint8Array.from(atob(base64), character => character.charCodeAt(0));
+    const decoded = JSON.parse(new TextDecoder().decode(bytes)) as {
+      id?: unknown;
+      nome?: unknown;
+      permissao?: unknown;
+    };
+
+    return {
+      id: typeof decoded.id === "string" || typeof decoded.id === "number" ? decoded.id : null,
+      nome: typeof decoded.nome === "string" && decoded.nome.trim() ? decoded.nome.trim() : null,
+      permissao: typeof decoded.permissao === "string" ? decoded.permissao : null,
+    };
   } catch {
     return null;
   }
@@ -60,7 +109,15 @@ export function clearToken(): void {
  * Verifica se existe uma sessão autenticada.
  */
 export function isAuthenticated(): boolean {
-  return Boolean(getToken());
+  const token = getToken();
+  if (!token) return false;
+
+  const expiration = getTokenExpiration();
+  if (expiration !== null && expiration <= Date.now()) {
+    clearToken();
+    return false;
+  }
+  return true;
 }
 
 /**
@@ -330,13 +387,11 @@ export async function apiFetch<T = unknown>(
 
   const data = await parseResponse(response);
 
-  /**
-   * Token inválido ou expirado.
-   *
-   * Não removemos automaticamente em toda chamada,
-   * porque a tela de login pode precisar tratar o erro.
-   */
   if (response.status === 401) {
+    if (getToken()) {
+      clearToken();
+      window.dispatchEvent(new Event(AUTH_EXPIRED_EVENT));
+    }
     throw new ApiError(
       getErrorMessage(data, response.status),
       response.status,

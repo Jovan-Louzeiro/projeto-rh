@@ -24,7 +24,7 @@ import {
 } from "./services/servidores";
 import { carregarDadosGeograficos, type DadosGeograficos } from "./services/localizacao";
 import { carregarOpcoesServidor, type OpcoesServidorCompletas } from "./services/opcoesServidor";
-import { isAuthenticated } from "./services/api";
+import { AUTH_EXPIRED_EVENT, clearToken, getTokenExpiration, isAuthenticated } from "./services/api";
 
 // Páginas
 import Dashboard from "./pages/Dashboard";
@@ -67,6 +67,30 @@ import { CadastroPais } from "./pages/teste";
 
 export default function App() {
   const [logged, setLogged] = useState(isAuthenticated);
+
+  useEffect(() => {
+    const encerrarSessao = () => setLogged(false);
+    window.addEventListener(AUTH_EXPIRED_EVENT, encerrarSessao);
+    return () => window.removeEventListener(AUTH_EXPIRED_EVENT, encerrarSessao);
+  }, []);
+
+  useEffect(() => {
+    if (!logged) return;
+
+    const expiration = getTokenExpiration();
+    if (expiration === null) return;
+
+    const verificarExpiracao = () => {
+      const expiraEm = getTokenExpiration();
+      if (expiraEm !== null && expiraEm <= Date.now()) {
+        clearToken();
+        setLogged(false);
+      }
+    };
+    verificarExpiracao();
+    const timer = window.setInterval(verificarExpiracao, 30_000);
+    return () => window.clearInterval(timer);
+  }, [logged]);
 
   return (
     <BrowserRouter>

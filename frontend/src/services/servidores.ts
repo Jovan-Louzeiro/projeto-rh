@@ -116,6 +116,21 @@ export type NovoServidorDados = {
   localizacao_diferenciada_id?: number | string;
   comunidade_indigena_id?: number | string;
 
+  matriculas?: {
+    numero: string;
+    admissao: string;
+    ativo?: boolean;
+    tipo_vinculo_id: number;
+    historicos_funcionais?: {
+      cargo_id: number;
+      funcao_id: number;
+      departamento_id: number;
+      situacao_id: number;
+      data_inicio: string;
+      data_fim?: string;
+    }[];
+  }[];
+
   [key: string]: unknown;
 };
 
@@ -256,6 +271,7 @@ export function adaptarServidor(item: Servidor): ServidorTela {
     ? (valor as Record<string, unknown>).descricao
     : undefined;
   return {
+    ...raw,
     id,
     nome: raw.nome_completo ?? "",
     matricula: typeof raw.matricula === "string" ? raw.matricula : "",

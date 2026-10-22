@@ -45,6 +45,7 @@ export interface Servidor {
   telefone?: string;
   sexoId?: string | number;
   sexo?: string;
+  [key: string]: unknown;
 }
 
 export type SituacaoRequerimento = "Pendente" | "Em análise" | "Deferido" | "Indeferido" | "Finalizado" | "Cancelado";

@@ -151,7 +151,11 @@ export class ServidorService extends CRUDServices<ServidorCreate, ServidorUpdate
                 identidade: true,
                 titulo_eleitor: true,
                 contatos: true,
-                matriculas: true
+                matriculas: {
+                    include: {
+                        historicos_funcionais: true
+                    }
+                }
             }
         })
 

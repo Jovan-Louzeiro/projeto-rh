@@ -15,6 +15,7 @@ type Props = {
   dominio: string;
   idServidor?: string | number;
   operacao: OperacaoFormulario;
+  schemaLocal?: JsonSchema;
   valoresIniciais?: Record<string, unknown>;
   campos?: Record<string, CampoFormularioConfig>;
   secoes?: SecaoFormularioConfig[];
@@ -30,6 +31,7 @@ export function FormularioDinamicoContainer({
   dominio,
   idServidor,
   operacao,
+  schemaLocal,
   valoresIniciais,
   campos,
   secoes,
@@ -45,6 +47,13 @@ export function FormularioDinamicoContainer({
   const [erro, setErro] = useState<string | null>(null);
 
   useEffect(() => {
+    if (schemaLocal) {
+      setSchema(schemaLocal);
+      setErro(null);
+      setCarregando(false);
+      return;
+    }
+
     let cancelado = false;
 
     async function carregarSchema() {
@@ -78,7 +87,7 @@ export function FormularioDinamicoContainer({
     return () => {
       cancelado = true;
     };
-  }, [dominio, idServidor, operacao]);
+  }, [dominio, idServidor, operacao, schemaLocal]);
 
   if (carregando) {
     return <p>Carregando formulário...</p>;

@@ -15,6 +15,7 @@ import {
   listarDepartamentos,
   listarEscolaridades,
   listarEstadosCivis,
+  listarFuncoes,
   listarGeneros,
   listarLocalizacoesDiferenciadas,
   listarRacasCor,
@@ -30,6 +31,7 @@ import type { TipoContato } from "../services/registrosServidor";
 import Icon from "../components/Icon";
 import { carregarDadosGeograficos, type DadosGeograficos } from "../services/localizacao";
 import { FormularioDinamicoContainer } from "../components/formularios/FormularioDinamicoContainer";
+import { criarSchemaLocal } from "../components/formularios/schemaLocal";
 import type { CampoFormularioConfig } from "../types/json-schema.types";
 
 type Props = {
@@ -42,6 +44,7 @@ type Opcoes = {
   racasCor: OpcaoServidor[];
   estadosCivis: OpcaoServidor[];
   cargos: OpcaoServidor[];
+  funcoes: OpcaoServidor[];
   departamentos: OpcaoServidor[];
   tiposVinculo: OpcaoServidor[];
   escolaridades: OpcaoServidor[];
@@ -61,6 +64,23 @@ type ContatoFormulario = {
 
 type TipoDocumento = "certidao" | "cnh" | "ctps" | "identidade" | "tituloEleitor";
 type DocumentoFormulario = { id: number; tipo: TipoDocumento };
+type HistoricoFormulario = {
+  id: number;
+  cargo_id: string;
+  funcao_id: string;
+  departamento_id: string;
+  situacao_id: string;
+  data_inicio: string;
+  data_fim: string;
+};
+type MatriculaFormulario = {
+  id: number;
+  numero: string;
+  admissao: string;
+  ativo: boolean;
+  tipo_vinculo_id: string;
+  historicos: HistoricoFormulario[];
+};
 
 const tiposDocumento: { tipo: TipoDocumento; titulo: string }[] = [
   { tipo: "certidao", titulo: "Certidão" },
@@ -76,6 +96,7 @@ const opcoesVazias: Opcoes = {
   racasCor: [],
   estadosCivis: [],
   cargos: [],
+  funcoes: [],
   departamentos: [],
   tiposVinculo: [],
   escolaridades: [],
@@ -107,8 +128,11 @@ export default function NovoServidor({
   const [ctpsAntiga, setCtpsAntiga] = useState(true);
   const [identidadeTipo, setIdentidadeTipo] = useState<"RG" | "CIN">("RG");
   const [contatos, setContatos] = useState<ContatoFormulario[]>([]);
+  const [matriculas, setMatriculas] = useState<MatriculaFormulario[]>([]);
   const proximoContatoId = useRef(0);
   const proximoDocumentoId = useRef(0);
+  const proximoMatriculaId = useRef(0);
+  const proximoHistoricoId = useRef(0);
   const documentosIncluidos = {
     certidao: documentos.some(documento => documento.tipo === "certidao"),
     cnh: documentos.some(documento => documento.tipo === "cnh"),
@@ -131,6 +155,7 @@ export default function NovoServidor({
           racasCor,
           estadosCivis,
           cargos,
+          funcoes,
           departamentos,
           tiposVinculo,
           escolaridades,
@@ -146,6 +171,7 @@ export default function NovoServidor({
           listarRacasCor(controller.signal),
           listarEstadosCivis(controller.signal),
           listarCargos(controller.signal),
+          listarFuncoes(controller.signal),
           listarDepartamentos(controller.signal),
           listarTiposVinculo(controller.signal),
           listarEscolaridades(controller.signal),
@@ -167,6 +193,7 @@ export default function NovoServidor({
           racasCor,
           estadosCivis,
           cargos,
+          funcoes,
           departamentos,
           tiposVinculo,
           escolaridades,
@@ -204,6 +231,8 @@ export default function NovoServidor({
     setSaving(true);
     setError("");
 
+    const valorCampo = (name: string) => _dados[name] ?? form.get(name) ?? "";
+
     /**
      * Texto:
      * vazio = null
@@ -211,9 +240,7 @@ export default function NovoServidor({
     const texto = (
       name: string
     ): string | undefined => {
-      const value = String(
-        form.get(name) ?? ""
-      ).trim();
+      const value = String(valorCampo(name)).trim();
 
       return value || undefined;
     };
@@ -226,9 +253,7 @@ export default function NovoServidor({
     const id = (
       name: string
     ): number | undefined => {
-      const value = String(
-        form.get(name) ?? ""
-      ).trim();
+      const value = String(valorCampo(name)).trim();
 
       if (!value) {
         return undefined;
@@ -253,9 +278,7 @@ export default function NovoServidor({
     const documento = (
       name: string
     ): string | undefined => {
-      const value = String(
-        form.get(name) ?? ""
-      ).trim();
+      const value = String(valorCampo(name)).trim();
 
       const somenteNumeros =
         value.replace(/\D/g, "");
@@ -266,9 +289,7 @@ export default function NovoServidor({
     const campo = (name: string) => texto(name);
     const numeroDocumento = (name: string) => documento(name);
 
-    const dataNascimento = String(
-      form.get("data_nascimento") ?? ""
-    ).trim();
+    const dataNascimento = String(valorCampo("data_nascimento")).trim();
 
     /**
      * Payload exatamente no formato
@@ -277,7 +298,7 @@ export default function NovoServidor({
      * Os relacionamentos são enviados como IDs.
      */
     const dados: NovoServidorDados = {
-      ativo: form.get("ativo") === "on",
+      ativo: valorCampo("ativo") === true || valorCampo("ativo") === "on",
 
       nome_completo: String(
         form.get("nome_completo") ?? ""
@@ -322,7 +343,7 @@ export default function NovoServidor({
         id("estado_civil_id"),
 
       uniao_estavel:
-        form.get("uniao_estavel") === "on",
+        valorCampo("uniao_estavel") === true || valorCampo("uniao_estavel") === "on",
 
       sexo_id:
         id("sexo_id"),
@@ -379,11 +400,11 @@ export default function NovoServidor({
 
       certidao: documentosIncluidos.certidao
         ? {
-            nova_certidao: form.get("certidao_nova") === "true",
+            nova_certidao: valorCampo("certidao_nova") === "true",
             matricula: numeroDocumento("certidao_matricula"),
             tipo_certidao: campo("certidao_tipo"),
             data_emissao: campo("certidao_data_emissao"),
-            ...(form.get("certidao_nova") === "true"
+            ...(valorCampo("certidao_nova") === "true"
               ? {}
               : {
                   termo: numeroDocumento("certidao_termo"),
@@ -399,6 +420,18 @@ export default function NovoServidor({
         principal,
         ativo: true,
       })),
+      matriculas: matriculas.map(({ id: _id, historicos, ...matricula }) => ({
+        ...matricula,
+        tipo_vinculo_id: Number(matricula.tipo_vinculo_id),
+        historicos_funcionais: historicos.map(({ id: _historicoId, ...historico }) => ({
+          cargo_id: Number(historico.cargo_id),
+          funcao_id: Number(historico.funcao_id),
+          departamento_id: Number(historico.departamento_id),
+          situacao_id: Number(historico.situacao_id),
+          data_inicio: historico.data_inicio,
+          ...(historico.data_fim ? { data_fim: historico.data_fim } : {}),
+        })),
+      })),
 
       cnh: documentosIncluidos.cnh
         ? {
@@ -412,7 +445,7 @@ export default function NovoServidor({
       ctps: documentosIncluidos.ctps
         ? {
             tipo_ctps: campo("ctps_tipo"),
-            ...(form.get("ctps_tipo") === "ANTIGO"
+            ...(valorCampo("ctps_tipo") === "ANTIGO"
               ? {
                   numero: numeroDocumento("ctps_numero"),
                   serie: numeroDocumento("ctps_serie"),
@@ -747,6 +780,7 @@ export default function NovoServidor({
     },
     uniao_estavel: {
       title: "União estável",
+      type: "boolean",
       disabledWhen: [
         { field: "estado_civil_id", equals: "" },
         ...(opcaoCasado ? [{ field: "estado_civil_id", equals: opcaoCasado.id }] : []),
@@ -836,6 +870,10 @@ export default function NovoServidor({
       campos: [],
     },
     {
+      titulo: "Matrículas e histórico funcional",
+      campos: [],
+    },
+    {
       titulo: "Formação",
       campos: [
         "escolaridade_id", "tipo_ensino_medio_cursado_id",
@@ -881,6 +919,11 @@ export default function NovoServidor({
         <FormularioDinamicoContainer
           dominio="servidores"
           operacao="adicionar"
+          schemaLocal={criarSchemaLocal(campos, "adicionar", [
+            "nome_completo", "cpf", "data_nascimento", "nacionalidade_id", "nome_mae",
+            "nome_pai", "sexo_id", "racacor_id", "cep", "logradouro", "bairro",
+            "municipio_endereco_id", "zona_endereco_id", "situacao_id",
+          ])}
           campos={campos}
           secoes={secoes}
           desabilitado={loading || saving}
@@ -959,6 +1002,198 @@ export default function NovoServidor({
                   Remover
                 </button>
               </div>
+            ))}
+          </section>
+
+          <section className="novo-servidor-matriculas" data-cadastro-secao="Matrículas e histórico funcional">
+            <div className="section-heading">
+              <div>
+                <h3>Matrículas e histórico funcional</h3>
+                <p>Adicione os vínculos e os períodos funcionais do servidor.</p>
+              </div>
+              <button
+                type="button"
+                className="btn outline"
+                onClick={() => setMatriculas(items => [...items, {
+                  id: proximoMatriculaId.current++,
+                  numero: "",
+                  admissao: "",
+                  ativo: true,
+                  tipo_vinculo_id: "",
+                  historicos: [],
+                }])}
+              >
+                <Icon name="add" /> Adicionar matrícula
+              </button>
+            </div>
+            {matriculas.length === 0 && (
+              <p className="cadastro-documentos-vazio">Nenhuma matrícula adicionada.</p>
+            )}
+            {matriculas.map(matricula => (
+              <article className="novo-servidor-matricula" key={matricula.id}>
+                <div className="cadastro-documento-item-heading">
+                  <strong>Matrícula</strong>
+                  <button
+                    type="button"
+                    className="btn outline"
+                    onClick={() => setMatriculas(items => items.filter(item => item.id !== matricula.id))}
+                  >
+                    Remover
+                  </button>
+                </div>
+                <div className="form-grid">
+                  <label>
+                    Número da matrícula
+                    <input
+                      required
+                      maxLength={50}
+                      value={matricula.numero}
+                      onChange={event => setMatriculas(items => items.map(item =>
+                        item.id === matricula.id ? { ...item, numero: event.target.value } : item,
+                      ))}
+                    />
+                  </label>
+                  <label>
+                    Data de admissão
+                    <input
+                      required
+                      type="date"
+                      value={matricula.admissao}
+                      onChange={event => setMatriculas(items => items.map(item =>
+                        item.id === matricula.id ? { ...item, admissao: event.target.value } : item,
+                      ))}
+                    />
+                  </label>
+                  <label>
+                    Tipo de vínculo
+                    <select
+                      required
+                      value={matricula.tipo_vinculo_id}
+                      disabled={loading}
+                      onChange={event => setMatriculas(items => items.map(item =>
+                        item.id === matricula.id ? { ...item, tipo_vinculo_id: event.target.value } : item,
+                      ))}
+                    >
+                      <option value="">Selecione</option>
+                      {opcoes.tiposVinculo.map(opcao => (
+                        <option key={String(opcao.id)} value={String(opcao.id)}>{opcao.descricao}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="document-toggle">
+                    <input
+                      type="checkbox"
+                      checked={matricula.ativo}
+                      onChange={event => setMatriculas(items => items.map(item =>
+                        item.id === matricula.id ? { ...item, ativo: event.target.checked } : item,
+                      ))}
+                    />
+                    Matrícula ativa
+                  </label>
+                </div>
+
+                <div className="section-heading novo-servidor-historico-heading">
+                  <strong>Histórico funcional</strong>
+                  <button
+                    type="button"
+                    className="btn outline"
+                    onClick={() => setMatriculas(items => items.map(item =>
+                      item.id === matricula.id
+                        ? {
+                            ...item,
+                            historicos: [...item.historicos, {
+                              id: proximoHistoricoId.current++,
+                              cargo_id: "",
+                              funcao_id: "",
+                              departamento_id: "",
+                              situacao_id: "",
+                              data_inicio: "",
+                              data_fim: "",
+                            }],
+                          }
+                        : item,
+                    ))}
+                  >
+                    <Icon name="add" /> Adicionar histórico
+                  </button>
+                </div>
+                {matricula.historicos.map(historico => (
+                  <div className="form-grid novo-servidor-historico" key={historico.id}>
+                    {([
+                      ["cargo_id", "Cargo", opcoes.cargos],
+                      ["funcao_id", "Função", opcoes.funcoes],
+                      ["departamento_id", "Departamento", opcoes.departamentos],
+                      ["situacao_id", "Situação", opcoes.situacoes],
+                    ] as const).map(([campo, rotulo, lista]) => (
+                      <label key={campo}>
+                        {rotulo}
+                        <select
+                          required
+                          value={historico[campo]}
+                          disabled={loading}
+                          onChange={event => setMatriculas(items => items.map(item => item.id !== matricula.id
+                            ? item
+                            : {
+                                ...item,
+                                historicos: item.historicos.map(registro => registro.id === historico.id
+                                  ? { ...registro, [campo]: event.target.value }
+                                  : registro),
+                              },
+                          ))}
+                        >
+                          <option value="">Selecione</option>
+                          {lista.map(opcao => (
+                            <option key={String(opcao.id)} value={String(opcao.id)}>{opcao.descricao}</option>
+                          ))}
+                        </select>
+                      </label>
+                    ))}
+                    <label>
+                      Início
+                      <input
+                        required
+                        type="date"
+                        value={historico.data_inicio}
+                        onChange={event => setMatriculas(items => items.map(item => item.id !== matricula.id
+                          ? item
+                          : {
+                              ...item,
+                              historicos: item.historicos.map(registro => registro.id === historico.id
+                                ? { ...registro, data_inicio: event.target.value }
+                                : registro),
+                            },
+                        ))}
+                      />
+                    </label>
+                    <label>
+                      Fim (opcional)
+                      <input
+                        type="date"
+                        value={historico.data_fim}
+                        onChange={event => setMatriculas(items => items.map(item => item.id !== matricula.id
+                          ? item
+                          : {
+                              ...item,
+                              historicos: item.historicos.map(registro => registro.id === historico.id
+                                ? { ...registro, data_fim: event.target.value }
+                                : registro),
+                            },
+                        ))}
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      className="btn outline"
+                      onClick={() => setMatriculas(items => items.map(item => item.id === matricula.id
+                        ? { ...item, historicos: item.historicos.filter(registro => registro.id !== historico.id) }
+                        : item,
+                      ))}
+                    >
+                      Remover histórico
+                    </button>
+                  </div>
+                ))}
+              </article>
             ))}
           </section>
 
