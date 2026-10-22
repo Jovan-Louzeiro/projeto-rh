@@ -179,7 +179,7 @@ model TipoVinculo {
   descricao       String  @unique @db.VarChar(50)
   ativo           Boolean @default(true)
 
-  historicos_funcionais HistoricoFuncional[]
+  matriculas Matricula[]
 }
 
 model TipoEnsinoMedioCursado {
@@ -337,7 +337,7 @@ model HistoricoFuncional {
   id_historico_funcional Int @id @default(autoincrement())
 
   matricula_id Int
-  matricula    Matricula @relation(fields: [matricula_id], references: [id_matricula])
+  matricula    Matricula @relation(fields: [matricula_id], references: [id_matricula], onDelete: Cascade)
 
   cargo_id Int
   cargo    Cargo @relation(fields: [cargo_id], references: [id_cargo])
@@ -347,9 +347,6 @@ model HistoricoFuncional {
 
   departamento_id Int?
   departamento    Departamento? @relation(fields: [departamento_id], references: [id_departamento])
-
-  tipo_vinculo_id Int
-  tipo_vinculo    TipoVinculo @relation(fields: [tipo_vinculo_id], references: [id_tipo_vinculo])
 
   situacao_id Int
   situacao    Situacao @relation(fields: [situacao_id], references: [id_situacao])
@@ -365,8 +362,11 @@ model Matricula {
   numero   String   @unique @db.VarChar(50)
   admissao DateTime
 
+  tipo_vinculo_id Int
+  tipo_vinculo    TipoVinculo @relation(fields: [tipo_vinculo_id], references: [id_tipo_vinculo])
+
   servidor_id Int
-  servidor    Servidor @relation(fields: [servidor_id], references: [id_servidor])
+  servidor    Servidor @relation(fields: [servidor_id], references: [id_servidor], onDelete: Cascade)
 
   historicos_funcionais HistoricoFuncional[]
 }
@@ -401,7 +401,7 @@ model Servidor {
   ativo       Boolean @default(true)
 
   // Identificação
-  matricula     Matricula[]
+  matriculas     Matricula[]
   nome_completo String      @db.VarChar(150)
   nome_social   String?     @db.VarChar(150)
   cpf           String      @unique @db.VarChar(11)

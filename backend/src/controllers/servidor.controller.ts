@@ -1,12 +1,13 @@
 import type { Request, Response } from "express";
 import { ServidorService } from "@/services/servidor.service.js";
 import { CrudController } from "@/controllers/crud.controller.js";
-import { ServidorSchemas } from "@/schemas/servidor.schemas.js";
+import { ServidorQuery, ServidorSchemas } from "@/schemas/servidor.schemas.js";
 import { obterUsuario } from "@/middlewares/auth.js";
+import { object } from "zod";
 
-export class ServidorController extends CrudController<ServidorService, ServidorSchemas>{
+export class ServidorController extends CrudController<ServidorService, ServidorSchemas> {
 
-    constructor(){
+    constructor() {
 
         super(
             new ServidorService(),
@@ -15,18 +16,45 @@ export class ServidorController extends CrudController<ServidorService, Servidor
         )
     }
 
-    procurarContato = async(req: Request, res: Response) => {
+    listarServidores = async (req: Request, res: Response) => {
 
-        const {idServidor} = this.validarParams(req.params)
+        const {select: camposSelect, ...filtrosQuery} = req.query
+
+        const queryFormatada = {
+            ...filtrosQuery,
+            ...(typeof camposSelect === "string" && {
+                select: camposSelect.split(",")
+            })
+        }
+
+        const where = this.validarQuery(
+            this.schemas.queryParams,
+            queryFormatada
+        )
+
+        const {select: campos, ...filtros} = where
+
+        const resposta = await this.service.listarServidores({
+            filtros: filtros,
+            camposSelect: campos
+        })
+
+        return res.json(resposta)
+
+    }
+
+    procurarServidor = async (req: Request, res: Response) => {
+
+        const { idServidor } = this.validarParams(req.params)
 
         const resposta = await this.service.procurar(idServidor)
 
         return res.json(resposta);
     }
 
-    atualizar = async(req: Request, res: Response) =>{
+    atualizar = async (req: Request, res: Response) => {
 
-        const {idServidor} = this.validarParams(req.params)
+        const { idServidor } = this.validarParams(req.params)
 
         const body = this.validarBody(this.schemas.atualizar, req.body)
 
@@ -39,11 +67,11 @@ export class ServidorController extends CrudController<ServidorService, Servidor
             dados: resposta
         });
 
-    }    
+    }
 
-    deletar = async (req: Request, res: Response) =>   {
+    deletar = async (req: Request, res: Response) => {
 
-        const {idServidor} = this.validarParams(req.params)
+        const { idServidor } = this.validarParams(req.params)
 
         const usuario = obterUsuario(req)
 
@@ -56,7 +84,7 @@ export class ServidorController extends CrudController<ServidorService, Servidor
 
     }
 
-    contarServidoresAtivos = async(req: Request, res: Response) => {
+    contarServidoresAtivos = async (req: Request, res: Response) => {
 
         const resposta = await this.service.contarServidoresAtivos()
 
@@ -68,7 +96,7 @@ export class ServidorController extends CrudController<ServidorService, Servidor
 
     detalharServidor = async (req: Request, res: Response) => {
 
-        const {idServidor} = this.validarParams(req.params)
+        const { idServidor } = this.validarParams(req.params)
 
         const resposta = await this.service.detalharServidor(idServidor);
 

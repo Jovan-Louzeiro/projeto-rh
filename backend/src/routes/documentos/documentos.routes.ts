@@ -28,7 +28,7 @@ extends CrudRoutes<TDocumentoController>{
             this.router.get(
                 "/",
                 autorizar(...this.autorizacoes.procurar),
-                this.controller.procurarContato
+                this.controller.procurarDocumento
             );
     
             this.router.post(

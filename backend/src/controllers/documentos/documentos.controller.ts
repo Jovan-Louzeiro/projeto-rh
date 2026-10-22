@@ -23,7 +23,7 @@ extends CrudController<TDocumentosService, TDocumentosSchemas>{
 
     }
 
-    procurarContato = async(req: Request, res: Response) => {
+    procurarDocumento = async(req: Request, res: Response) => {
 
         const {idServidor} = this.validarParams(req.params)
 

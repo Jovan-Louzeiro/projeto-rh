@@ -17,9 +17,6 @@ export class HistoricoFuncionalSchemas extends CrudSchemas{
         departamento_id:
             this.idExternoSchema("Departamento Id"),
 
-        tipo_vinculo_id:
-            this.idExternoSchema("Tipo de Vinculo Id"),
-
         situacao_id:
             this.idExternoSchema("Situação Id"),
 
@@ -33,6 +30,8 @@ export class HistoricoFuncionalSchemas extends CrudSchemas{
     })
 
     public atualizar = this.adicionar
+
+    public matriculaSchema = this.adicionar.partial({matricula_id: true})
 
 }
 

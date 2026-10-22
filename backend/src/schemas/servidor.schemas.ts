@@ -6,11 +6,13 @@ import { CnhSchemas } from "@/schemas/documentos/cnh.schemas.js";
 import { CtpsSchemas } from "@/schemas/documentos/ctps.schemas.js";
 import { TituloEleitorSchemas } from "@/schemas/documentos/tituloEleitor.schema.js";
 import { ContatoSchema } from "@/schemas/contato.schemas.js";
+import { MatriculaSchemas } from "@/schemas/matricula.schemas.js";
 
 export class ServidorSchemas extends CrudSchemas {
 
     public readonly adicionar
     public readonly atualizar
+    public readonly queryParams
 
     constructor() {
 
@@ -25,6 +27,8 @@ export class ServidorSchemas extends CrudSchemas {
         }
 
         const contatos = new ContatoSchema()
+
+        const matriculas = new MatriculaSchemas()
 
 
         const baseSchema = z.strictObject({
@@ -126,7 +130,10 @@ export class ServidorSchemas extends CrudSchemas {
             ctps: documentos.ctps.schemaServidor.optional(),
             identidade: documentos.identidade.schemaServidor.optional(),
             titulo_eleitor: documentos.titulo_eleitor.schemaServidor.optional(),
-            contatos:  z.array(contatos.adicionar)
+
+            contatos:  z.array(contatos.adicionar).optional(),
+
+            matriculas: z.array(matriculas.servidorSchema).optional()
 
         })
 
@@ -137,7 +144,12 @@ export class ServidorSchemas extends CrudSchemas {
                 {
                     message: "É necessário informar pelo menos um campo para atualizar"
                 }
-            );
+        );
+
+        this.queryParams = baseSchema.partial().extend({
+            id_servidor: this.idExternoSchema("id_servidor").optional(),
+            select: z.array(baseSchema.keyof()).optional()
+        })
 
     }
 }
@@ -148,4 +160,8 @@ export type ServidorCreate = z.infer<
 
 export type ServidorUpdate = z.infer<
     ServidorSchemas["atualizar"]
+>
+
+export type ServidorQuery = z.infer<
+    ServidorSchemas["queryParams"]
 >

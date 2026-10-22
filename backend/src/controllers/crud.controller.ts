@@ -27,6 +27,13 @@ export class CrudController<TService extends CRUDServices<any, any>, TSchema ext
         ).parse(parametros);
     }
 
+    protected validarQuery<T>(
+        schema: z.ZodType<T>,
+        dados: unknown
+    ): T {
+        return schema.parse(dados)
+    }
+
     protected validarBody<T>(
         schema: z.ZodType<T>,
         dados: unknown

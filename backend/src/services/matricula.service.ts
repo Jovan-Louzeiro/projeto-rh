@@ -1,5 +1,6 @@
 import { RegistroNaoEncontradoError } from "@/errors/dominios.errors.js";
 import { prisma } from "@/lib/prisma.js";
+import { HistoricoFuncionalCreate } from "@/schemas/historicoFuncional.schema.js";
 import { MatriculaCreate, MatriculaUpdate } from "@/schemas/matricula.schemas.js";
 import { CRUDServices } from "@/services/crud.service.js";
 import { ServidorService } from "@/services/servidor.service.js";
@@ -57,12 +58,28 @@ export class MatriculaService extends CRUDServices<MatriculaCreate, MatriculaUpd
     }
 
     // Cria uma nova Matricula
-    async adicionarMatricula(usuario: string, data: MatriculaCreate) {
+    async adicionarMatricula(usuario: string, data: MatriculaCreate & {historicos_funcionais?: HistoricoFuncionalCreate[]}) {
 
         // Procura se o servidor existe
         await this.servidorService.procurar(data.servidor_id)
 
-        return super.adicionar(usuario, data)
+        const { historicos_funcionais, ...dadosMatricula } = data
+
+        console.log(`Novo Servidor Criado por ${usuario}`)
+
+        return this.prismaModel.create({
+            data: {
+                ...dadosMatricula,
+
+                historicos_funcionais: historicos_funcionais
+                    ? { create: historicos_funcionais }
+                    : undefined
+
+            }, include: {
+
+                historicos_funcionais: true
+            }
+        })
 
     }
 
