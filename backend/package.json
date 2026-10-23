@@ -17,7 +17,7 @@
     "@types/bcrypt": "^6.0.0",
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
-    "@types/node": "^26.4.1",
+    "@types/node": "^26.6.5",
     "@types/pg": "^8.21.0",
     "prisma": "^7.9.1",
     "tsc-alias": "^1.9.7",

@@ -35,9 +35,15 @@ export class CrudSchemas {
     }
 
     ativoSchema() {
-        return z
-            .boolean("Ativo deve ser um valor boolean")
+        return z.preprocess(
+            valor => {
+                if (valor === "true") return true
+                if (valor === "false") return false
+                return valor
+            },
+            z.boolean("Ativo deve ser um valor boolean")
             .optional()
+        )
     }
 
     idExternoSchema(nome: string) {

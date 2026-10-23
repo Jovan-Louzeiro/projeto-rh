@@ -31,7 +31,14 @@ export class HistoricoFuncionalSchemas extends CrudSchemas{
 
     public atualizar = this.adicionar
 
-    public matriculaSchema = this.adicionar.partial({matricula_id: true})
+    public matriculaSchema = this.adicionar.omit({matricula_id: true})
+
+    public queryParams = this.adicionar
+        .strip()
+        .extend({
+            select: z.array(this.adicionar.keyof())
+        })
+        .partial()
 
 }
 

@@ -1,6 +1,6 @@
 import { CrudSchemas } from "@/schemas/crud.schemas.js";
 import { HistoricoFuncionalSchemas } from "@/schemas/historicoFuncional.schema.js";
-import z from "zod";
+import z, { keyof } from "zod";
 
 export class MatriculaSchemas extends CrudSchemas {
 
@@ -29,12 +29,19 @@ export class MatriculaSchemas extends CrudSchemas {
     public atualizar = this.baseSchema
 
     public servidorSchema = this.baseSchema
-        .partial({
+        .omit({
             servidor_id: true
         })
         .extend({
             historicos_funcionais: z.array(this.historicosFuncionais.matriculaSchema).optional()
         })
+
+    public queryParams = this.baseSchema
+        .strip()
+        .extend({
+            select: z.array(this.baseSchema.keyof())
+        })
+        .partial()
 
 }
 

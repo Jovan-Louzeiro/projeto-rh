@@ -13,38 +13,108 @@ export class ServidorService extends CRUDServices<ServidorCreate, ServidorUpdate
             "Servidor",
             "id_servidor"
         )
+
     }
 
     async listarServidores({
         filtros,
         camposSelect
     }: {
-        filtros?: Prisma.ServidorWhereInput,
-        camposSelect?: string[]
-    }){
+        filtros?: {
 
-        const select = camposSelect?
-            Object.fromEntries(
-                camposSelect.map((campo: string) => [campo, true])
-            ) : undefined
+            servidorFiltro: Prisma.ServidorWhereInput
+            matriculasFiltro?: Prisma.MatriculaWhereInput,
+            historicosFuncionaisFiltro?: Prisma.HistoricoFuncionalWhereInput
 
-        const pesquisa: {
-            where: Prisma.ServidorWhereInput,
-            select?: Prisma.ServidorSelect,
-        } = {
+        },
+        camposSelect?: {
 
-            where: filtros ?? {}
+            servidorSelect?: (keyof Prisma.ServidorSelect)[],
+            matriculasSelect?: (keyof Prisma.MatriculaSelect)[],
+            historicosFuncionaisSelect?: (keyof Prisma.HistoricoFuncionalSelect)[]
 
         }
+    }) {
 
-        if(select){
+        const { matriculasFiltro, historicosFuncionaisFiltro, servidorFiltro } = filtros ?? {}
 
-            pesquisa.select = select
+        const select = camposSelect ? {
+
+            servidorSelect: camposSelect.servidorSelect ? Object.fromEntries(
+                camposSelect.servidorSelect.map((campo: string) => [campo, true])
+            ) : undefined,
+
+            matriculasSelect: camposSelect.matriculasSelect ?Object.fromEntries(
+                camposSelect.matriculasSelect.map((campo: string) => [campo, true])
+            ) : undefined,
+
+            historicosFuncionaisSelect: camposSelect.historicosFuncionaisSelect ? Object.fromEntries(
+                camposSelect.historicosFuncionaisSelect.map((campo: string) => [campo, true])
+            ) : undefined
+
+        } : undefined
+
+        const pesquisa: Prisma.ServidorFindManyArgs = {
+
+            where: {
+
+                ...servidorFiltro,
+
+                ...(matriculasFiltro || historicosFuncionaisFiltro
+
+                    ? {
+
+                        matriculas: {
+
+                            some: {
+
+                                ...matriculasFiltro,
+
+                                ...(historicosFuncionaisFiltro
+                                    ? {
+
+                                        historicos_funcionais: {
+
+                                            some: historicosFuncionaisFiltro
+                                        }
+                                    } : {})
+
+                            }
+                        }
+                    }
+                    : {})
+
+            },
+
+            ...(select
+
+                ? {
+
+                    ...select.servidorSelect,
+
+                    ...(select.matriculasSelect || select.historicosFuncionaisSelect
+                        ? {
+                            matriculas: {
+                                select: {
+                                    ...select.matriculasSelect,
+
+                                    ...(select.historicosFuncionaisSelect
+                                        ? {
+                                            historicos_funcionais: {
+                                                select: select.historicosFuncionaisSelect
+                                            }
+                                        } : {})
+                                }
+                            }
+
+                        } : {})
+
+                } : {})
 
         }
 
         console.log(pesquisa)
-        
+
         const resultados = this.prismaModel.findMany(pesquisa)
 
         return resultados
@@ -139,7 +209,7 @@ export class ServidorService extends CRUDServices<ServidorCreate, ServidorUpdate
                 contatos: contatos
                     ? { create: contatos }
                     : undefined,
-                
+
                 matriculas: matriculasFormatadas
                     ? { create: matriculasFormatadas }
                     : undefined

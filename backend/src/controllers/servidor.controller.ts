@@ -4,6 +4,9 @@ import { CrudController } from "@/controllers/crud.controller.js";
 import { ServidorQuery, ServidorSchemas } from "@/schemas/servidor.schemas.js";
 import { obterUsuario } from "@/middlewares/auth.js";
 import { object } from "zod";
+import { MatriculaSchemas } from "@/schemas/matricula.schemas.js";
+import { HistoricoFuncionalSchemas } from "@/schemas/historicoFuncional.schema.js";
+import { Prisma } from "#/generated/prisma/client.js";
 
 export class ServidorController extends CrudController<ServidorService, ServidorSchemas> {
 
@@ -14,32 +17,51 @@ export class ServidorController extends CrudController<ServidorService, Servidor
             new ServidorSchemas(),
             "idServidor"
         )
+
+        
+
     }
+
+    private matriculaSchema = new MatriculaSchemas()
+    private historicosFuncionaisShemas = new HistoricoFuncionalSchemas()
 
     listarServidores = async (req: Request, res: Response) => {
 
-        const {select: camposSelect, ...filtrosQuery} = req.query
+        const {servidorSelect, matriculasSelect, historicosFuncionaisSelect, ...filtrosQuery} = req.query
 
-        const queryFormatada = {
-            ...filtrosQuery,
-            ...(typeof camposSelect === "string" && {
-                select: camposSelect.split(",")
-            })
+        const camposSelect = {
+            
+            servidorSelect: typeof servidorSelect === "string"
+            ? this.validarQuery(this.schemas.queryParams, {select: servidorSelect.split(",")}).select
+            : undefined,
+
+            servidorSelect: typeof servidorSelect === "string"
+            ? this.validarQuery(this.schemas.queryParams, {select: servidorSelect.split(",")}).select
+            : undefined
+
+
         }
 
-        const where = this.validarQuery(
-            this.schemas.queryParams,
-            queryFormatada
+        const filtros = {
+
+            servidorFiltro: this.validarQuery(this.schemas.queryParams, filtrosQuery),
+
+            matriculasFiltro: this.validarQuery(this.matriculaSchema.queryParams, filtrosQuery),
+
+            historicosFuncionaisFiltro: this.validarQuery(this.historicosFuncionaisShemas.queryParams, filtrosQuery)
+
+        }
+
+        const resposta = this.service.listarServidores(
+            {
+                filtros: filtros,
+
+                camposSelect: camposSelect
+            }
         )
 
-        const {select: campos, ...filtros} = where
 
-        const resposta = await this.service.listarServidores({
-            filtros: filtros,
-            camposSelect: campos
-        })
-
-        return res.json(resposta)
+        return res.json({camposSelect})
 
     }
 

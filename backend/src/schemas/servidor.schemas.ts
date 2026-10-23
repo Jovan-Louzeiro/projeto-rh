@@ -1,4 +1,4 @@
-import z from "zod";
+import z, { union } from "zod";
 import { CrudSchemas } from "@/schemas/crud.schemas.js";
 import { IdentidadeSchemas } from "@/schemas/documentos/identidade.schemas.js";
 import { CertidaoSchemas } from "@/schemas/documentos/certidao.schemas.js";
@@ -131,9 +131,9 @@ export class ServidorSchemas extends CrudSchemas {
             identidade: documentos.identidade.schemaServidor.optional(),
             titulo_eleitor: documentos.titulo_eleitor.schemaServidor.optional(),
 
-            contatos:  z.array(contatos.adicionar).optional(),
+            contatos: z.array(contatos.adicionar).optional(),
 
-            matriculas: z.array(matriculas.servidorSchema).optional()
+            matriculas: z.array(matriculas.servidorSchema)
 
         })
 
@@ -144,12 +144,15 @@ export class ServidorSchemas extends CrudSchemas {
                 {
                     message: "É necessário informar pelo menos um campo para atualizar"
                 }
-        );
+            );
 
-        this.queryParams = baseSchema.partial().extend({
-            id_servidor: this.idExternoSchema("id_servidor").optional(),
-            select: z.array(baseSchema.keyof()).optional()
-        })
+        this.queryParams = baseSchema
+            .strip()
+            .extend({
+                id_servidor: this.idExternoSchema("id_servidor"),
+                select: z.array(baseSchema.keyof())
+            })
+            .partial()
 
     }
 }
