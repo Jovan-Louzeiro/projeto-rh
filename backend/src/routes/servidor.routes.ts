@@ -22,6 +22,8 @@ export class ServidorRouter extends CrudRoutes<ServidorController>{
 
        this.registrarListarServidores()
 
+       this.outrosMetodos()
+       
         //Genericos
         this.registrarAdicionar()
         this.registrarAtualizar()
@@ -33,8 +35,6 @@ export class ServidorRouter extends CrudRoutes<ServidorController>{
         this.registrarRotasCrud()
         
         this.registrosServidor()
-
-        this.outrosMetodos()
 
     }
 
@@ -51,9 +51,9 @@ export class ServidorRouter extends CrudRoutes<ServidorController>{
     private outrosMetodos(): void {
 
         this.router.get(
-            `/contarServidoresAtivos`,
+            `/contar`,
             autorizar(...this.autorizacoes.procurar),
-            this.controller.contarServidoresAtivos
+            this.controller.contarServidores
         )
 
         this.router.get(

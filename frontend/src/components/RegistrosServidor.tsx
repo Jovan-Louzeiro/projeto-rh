@@ -251,8 +251,7 @@ function MatriculaItem({
             <Info label="Cargo" value={optionLabel(opcoes.cargos, historicoRecente.cargo_id)} />
             <Info label="Função" value={optionLabel(opcoes.funcoes, historicoRecente.funcao_id)} />
             <Info label="Departamento" value={optionLabel(opcoes.departamentos, historicoRecente.departamento_id)} />
-            <Info label="Vínculo" value={optionLabel(opcoes.tiposVinculo, historicoRecente.tipo_vinculo_id)} />
-            <Info label="Situação" value={optionLabel(opcoes.situacoes, historicoRecente.situacao_id)} />
+            <Info label="Situação" value={optionLabel(opcoes.situacoes, historicoRecente.situacao_historico_funcional_id)} />
             <Info label="Período" value={`${formatDate(historicoRecente.data_inicio)} – ${formatDate(historicoRecente.data_fim)}`} />
           </div>
         ) : <p className="muted">Nenhum período funcional registrado.</p>}
@@ -333,8 +332,7 @@ function HistoricoMatricula({
                 <Info label="Cargo" value={optionLabel(opcoes.cargos, item.cargo_id)} />
                 <Info label="Função" value={optionLabel(opcoes.funcoes, item.funcao_id)} />
                 <Info label="Departamento" value={optionLabel(opcoes.departamentos, item.departamento_id)} />
-                <Info label="Vínculo" value={optionLabel(opcoes.tiposVinculo, item.tipo_vinculo_id)} />
-                <Info label="Situação" value={optionLabel(opcoes.situacoes, item.situacao_id)} />
+                <Info label="Situação" value={optionLabel(opcoes.situacoes, item.situacao_historico_funcional_id)} />
                 <Info label="Período" value={`${formatDate(item.data_inicio)} – ${formatDate(item.data_fim)}`} />
               </div>
               <div className="registro-acoes">
@@ -397,6 +395,7 @@ function RegistroModal({
           numero: String(formData.get("numero") ?? "").trim(),
           admissao: String(formData.get("admissao") ?? ""),
           ativo: formData.get("ativo") === "on",
+          tipo_vinculo_id: Number(formData.get("tipo_vinculo_id")),
         };
         if (target.item && "id_matricula" in target.item) await atualizarMatricula(idServidor, target.item.id_matricula, dados);
         else await criarMatricula(idServidor, dados);
@@ -406,8 +405,7 @@ function RegistroModal({
           cargo_id: Number(formData.get("cargo_id")),
           funcao_id: Number(formData.get("funcao_id")),
           departamento_id: Number(formData.get("departamento_id")),
-          tipo_vinculo_id: Number(formData.get("tipo_vinculo_id")),
-          situacao_id: Number(formData.get("situacao_id")),
+          situacao_historico_funcional_id: Number(formData.get("situacao_historico_funcional_id")),
           data_inicio: String(formData.get("data_inicio") ?? ""),
           ...(formData.get("data_fim") ? { data_fim: String(formData.get("data_fim")) } : {}),
         };
@@ -430,7 +428,7 @@ function RegistroModal({
     <Modal title={title} onClose={onClose}>
       <form className="form-grid registro-form" onSubmit={salvar}>
         {target.tipo === "contato" && <ContatoFields item={target.item} />}
-        {target.tipo === "matricula" && <MatriculaFields item={target.item} />}
+        {target.tipo === "matricula" && <MatriculaFields item={target.item} opcoes={opcoes} />}
         {target.tipo === "historico" && <HistoricoFields item={target.item} opcoes={opcoes} />}
         {erro && <p className="form-error full-col" role="alert">{erro}</p>}
         <div className="form-actions full-col">
@@ -469,10 +467,18 @@ function ContatoFields({ item }: { item?: Contato }) {
   </>;
 }
 
-function MatriculaFields({ item }: { item?: Matricula }) {
+function MatriculaFields({ item, opcoes }: { item?: Matricula; opcoes: OpcoesServidorCompletas }) {
   return <>
     <label>Número da matrícula
       <input name="numero" maxLength={50} defaultValue={item?.numero ?? ""} required />
+    </label>
+    <label>Tipo de vínculo
+      <select name="tipo_vinculo_id" defaultValue={item?.tipo_vinculo_id == null ? "" : String(item.tipo_vinculo_id)} required>
+        <option value="">Selecione</option>
+        {opcoes.tiposVinculo.map(option => (
+          <option key={option.id} value={option.id}>{option.descricao}</option>
+        ))}
+      </select>
     </label>
     <label>Data de admissão
       <input name="admissao" type="date" defaultValue={inputDate(item?.admissao)} required />
@@ -486,8 +492,7 @@ function HistoricoFields({ item, opcoes }: { item?: HistoricoFuncional; opcoes: 
     { name: "cargo_id", label: "Cargo", items: opcoes.cargos },
     { name: "funcao_id", label: "Função", items: opcoes.funcoes },
     { name: "departamento_id", label: "Departamento", items: opcoes.departamentos },
-    { name: "tipo_vinculo_id", label: "Tipo de vínculo", items: opcoes.tiposVinculo },
-    { name: "situacao_id", label: "Situação", items: opcoes.situacoes },
+    { name: "situacao_historico_funcional_id", label: "Situação", items: opcoes.situacoes },
   ];
   return <>
     {campos.map(campo => (

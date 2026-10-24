@@ -24,6 +24,7 @@ export class UsuariosSchemas extends CrudSchemas {
             senha: this.stringSchema("Senha", 3),
             permissao: z.enum(PermissaoUsuario),
             ativo: this.ativoSchema(),
+            servidor_id: this.idExternoSchema("Servidor").optional()
         });
 
         this.adicionar = baseSchema;

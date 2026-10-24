@@ -39,7 +39,17 @@ export class MatriculaSchemas extends CrudSchemas {
     public queryParams = this.baseSchema
         .strip()
         .extend({
-            select: z.array(this.baseSchema.keyof())
+            select: z
+                .array(
+                    z.union(
+                        [
+                            this.baseSchema.keyof(),
+                            z.literal("historicos_funcionais"),
+                            z.literal("tipo_vinculo"),
+                            z.literal("id_matricula")
+                        ]
+                    )
+                )
         })
         .partial()
 

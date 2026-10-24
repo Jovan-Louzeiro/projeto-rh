@@ -15,6 +15,7 @@ export type Matricula = {
   numero: string;
   admissao: string;
   ativo: boolean;
+  tipo_vinculo_id: number;
 };
 
 export type HistoricoFuncional = {
@@ -23,8 +24,7 @@ export type HistoricoFuncional = {
   cargo_id: number;
   funcao_id: number | null;
   departamento_id: number | null;
-  tipo_vinculo_id: number;
-  situacao_id: number;
+  situacao_historico_funcional_id: number;
   data_inicio: string;
   data_fim: string | null;
 };

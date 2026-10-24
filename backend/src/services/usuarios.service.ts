@@ -51,7 +51,17 @@ export class UsuariosService extends CRUDServices<UsuarioCreate, UsuarioUpdate> 
 
         }
 
-        return super.atualizar(usuario, id, data)
+        console.log(`${this.nome} id:${id} foi atualizado por ${usuario}`)
+
+        return await this.prismaModel.update({
+            where: {
+                id_usuario: id
+            },
+            data: data,
+            omit:{
+                senha: true
+            }
+        })
     }
 
     async adicionar(usuario: string, data: UsuarioCreate){        

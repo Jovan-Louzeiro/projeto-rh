@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import type { Servidor } from "../types";
 import { excluirServidor, listarServidores } from "../services/servidores";
@@ -19,8 +19,14 @@ type CampoServidor = {
   tipo: "text" | "date" | "boolean" | "select";
 };
 
+type CampoFiltroServidor = CampoServidor & {
+  escopo: "servidor" | "matriculas" | "historicos_funcionais";
+  localOnly?: boolean;
+};
+
 type FiltroServidor = {
   id: number;
+  escopo: CampoFiltroServidor["escopo"];
   campo: string;
   valor: string;
 };
@@ -65,7 +71,34 @@ const camposServidor: CampoServidor[] = [
   { chave: "observacao", rotulo: "Observação", tipo: "text" },
 ];
 
-const camposVisiveisIniciais = ["cpf", "data_nascimento"];
+const camposRelacionados: CampoServidor[] = [
+  { chave: "tipo_vinculo_atual", rotulo: "Tipo de vínculo", tipo: "select" },
+  { chave: "admissao_matricula", rotulo: "Admissão", tipo: "date" },
+  { chave: "cargo_historico_atual", rotulo: "Cargo", tipo: "select" },
+  { chave: "funcao_historico_atual", rotulo: "Função", tipo: "select" },
+  { chave: "departamento_historico_atual", rotulo: "Departamento", tipo: "select" },
+  { chave: "situacao_historico_atual", rotulo: "Situação funcional", tipo: "select" },
+  { chave: "inicio_historico_atual", rotulo: "Início", tipo: "date" },
+];
+
+const camposFiltroServidor: CampoFiltroServidor[] = [
+  ...camposServidor.map(campo => ({
+    ...campo,
+    escopo: "servidor" as const,
+    localOnly: campo.chave === "ativo" || campo.chave === "numero",
+  })),
+  { escopo: "matriculas", chave: "matricula_numero", rotulo: "Número da matrícula", tipo: "text", localOnly: true },
+  { escopo: "matriculas", chave: "admissao", rotulo: "Data de admissão", tipo: "date" },
+  { escopo: "matriculas", chave: "tipo_vinculo_id", rotulo: "Tipo de vínculo", tipo: "select" },
+  { escopo: "historicos_funcionais", chave: "cargo_id", rotulo: "Cargo", tipo: "select" },
+  { escopo: "historicos_funcionais", chave: "funcao_id", rotulo: "Função", tipo: "select" },
+  { escopo: "historicos_funcionais", chave: "departamento_id", rotulo: "Departamento", tipo: "select" },
+  { escopo: "historicos_funcionais", chave: "situacao_historico_funcional_id", rotulo: "Situação funcional", tipo: "select" },
+  { escopo: "historicos_funcionais", chave: "data_inicio", rotulo: "Início", tipo: "date" },
+  { escopo: "historicos_funcionais", chave: "data_fim", rotulo: "Término", tipo: "date" },
+];
+
+const camposVisiveisIniciais = ["cpf", "funcao_historico_atual"];
 const opcoesServidorVazias: OpcoesServidorCompletas = {
   sexos: [], generos: [], racasCor: [], estadosCivis: [], cargos: [], funcoes: [],
   departamentos: [], tiposVinculo: [], escolaridades: [], tiposEnsinoMedio: [],
@@ -78,6 +111,15 @@ const formatarCpf = (cpf?: string) => {
   return numeros.length === 11
     ? `${numeros.slice(0, 3)}.${numeros.slice(3, 6)}.${numeros.slice(6, 9)}-${numeros.slice(9)}`
     : cpf || "—";
+};
+
+const formatarData = (valor: unknown) => {
+  if (!valor) return "—";
+  const data = String(valor).slice(0, 10);
+  const correspondencia = /^(\d{4})-(\d{2})-(\d{2})$/.exec(data);
+  return correspondencia
+    ? `${correspondencia[3]}-${correspondencia[2]}-${correspondencia[1]}`
+    : data;
 };
 
 const iniciais = (nome: string) =>
@@ -102,9 +144,133 @@ const mostrarCampo = (campo: CampoServidor, valor: unknown, opcoes: OpcaoFiltro[
   if (campo.chave === "cpf" || campo.chave === "cpf_mae" || campo.chave === "cpf_pai") {
     return formatarCpf(String(valor));
   }
-  if (campo.tipo === "date") return String(valor).slice(0, 10);
+  if (campo.tipo === "date") return formatarData(valor);
   return String(valor);
 };
+
+const descricaoRelacionada = (valor: unknown) => {
+  if (!valor || typeof valor !== "object") return "";
+  const relacao = valor as Record<string, unknown>;
+  const descricao = relacao.descricao ?? relacao.nome ?? relacao.titulo;
+  return typeof descricao === "string" ? descricao : "";
+};
+
+const listaMatriculas = (servidor: Servidor): Record<string, unknown>[] =>
+  Array.isArray(servidor.matriculas)
+    ? servidor.matriculas as Record<string, unknown>[]
+    : [];
+
+const historicoFuncionalAtual = (matricula: Record<string, unknown>) => {
+  const historicos = Array.isArray(matricula.historicos_funcionais)
+    ? matricula.historicos_funcionais as Record<string, unknown>[]
+    : [];
+  return historicos
+    .filter(historico => historico.data_fim === null || historico.data_fim === undefined || historico.data_fim === "")
+    .sort((a, b) => String(b.data_inicio ?? "").localeCompare(String(a.data_inicio ?? "")))[0];
+};
+
+const formatarDataRelacionada = formatarData;
+
+function escolherHistorico(
+  matricula: Record<string, unknown>,
+  filtros: FiltroServidor[],
+): Record<string, unknown> | undefined {
+  const historicos = Array.isArray(matricula.historicos_funcionais)
+    ? matricula.historicos_funcionais as Record<string, unknown>[]
+    : [];
+  const filtrosHistorico = filtros.filter(filtro => filtro.escopo === "historicos_funcionais");
+  return historicos
+    .filter(historico => filtrosHistorico.length
+      ? filtrosHistorico.every(filtro => correspondeFiltro(historico[filtro.campo], filtro))
+      : historico.data_fim === null || historico.data_fim === undefined || historico.data_fim === "",
+    )
+    .sort((a, b) => String(b.data_inicio ?? "").localeCompare(String(a.data_inicio ?? "")))[0];
+}
+
+function correspondeFiltro(valor: unknown, filtro: FiltroServidor): boolean {
+  const normalizado = (item: unknown) =>
+    ["admissao", "data_inicio", "data_fim"].includes(filtro.campo) && item
+      ? String(item).slice(0, 10)
+      : normalizarValorFiltro(filtro.campo, item);
+  return normalizado(valor) === normalizado(filtro.valor);
+}
+
+function escolherMatricula(
+  servidor: Servidor,
+  filtros: FiltroServidor[],
+): { matricula?: Record<string, unknown>; historico?: Record<string, unknown> } {
+  const matriculas = listaMatriculas(servidor);
+  const filtrosMatricula = filtros.filter(filtro => filtro.escopo === "matriculas");
+  const filtrosHistorico = filtros.filter(filtro => filtro.escopo === "historicos_funcionais");
+
+  const candidatas = matriculas.flatMap(matricula => {
+    if (!filtrosMatricula.every(filtro => correspondeFiltro(
+      filtro.campo === "matricula_numero" ? matricula.numero : matricula[filtro.campo],
+      filtro,
+    ))) return [];
+
+    const historico = escolherHistorico(matricula, filtros);
+
+    if (filtrosHistorico.length && !historico) return [];
+    return [{ matricula, historico }];
+  });
+
+  candidatas.sort((a, b) => {
+    if (filtrosHistorico.length) {
+      const comparacaoData = String(b.historico?.data_inicio ?? "")
+        .localeCompare(String(a.historico?.data_inicio ?? ""));
+      if (comparacaoData) return comparacaoData;
+    }
+    return Number(b.matricula.ativo === true) - Number(a.matricula.ativo === true);
+  });
+
+  if (candidatas.length) return candidatas[0];
+  const padrao = matriculas.find(matricula => matricula.ativo === true) ?? matriculas[0];
+  return { matricula: padrao, historico: padrao ? historicoFuncionalAtual(padrao) : undefined };
+}
+
+function obterValorMatricula(
+  matricula: Record<string, unknown>,
+  campo: CampoServidor,
+  historicoSelecionado?: Record<string, unknown>,
+): unknown {
+  if (campo.chave === "tipo_vinculo_atual") {
+    return matricula.tipo_vinculo ?? matricula.tipo_vinculo_id;
+  }
+  if (campo.chave === "admissao_matricula") return matricula.admissao;
+
+  const historico = historicoSelecionado ?? historicoFuncionalAtual(matricula);
+  if (!historico) return null;
+
+  const valores: Record<string, unknown> = {
+    cargo_historico_atual: historico.cargo ?? historico.cargo_id,
+    funcao_historico_atual: historico.funcao ?? historico.funcao_id,
+    departamento_historico_atual: historico.departamento ?? historico.departamento_id,
+    situacao_historico_atual: historico.situacao ?? historico.situacao_historico_funcional_id,
+    inicio_historico_atual: historico.data_inicio,
+  };
+  return valores[campo.chave] ?? null;
+}
+
+function obterValorExibicao(
+  servidor: Servidor,
+  campo: CampoServidor,
+  filtros: FiltroServidor[],
+): unknown {
+  const { matricula, historico } = escolherMatricula(servidor, filtros);
+
+  const valoresRelacionados: Record<string, unknown> = {
+    tipo_vinculo_atual: matricula?.tipo_vinculo_id ?? matricula?.tipo_vinculo,
+    admissao_matricula: matricula?.admissao,
+    cargo_historico_atual: historico?.cargo_id ?? historico?.cargo,
+    funcao_historico_atual: historico?.funcao_id ?? historico?.funcao,
+    departamento_historico_atual: historico?.departamento_id ?? historico?.departamento,
+    situacao_historico_atual: historico?.situacao_historico_funcional_id ?? historico?.situacao,
+    inicio_historico_atual: historico?.data_inicio,
+  };
+
+  return campo.chave in valoresRelacionados ? valoresRelacionados[campo.chave] : servidor[campo.chave];
+}
 
 export function Servidores({ onProfile, onEdit, onNew }: Props) {
   const [servidores, setServidores] = useState<Servidor[]>([]);
@@ -120,23 +286,38 @@ export function Servidores({ onProfile, onEdit, onNew }: Props) {
   const [filtrosAplicados, setFiltrosAplicados] = useState<FiltroServidor[]>([]);
   const [proximoFiltroId, setProximoFiltroId] = useState(0);
   const [excluindo, setExcluindo] = useState<string | null>(null);
+  const [servidorExpandido, setServidorExpandido] = useState<string | null>(null);
   const [sucesso, setSucesso] = useState("");
 
-  async function carregarServidores(signal?: AbortSignal) {
+  async function carregarServidores(
+    signal?: AbortSignal,
+    filtros: FiltroServidor[] = [],
+    carregarDependencias = false,
+  ) {
     try {
       setLoading(true);
       setErro("");
-      const [lista, opcoes, dadosGeograficos] = await Promise.all([
-        listarServidores(signal),
-        carregarOpcoesServidor(signal),
-        carregarDadosGeograficos(signal),
-      ]);
+      const filtrosApi = Object.fromEntries(
+        filtros
+          .filter(filtro => !camposFiltroServidor.find(campo =>
+            campo.escopo === filtro.escopo && campo.chave === filtro.campo,
+          )?.localOnly)
+          .map(filtro => [filtro.campo, filtro.valor]),
+      );
+      const listaPromise = listarServidores(signal, { filtros: filtrosApi });
+      const dependenciasPromise = carregarDependencias
+        ? Promise.all([carregarOpcoesServidor(signal), carregarDadosGeograficos(signal)])
+        : Promise.resolve(null);
+      const [lista, dependencias] = await Promise.all([listaPromise, dependenciasPromise]);
       setServidores(lista);
-      setOpcoesServidor(opcoes);
-      setGeografia(dadosGeograficos);
+      if (dependencias) {
+        setOpcoesServidor(dependencias[0]);
+        setGeografia(dependencias[1]);
+      }
     } catch (error) {
       if (signal?.aborted) return;
       console.error(error);
+      setServidores([]);
       setErro(error instanceof Error ? error.message : "Não foi possível carregar os servidores.");
     } finally {
       if (!signal?.aborted) setLoading(false);
@@ -145,7 +326,7 @@ export function Servidores({ onProfile, onEdit, onNew }: Props) {
 
   useEffect(() => {
     const controller = new AbortController();
-    void carregarServidores(controller.signal);
+    void carregarServidores(controller.signal, [], true);
     return () => controller.abort();
   }, []);
 
@@ -158,20 +339,56 @@ export function Servidores({ onProfile, onEdit, onNew }: Props) {
         servidor.matricula,
         servidor.cpf,
       ].some(valor => valor?.toLocaleLowerCase().includes(termo));
-      const ativo = servidor.status === "Ativo";
+      const ativo = servidor.ativo === true;
       const correspondeStatus = filtroStatus === "Todos"
         || (filtroStatus === "Ativos" && ativo)
         || (filtroStatus === "Inativos" && !ativo);
-      const correspondeFiltros = filtrosAplicados.every(filtro =>
-        normalizarValorFiltro(filtro.campo, servidor[filtro.campo])
-          === normalizarValorFiltro(filtro.campo, filtro.valor),
-      );
+      const correspondeFiltros = filtrosAplicados.every(filtro => {
+        const campo = camposFiltroServidor.find(item =>
+          item.escopo === filtro.escopo && item.chave === filtro.campo,
+        );
+        if (!campo?.localOnly) return true;
+        if (filtro.escopo === "matriculas") {
+          const matriculas = Array.isArray(servidor.matriculas)
+            ? servidor.matriculas as Record<string, unknown>[]
+            : [];
+          return matriculas.some(matricula =>
+            normalizarValorFiltro(filtro.campo, matricula.numero)
+              === normalizarValorFiltro(filtro.campo, filtro.valor),
+          );
+        }
+        return normalizarValorFiltro(filtro.campo, servidor[filtro.campo])
+          === normalizarValorFiltro(filtro.campo, filtro.valor);
+      });
       return correspondeBusca && correspondeStatus && correspondeFiltros;
     });
   }, [servidores, busca, filtroStatus, filtrosAplicados]);
 
-  const ativos = servidores.filter(servidor => servidor.status === "Ativo").length;
-  const camposDeExibicao = camposServidor.filter(campo => campo.chave !== "nome_completo");
+  const ativos = servidores.filter(servidor => servidor.ativo === true).length;
+  const camposDeExibicao = [
+    ...camposServidor.filter(campo => campo.chave !== "nome_completo"),
+    ...camposRelacionados,
+  ];
+  const gruposCamposExibicao = [
+    {
+      titulo: "Servidor",
+      campos: camposDeExibicao.filter(campo =>
+        camposServidor.some(item => item.chave === campo.chave) && campo.chave !== "nome_completo",
+      ),
+    },
+    {
+      titulo: "Matrícula",
+      campos: camposRelacionados.filter(campo =>
+        campo.chave === "tipo_vinculo_atual" || campo.chave === "admissao_matricula",
+      ),
+    },
+    {
+      titulo: "Dados funcionais",
+      campos: camposRelacionados.filter(campo =>
+        campo.chave !== "tipo_vinculo_atual" && campo.chave !== "admissao_matricula",
+      ),
+    },
+  ];
   const colunasAdicionais = camposDeExibicao.filter(campo => camposVisiveis.includes(campo.chave));
   const opcoesGeograficas = (itens: { id: number; nome: string }[]): OpcaoFiltro[] =>
     itens.map(item => ({ valor: String(item.id), descricao: item.nome }));
@@ -199,13 +416,26 @@ export function Servidores({ onProfile, onEdit, onNew }: Props) {
     zona_endereco_id: opcoesServidor.zonasEndereco.map(opcao => ({ valor: String(opcao.id), descricao: opcao.descricao })),
     localizacao_diferenciada_id: opcoesServidor.localizacoesDiferenciadas.map(opcao => ({ valor: String(opcao.id), descricao: opcao.descricao })),
     situacao_id: opcoesServidor.situacoes.map(opcao => ({ valor: String(opcao.id), descricao: opcao.descricao })),
+    situacao_historico_funcional_id: opcoesServidor.situacoes.map(opcao => ({ valor: String(opcao.id), descricao: opcao.descricao })),
+    tipo_vinculo_id: opcoesServidor.tiposVinculo.map(opcao => ({ valor: String(opcao.id), descricao: opcao.descricao })),
+    tipo_vinculo_atual: opcoesServidor.tiposVinculo.map(opcao => ({ valor: String(opcao.id), descricao: opcao.descricao })),
+    cargo_historico_atual: opcoesServidor.cargos.map(opcao => ({ valor: String(opcao.id), descricao: opcao.descricao })),
+    funcao_historico_atual: opcoesServidor.funcoes.map(opcao => ({ valor: String(opcao.id), descricao: opcao.descricao })),
+    departamento_historico_atual: opcoesServidor.departamentos.map(opcao => ({ valor: String(opcao.id), descricao: opcao.descricao })),
+    situacao_historico_atual: opcoesServidor.situacoes.map(opcao => ({ valor: String(opcao.id), descricao: opcao.descricao })),
+    cargo_id: opcoesServidor.cargos.map(opcao => ({ valor: String(opcao.id), descricao: opcao.descricao })),
+    funcao_id: opcoesServidor.funcoes.map(opcao => ({ valor: String(opcao.id), descricao: opcao.descricao })),
+    departamento_id: opcoesServidor.departamentos.map(opcao => ({ valor: String(opcao.id), descricao: opcao.descricao })),
     escolaridade_id: opcoesServidor.escolaridades.map(opcao => ({ valor: String(opcao.id), descricao: opcao.descricao })),
     tipo_ensino_medio_cursado_id: opcoesServidor.tiposEnsinoMedio.map(opcao => ({ valor: String(opcao.id), descricao: opcao.descricao })),
   };
   const ordenados = [...filtrados].sort((a, b) => {
     const valorOrdenacao = (servidor: Servidor) => {
       if (ordenacao.campo === "situacao") return servidor.status;
-      const valor = servidor[ordenacao.campo];
+      const campo = camposDeExibicao.find(item => item.chave === ordenacao.campo);
+      const valor = campo
+        ? obterValorExibicao(servidor, campo, filtrosAplicados)
+        : servidor[ordenacao.campo];
       if (valor === null || valor === undefined || valor === "") return null;
       const opcao = (opcoesPorCampo[ordenacao.campo] ?? [])
         .find(item => item.valor === String(valor));
@@ -253,20 +483,36 @@ export function Servidores({ onProfile, onEdit, onNew }: Props) {
   }
 
   function adicionarFiltro() {
-    const campoDisponivel = camposServidor.find(campo =>
-      !filtrosRascunho.some(filtro => filtro.campo === campo.chave),
-    ) ?? camposServidor[0];
+    const campoDisponivel = camposFiltroServidor.find(campo =>
+      !filtrosRascunho.some(filtro =>
+        filtro.escopo === campo.escopo && filtro.campo === campo.chave,
+      ),
+    ) ?? camposFiltroServidor[0];
     setFiltrosRascunho(atual => [
       ...atual,
-      { id: proximoFiltroId, campo: campoDisponivel.chave, valor: "" },
+      {
+        id: proximoFiltroId,
+        escopo: campoDisponivel.escopo,
+        campo: campoDisponivel.chave,
+        valor: "",
+      },
     ]);
     setProximoFiltroId(atual => atual + 1);
   }
 
-  function aplicarFiltros(event: FormEvent<HTMLFormElement>) {
+  async function aplicarFiltros(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setFiltrosAplicados(filtrosRascunho);
-    setErro("");
+    const filtrosValidos = filtrosRascunho.filter(filtro => filtro.valor.trim() !== "");
+    setFiltrosAplicados(filtrosValidos);
+    await carregarServidores(undefined, filtrosValidos);
+  }
+
+  async function limparFiltros() {
+    setFiltrosRascunho([]);
+    setFiltrosAplicados([]);
+    setBusca("");
+    setFiltroStatus("Todos");
+    await carregarServidores(undefined, []);
   }
 
   async function excluir(servidor: Servidor) {
@@ -332,6 +578,7 @@ export function Servidores({ onProfile, onEdit, onNew }: Props) {
           <div>
             <h2>Lista de servidores</h2>
             <p>{filtrados.length} {filtrados.length === 1 ? "cadastro encontrado" : "cadastros encontrados"}</p>
+            {loading && <span className="muted">Atualizando resultados...</span>}
           </div>
           <div className="servidores-filtros">
             <label className="filter-search">
@@ -357,18 +604,25 @@ export function Servidores({ onProfile, onEdit, onNew }: Props) {
             <section className="servidores-campos">
               <div>
                 <h3>Campos exibidos</h3>
-                <p>Nome, matrícula, situação e ações são mantidos para identificar cada servidor.</p>
+                <p>Escolha os campos adicionais que deseja ver na tabela.</p>
               </div>
-              <div className="servidores-campos-lista">
-                {camposDeExibicao.map(campo => (
-                  <label key={campo.chave}>
-                    <input
-                      type="checkbox"
-                      checked={camposVisiveis.includes(campo.chave)}
-                      onChange={() => alternarCampo(campo.chave)}
-                    />
-                    <span>{campo.rotulo}</span>
-                  </label>
+              <div className="servidores-campos-grupos">
+                {gruposCamposExibicao.map(grupo => (
+                  <section className="servidores-campos-grupo" key={grupo.titulo}>
+                    <h4>{grupo.titulo}</h4>
+                    <div className="servidores-campos-lista">
+                      {grupo.campos.map(campo => (
+                        <label key={campo.chave}>
+                          <input
+                            type="checkbox"
+                            checked={camposVisiveis.includes(campo.chave)}
+                            onChange={() => alternarCampo(campo.chave)}
+                          />
+                          <span>{campo.rotulo}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </section>
                 ))}
               </div>
             </section>
@@ -386,21 +640,48 @@ export function Servidores({ onProfile, onEdit, onNew }: Props) {
               {filtrosRascunho.length === 0 ? (
                 <p className="servidores-sem-filtros">Nenhum filtro adicional selecionado.</p>
               ) : filtrosRascunho.map(filtro => {
-                const campo = camposServidor.find(item => item.chave === filtro.campo) ?? camposServidor[0];
+                const campo = camposFiltroServidor.find(item =>
+                  item.escopo === filtro.escopo && item.chave === filtro.campo,
+                ) ?? camposFiltroServidor[0];
                 const opcoesCampo = opcoesPorCampo[campo.chave] ?? [];
                 return (
                   <div className="servidor-filtro-linha" key={filtro.id}>
                     <label>
                       <span>Campo</span>
                       <select
-                        value={filtro.campo}
-                        onChange={event => setFiltrosRascunho(atual => atual.map(item =>
-                          item.id === filtro.id ? { ...item, campo: event.target.value, valor: "" } : item,
-                        ))}
+                        value={`${filtro.escopo}.${filtro.campo}`}
+                        onChange={event => {
+                          const selecionado = camposFiltroServidor.find(opcao =>
+                            `${opcao.escopo}.${opcao.chave}` === event.target.value,
+                          );
+                          if (!selecionado) return;
+                          setFiltrosRascunho(atual => atual.map(item =>
+                            item.id === filtro.id
+                              ? {
+                                ...item,
+                                escopo: selecionado.escopo,
+                                campo: selecionado.chave,
+                                valor: "",
+                              }
+                              : item,
+                          ));
+                        }}
                       >
-                        {camposServidor.map(opcao => (
-                          <option key={opcao.chave} value={opcao.chave}>{opcao.rotulo}</option>
-                        ))}
+                        <optgroup label="Servidor">
+                          {camposFiltroServidor.filter(opcao => opcao.escopo === "servidor").map(opcao => (
+                            <option key={opcao.chave} value={`${opcao.escopo}.${opcao.chave}`}>{opcao.rotulo}</option>
+                          ))}
+                        </optgroup>
+                        <optgroup label="Matrículas">
+                          {camposFiltroServidor.filter(opcao => opcao.escopo === "matriculas").map(opcao => (
+                            <option key={opcao.chave} value={`${opcao.escopo}.${opcao.chave}`}>{opcao.rotulo}</option>
+                          ))}
+                        </optgroup>
+                        <optgroup label="Históricos funcionais">
+                          {camposFiltroServidor.filter(opcao => opcao.escopo === "historicos_funcionais").map(opcao => (
+                            <option key={opcao.chave} value={`${opcao.escopo}.${opcao.chave}`}>{opcao.rotulo}</option>
+                          ))}
+                        </optgroup>
                       </select>
                     </label>
                     <label>
@@ -464,10 +745,7 @@ export function Servidores({ onProfile, onEdit, onNew }: Props) {
               })}
               <div className="servidores-filtros-acoes">
                 <button className="btn outline" type="button" onClick={() => {
-                  setFiltrosRascunho([]);
-                  setFiltrosAplicados([]);
-                  setBusca("");
-                  setFiltroStatus("Todos");
+                  void limparFiltros();
                 }}>
                   Limpar filtros
                 </button>
@@ -500,43 +778,113 @@ export function Servidores({ onProfile, onEdit, onNew }: Props) {
                     {!servidores.length && <button className="btn primary" type="button" onClick={onNew}><Icon name="add" /> Cadastrar servidor</button>}
                   </td>
                 </tr>
-              ) : ordenados.map(servidor => (
-                <tr key={servidor.id}>
-                  <td>
-                    <div className="servidor-identidade">
-                      <span className="servidor-avatar">{iniciais(servidor.nome)}</span>
-                      <div><strong>{servidor.nome}</strong><span>ID {servidor.id}</span></div>
-                    </div>
-                  </td>
-                  <td>{servidor.matricula || "—"}</td>
-                  <td><Status tone={servidor.status === "Ativo" ? "green" : "yellow"}>{servidor.status}</Status></td>
-                  {colunasAdicionais.map(campo => (
-                    <td className={campo.chave === "cpf" ? "servidor-cpf" : undefined} key={campo.chave}>
-                        {mostrarCampo(campo, servidor[campo.chave], opcoesPorCampo[campo.chave] ?? [])}
-                    </td>
-                  ))}
-                  <td>
-                    <div className="action-buttons servidores-action-buttons">
-                      <button type="button" className="servidores-action" onClick={() => onProfile(servidor)} aria-label={`Ver perfil de ${servidor.nome}`} title="Ver perfil">
-                        <Icon name="eye" /><span>Ver</span>
-                      </button>
-                      <button type="button" className="servidores-action" onClick={() => onEdit(servidor)} aria-label={`Editar ${servidor.nome}`} title="Editar">
-                        <Icon name="edit" /><span>Editar</span>
-                      </button>
-                      <button
-                        type="button"
-                        className="servidores-action danger"
-                        onClick={() => void excluir(servidor)}
-                        disabled={excluindo !== null}
-                        aria-label={`Excluir ${servidor.nome}`}
-                        title="Excluir"
-                      >
-                        <Icon name="trash" /><span>{excluindo === servidor.id ? "Excluindo..." : "Excluir"}</span>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+              ) : ordenados.map(servidor => {
+                const matriculas = listaMatriculas(servidor);
+                const destaque = escolherMatricula(servidor, filtrosAplicados);
+                const matriculasOrdenadas = destaque.matricula
+                  ? [destaque.matricula, ...matriculas.filter(matricula => matricula !== destaque.matricula)]
+                  : matriculas;
+                const expandido = servidorExpandido === servidor.id;
+                return (
+                  <Fragment key={servidor.id}>
+                    <tr>
+                      <td>
+                        <div className="servidor-identidade">
+                          <span className="servidor-avatar">{iniciais(servidor.nome)}</span>
+                          <div><strong>{servidor.nome}</strong><span>ID {servidor.id}</span></div>
+                        </div>
+                      </td>
+                      <td>
+                        <div className="servidor-matricula-principal">
+                          <span>{String(destaque.matricula?.numero ?? servidor.matricula ?? "—")}</span>
+                          {matriculas.length > 0 && (
+                            <button
+                              type="button"
+                              className="servidores-matriculas-toggle"
+                              onClick={() => setServidorExpandido(atual => atual === servidor.id ? null : servidor.id)}
+                              aria-expanded={expandido}
+                              aria-label={`${expandido ? "Ocultar" : "Exibir"} ${matriculas.length} matrículas de ${servidor.nome}`}
+                              title={`${expandido ? "Ocultar" : "Exibir"} matrículas`}
+                            >
+                              <span>{matriculas.length} {matriculas.length === 1 ? "matrícula" : "matrículas"}</span>
+                              <Icon name={expandido ? "angle-small-up" : "angle-small-down"} />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                      <td><Status tone={servidor.status === "Ativo" ? "green" : "yellow"}>{servidor.status}</Status></td>
+                      {colunasAdicionais.map(campo => (
+                        <td
+                          className={[
+                            campo.chave === "cpf" ? "servidor-cpf" : "",
+                            camposRelacionados.some(relacionado => relacionado.chave === campo.chave)
+                              ? "servidores-campo-relacionado"
+                              : "",
+                          ].filter(Boolean).join(" ") || undefined}
+                          key={campo.chave}
+                        >
+                          {mostrarCampo(campo, obterValorExibicao(servidor, campo, filtrosAplicados), opcoesPorCampo[campo.chave] ?? [])}
+                        </td>
+                      ))}
+                      <td>
+                        <div className="action-buttons servidores-action-buttons">
+                          <button type="button" className="servidores-action" onClick={() => onProfile(servidor)} aria-label={`Ver perfil de ${servidor.nome}`} title="Ver perfil">
+                            <Icon name="eye" /><span>Ver</span>
+                          </button>
+                          <button type="button" className="servidores-action" onClick={() => onEdit(servidor)} aria-label={`Editar ${servidor.nome}`} title="Editar">
+                            <Icon name="edit" /><span>Editar</span>
+                          </button>
+                          <button
+                            type="button"
+                            className="servidores-action danger"
+                            onClick={() => void excluir(servidor)}
+                            disabled={excluindo !== null}
+                            aria-label={`Excluir ${servidor.nome}`}
+                            title="Excluir"
+                          >
+                            <Icon name="trash" /><span>{excluindo === servidor.id ? "Excluindo..." : "Excluir"}</span>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                    {expandido && (
+                      matriculasOrdenadas.length ? matriculasOrdenadas.map(matricula => {
+                        const historicoSelecionado = escolherHistorico(matricula, filtrosAplicados);
+                        const correspondeFiltroAplicado = filtrosAplicados.some(filtro =>
+                          filtro.escopo === "matriculas" || filtro.escopo === "historicos_funcionais",
+                        ) && matricula === destaque.matricula;
+                        return (
+                        <tr
+                          className={`servidores-matricula-linha${correspondeFiltroAplicado ? " selecionada" : ""}`}
+                          key={`${servidor.id}-${String(matricula.id_matricula ?? matricula.numero)}`}
+                        >
+                          <td><span className="servidores-matricula-indicador">{correspondeFiltroAplicado ? "Correspondente" : ""}</span></td>
+                          <td>{String(matricula.numero ?? "—")}</td>
+                          <td>{matricula.ativo === true ? "Ativa" : "Inativa"}</td>
+                          {colunasAdicionais.map(campo => {
+                            const relacionado = camposRelacionados.some(item => item.chave === campo.chave);
+                            if (!relacionado) return <td key={campo.chave} />;
+
+                            const valor = obterValorMatricula(matricula, campo, historicoSelecionado);
+                            const exibicao = campo.chave === "inicio_historico_atual"
+                              ? formatarDataRelacionada(valor)
+                              : descricaoRelacionada(valor)
+                                || mostrarCampo(campo, valor, opcoesPorCampo[campo.chave] ?? []);
+                            return <td key={campo.chave}>{exibicao}</td>;
+                          })}
+                          <td />
+                        </tr>
+                      );
+                      }) : (
+                        <tr className="servidores-matricula-linha" key={`${servidor.id}-sem-matriculas`}>
+                          <td colSpan={3 + colunasAdicionais.length} className="muted">Nenhuma matrícula cadastrada.</td>
+                          <td />
+                        </tr>
+                      )
+                    )}
+                  </Fragment>
+                );
+              })}
             </tbody>
           </table>
         </div>

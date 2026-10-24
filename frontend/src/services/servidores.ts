@@ -63,6 +63,24 @@ type MatriculaServidor = {
   ativo?: boolean;
 };
 
+type OpcoesListagemServidores = {
+  filtros?: Record<string, string>;
+  servidorSelect?: string[];
+  matriculasSelect?: string[];
+  historicosFuncionaisSelect?: string[];
+};
+
+const camposServidorListagem = [
+  "id_servidor", "ativo", "nome_completo", "nome_social", "cpf", "nis_pis",
+  "data_nascimento", "nacionalidade_id", "pais_origem_id", "ano_chegada_brasil",
+  "municipio_nascimento_id", "cpf_mae", "nome_mae", "cpf_pai", "nome_pai",
+  "estado_civil_id", "uniao_estavel", "sexo_id", "genero_id", "racacor_id",
+  "comunidade_indigena_id", "cep", "logradouro", "numero", "complemento", "bairro",
+  "municipio_endereco_id", "zona_endereco_id", "localizacao_diferenciada_id",
+  "cartao_sus", "situacao_id", "escolaridade_id", "tipo_ensino_medio_cursado_id",
+  "observacao",
+];
+
 
 /* =========================================================
    DADOS PARA CADASTRO
@@ -238,9 +256,25 @@ function normalizarId(
 
 export async function listarServidores(
   signal?: AbortSignal,
+  opcoes: OpcoesListagemServidores = {},
 ): Promise<ServidorTela[]> {
+  const parametros = new URLSearchParams(opcoes.filtros);
+  parametros.set("servidorSelect", (opcoes.servidorSelect ?? camposServidorListagem).join(","));
+  parametros.set("matriculasSelect", (opcoes.matriculasSelect ?? [
+    "id_matricula", "numero", "ativo", "admissao", "tipo_vinculo_id", "tipo_vinculo",
+    "historicos_funcionais",
+  ]).join(","));
+  const camposHistorico = opcoes.historicosFuncionaisSelect ?? [
+    "id_historico_funcional", "data_inicio", "data_fim", "cargo_id", "cargo",
+    "funcao_id", "funcao", "departamento_id", "departamento",
+    "situacao_historico_funcional_id", "situacao",
+  ];
+  if (camposHistorico.length) {
+    parametros.set("historicosFuncionaisSelect", camposHistorico.join(","));
+  }
+
   const response = await apiGet<unknown>(
-    "/api/servidores",
+    `/api/servidores?${parametros.toString()}`,
     {
       signal,
     },
@@ -248,20 +282,30 @@ export async function listarServidores(
 
   const servidores = normalizarLista(response);
 
-  return Promise.all(
-    servidores.map(async servidor => {
-      const matriculas = await apiGet<MatriculaServidor[]>(
-        `/api/servidores/${normalizarId(servidor.id_servidor)}/matriculas`,
-        { signal },
-      );
-      const matricula = matriculas.find(item => item.ativo) ?? matriculas[0];
+  return servidores.map(servidor => {
+    const matriculas = Array.isArray(servidor.matriculas)
+      ? servidor.matriculas as MatriculaServidor[]
+      : [];
+    const matricula = matriculas.find(item => item.ativo) ?? matriculas[0];
+    return adaptarServidor({ ...servidor, matricula: matricula?.numero });
+  });
+}
 
-      return adaptarServidor({
-        ...servidor,
-        matricula: matricula?.numero,
-      });
-    }),
+export async function contarServidores(
+  filtros: Record<string, string>,
+  signal?: AbortSignal,
+): Promise<number> {
+  const parametros = new URLSearchParams(filtros);
+  const resposta = await apiGet<{ total?: number }>(
+    `/api/servidores/contar?${parametros.toString()}`,
+    { signal },
   );
+
+  if (typeof resposta.total !== "number" || !Number.isFinite(resposta.total)) {
+    throw new Error("A API retornou uma contagem de servidores inválida.");
+  }
+
+  return resposta.total;
 }
 
 export function adaptarServidor(item: Servidor): ServidorTela {

@@ -5,6 +5,14 @@ import { CRUDServices } from "@/services/crud.service.js";
 import { includes, string } from "zod";
 import { Prisma } from "#/generated/prisma/client.js";
 
+interface Filtros {
+
+    servidorFiltro?: Prisma.ServidorWhereInput
+    matriculasFiltro?: Prisma.MatriculaWhereInput,
+    historicosFuncionaisFiltro?: Prisma.HistoricoFuncionalWhereInput
+
+}
+
 export class ServidorService extends CRUDServices<ServidorCreate, ServidorUpdate> {
 
     constructor() {
@@ -16,13 +24,54 @@ export class ServidorService extends CRUDServices<ServidorCreate, ServidorUpdate
 
     }
 
+    private async obterWhere({
+        filtros
+    }: {
+        filtros?: Filtros
+    }) {
+
+        const { matriculasFiltro, historicosFuncionaisFiltro, servidorFiltro } = filtros ?? {}
+
+        const where: Prisma.ServidorWhereInput = {
+
+            ...servidorFiltro,
+
+            ...(matriculasFiltro || historicosFuncionaisFiltro
+
+                ? {
+
+                    matriculas: {
+
+                        some: {
+
+                            ...matriculasFiltro,
+
+                            ...(historicosFuncionaisFiltro
+                                ? {
+
+                                    historicos_funcionais: {
+
+                                        some: historicosFuncionaisFiltro
+                                    }
+                                } : {})
+
+                        }
+                    }
+                }
+                : {})
+
+        }
+
+        return where
+    }
+
     async listarServidores({
         filtros,
         camposSelect
     }: {
         filtros?: {
 
-            servidorFiltro: Prisma.ServidorWhereInput
+            servidorFiltro?: Prisma.ServidorWhereInput
             matriculasFiltro?: Prisma.MatriculaWhereInput,
             historicosFuncionaisFiltro?: Prisma.HistoricoFuncionalWhereInput
 
@@ -36,15 +85,21 @@ export class ServidorService extends CRUDServices<ServidorCreate, ServidorUpdate
         }
     }) {
 
-        const { matriculasFiltro, historicosFuncionaisFiltro, servidorFiltro } = filtros ?? {}
+        const where = await this.obterWhere({ filtros })
 
-        const select = camposSelect ? {
+        const selectFormatado: {
+
+            servidorSelect?: Prisma.ServidorSelect,
+            matriculasSelect?: Prisma.MatriculaSelect,
+            historicosFuncionaisSelect?: Prisma.HistoricoFuncionalSelect
+
+        } = camposSelect ? {
 
             servidorSelect: camposSelect.servidorSelect ? Object.fromEntries(
                 camposSelect.servidorSelect.map((campo: string) => [campo, true])
             ) : undefined,
 
-            matriculasSelect: camposSelect.matriculasSelect ?Object.fromEntries(
+            matriculasSelect: camposSelect.matriculasSelect ? Object.fromEntries(
                 camposSelect.matriculasSelect.map((campo: string) => [campo, true])
             ) : undefined,
 
@@ -52,81 +107,65 @@ export class ServidorService extends CRUDServices<ServidorCreate, ServidorUpdate
                 camposSelect.historicosFuncionaisSelect.map((campo: string) => [campo, true])
             ) : undefined
 
-        } : undefined
+        } : {}
 
-        const pesquisa: Prisma.ServidorFindManyArgs = {
+        if (selectFormatado.servidorSelect?.usuario) {
 
-            where: {
+            selectFormatado.servidorSelect.usuario = {
+                omit: {
+                    senha: true
+                }
+            }
+        }
 
-                ...servidorFiltro,
+        const select: Prisma.ServidorSelect = {
 
-                ...(matriculasFiltro || historicosFuncionaisFiltro
+            ...selectFormatado.servidorSelect,
 
-                    ? {
 
-                        matriculas: {
+            ...(selectFormatado.matriculasSelect || selectFormatado.historicosFuncionaisSelect
+                ? {
+                    matriculas: {
+                        select: {
+                            ...selectFormatado.matriculasSelect,
 
-                            some: {
-
-                                ...matriculasFiltro,
-
-                                ...(historicosFuncionaisFiltro
-                                    ? {
-
-                                        historicos_funcionais: {
-
-                                            some: historicosFuncionaisFiltro
-                                        }
-                                    } : {})
-
-                            }
+                            ...(selectFormatado.historicosFuncionaisSelect
+                                ? {
+                                    historicos_funcionais: {
+                                        select: selectFormatado.historicosFuncionaisSelect
+                                    }
+                                } : {})
                         }
                     }
-                    : {})
-
-            },
-
-            ...(select
-
-                ? {
-
-                    ...select.servidorSelect,
-
-                    ...(select.matriculasSelect || select.historicosFuncionaisSelect
-                        ? {
-                            matriculas: {
-                                select: {
-                                    ...select.matriculasSelect,
-
-                                    ...(select.historicosFuncionaisSelect
-                                        ? {
-                                            historicos_funcionais: {
-                                                select: select.historicosFuncionaisSelect
-                                            }
-                                        } : {})
-                                }
-                            }
-
-                        } : {})
 
                 } : {})
 
+
+
         }
 
-        console.log(pesquisa)
+        console.log(select)
 
-        const resultados = this.prismaModel.findMany(pesquisa)
+        const resultados = this.prismaModel.findMany({
+            where: where,
+            select: select
+        })
 
         return resultados
 
     }
 
-    async contarServidoresAtivos() {
+    async contarServidores({
+        filtros
+    }: {
+        filtros?: Filtros
+    }
+    ) {
+
+        const where = await this.obterWhere({ filtros })
 
         const resultado = await prisma.servidor.count({
-            where: {
-                ativo: true
-            }
+            where: where
         })
 
         return resultado

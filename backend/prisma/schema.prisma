@@ -348,8 +348,8 @@ model HistoricoFuncional {
   departamento_id Int?
   departamento    Departamento? @relation(fields: [departamento_id], references: [id_departamento])
 
-  situacao_id Int
-  situacao    Situacao @relation(fields: [situacao_id], references: [id_situacao])
+  situacao_historico_funcional_id Int
+  situacao    Situacao @relation(fields: [situacao_historico_funcional_id], references: [id_situacao])
 
   data_inicio DateTime
   data_fim    DateTime?

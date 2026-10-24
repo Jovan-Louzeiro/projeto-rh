@@ -18,7 +18,7 @@ export class ServidorController extends CrudController<ServidorService, Servidor
             "idServidor"
         )
 
-        
+
 
     }
 
@@ -27,22 +27,25 @@ export class ServidorController extends CrudController<ServidorService, Servidor
 
     listarServidores = async (req: Request, res: Response) => {
 
-        const {servidorSelect, matriculasSelect, historicosFuncionaisSelect, ...filtrosQuery} = req.query
+        const { servidorSelect, matriculasSelect, historicosFuncionaisSelect, ...filtrosQuery } = req.query
 
         const camposSelect = {
-            
-            servidorSelect: typeof servidorSelect === "string"
-            ? this.validarQuery(this.schemas.queryParams, {select: servidorSelect.split(",")}).select
-            : undefined,
 
             servidorSelect: typeof servidorSelect === "string"
-            ? this.validarQuery(this.schemas.queryParams, {select: servidorSelect.split(",")}).select
-            : undefined
+                ? this.validarQuery(this.schemas.queryParams, { select: servidorSelect.split(",") }).select
+                : undefined,
 
+            matriculasSelect: typeof matriculasSelect === "string"
+                ? this.validarQuery(this.matriculaSchema.queryParams, { select: matriculasSelect.split(",") }).select
+                : undefined,
+
+            historicosFuncionaisSelect: typeof historicosFuncionaisSelect === "string"
+                ? this.validarQuery(this.historicosFuncionaisShemas.queryParams, { select: historicosFuncionaisSelect.split(",") }).select
+                : undefined
 
         }
 
-        const filtros = {
+        const filtrosValidados = {
 
             servidorFiltro: this.validarQuery(this.schemas.queryParams, filtrosQuery),
 
@@ -52,7 +55,15 @@ export class ServidorController extends CrudController<ServidorService, Servidor
 
         }
 
-        const resposta = this.service.listarServidores(
+        const filtros = Object.fromEntries(
+            Object.entries(filtrosValidados).filter(
+                ([, valor]) =>
+                    valor !== null &&
+                    Object.keys(valor).length > 0
+            )
+        )
+
+        const resposta = await this.service.listarServidores(
             {
                 filtros: filtros,
 
@@ -61,7 +72,7 @@ export class ServidorController extends CrudController<ServidorService, Servidor
         )
 
 
-        return res.json({camposSelect})
+        return res.json(resposta)
 
     }
 
@@ -106,13 +117,32 @@ export class ServidorController extends CrudController<ServidorService, Servidor
 
     }
 
-    contarServidoresAtivos = async (req: Request, res: Response) => {
+    contarServidores = async (req: Request, res: Response) => {
 
-        const resposta = await this.service.contarServidoresAtivos()
+        const filtrosQuery = req.query
 
-        return res.json({
-            servidores_ativos: resposta
-        })
+
+        const filtrosValidados = {
+
+            servidorFiltro: this.validarQuery(this.schemas.queryParams, filtrosQuery),
+
+            matriculasFiltro: this.validarQuery(this.matriculaSchema.queryParams, filtrosQuery),
+
+            historicosFuncionaisFiltro: this.validarQuery(this.historicosFuncionaisShemas.queryParams, filtrosQuery)
+
+        }
+
+        const filtros = Object.fromEntries(
+            Object.entries(filtrosValidados).filter(
+                ([, valor]) =>
+                    valor !== null &&
+                    Object.keys(valor).length > 0
+            )
+        )
+
+        const resposta = await this.service.contarServidores({filtros: filtros})
+
+        return res.json({"total": resposta})
 
     }
 

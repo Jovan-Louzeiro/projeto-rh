@@ -7,17 +7,20 @@ import { CtpsSchemas } from "@/schemas/documentos/ctps.schemas.js";
 import { TituloEleitorSchemas } from "@/schemas/documentos/tituloEleitor.schema.js";
 import { ContatoSchema } from "@/schemas/contato.schemas.js";
 import { MatriculaSchemas } from "@/schemas/matricula.schemas.js";
+import { Prisma } from "#/generated/prisma/client.js";
+
 
 export class ServidorSchemas extends CrudSchemas {
 
     public readonly adicionar
     public readonly atualizar
     public readonly queryParams
+    public readonly select
 
     constructor() {
 
         super()
-
+        
         const documentos = {
             certidao: new CertidaoSchemas(),
             cnh: new CnhSchemas(),
@@ -146,11 +149,51 @@ export class ServidorSchemas extends CrudSchemas {
                 }
             );
 
+        this.select = z.
+                    array(
+                        z.union(
+                            [
+                                baseSchema.keyof(),
+                                z.literal("id_servidor"),
+
+                                z.literal("sexo"),
+                                z.literal("nacionalidade"),
+                                z.literal("pais_origem"),
+                                z.literal("municipio_nascimento"),
+                                z.literal("estado_civil"),
+                                z.literal("genero"),
+                                z.literal("racacor"),
+                                z.literal("comunidade_indigena"),
+                                z.literal("contatos"),
+                                z.literal("municipio_endereco"),
+                                z.literal("zona_endereco"),
+                                z.literal("localizacao_diferenciada"),
+
+                                z.literal("certidao"),
+                                z.literal("cnh"),
+                                z.literal("identidade"),
+                                z.literal("titulo_eleitor"),
+
+                                z.literal("servidor_cid"),
+                                z.literal("escolaridade"),
+                                z.literal("tipo_ensino_medio_cursado"),
+                                z.literal("cursos_formacao_continuada"),
+                                z.literal("usuario"),
+
+
+                                
+                                
+
+                                z.literal("matriculas")
+                            ]
+                        )
+                    )
+
         this.queryParams = baseSchema
             .strip()
             .extend({
                 id_servidor: this.idExternoSchema("id_servidor"),
-                select: z.array(baseSchema.keyof())
+                select: this.select
             })
             .partial()
 
@@ -167,4 +210,8 @@ export type ServidorUpdate = z.infer<
 
 export type ServidorQuery = z.infer<
     ServidorSchemas["queryParams"]
+>
+
+export type ServidorSelect = z.infer<
+    ServidorSchemas["select"]
 >
