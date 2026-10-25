@@ -8,7 +8,7 @@ export class DepartamentoSchemas extends DominioSchemas {
         super(150);
 
         const schema = this.baseSchema.extend({
-            inep: this.stringSchema("INEP", 1, 50)
+            inep: this.stringSchema("INEP", 1, 50).optional()
         });
 
         this.adicionar = schema;

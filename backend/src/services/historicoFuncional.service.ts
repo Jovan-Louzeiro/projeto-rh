@@ -1,3 +1,4 @@
+import { Prisma } from "#/generated/prisma/client.js";
 import { RegistroNaoEncontradoError } from "@/errors/dominios.errors.js";
 import { prisma } from "@/lib/prisma.js";
 import { HistoricoFuncionalCreate, HistoricoFuncionalUpdate } from "@/schemas/historicoFuncional.schema.js";
@@ -21,19 +22,23 @@ export class HistoricoFuncionalSevice extends CRUDServices<
 
     private matriculaService = new MatriculaService()
 
-    async listarHistoricoFuncionalPorMatricula(servidor_id: number, matricula_id: number){
+    async listarHistoricoFuncionalPorMatricula(servidor_id: number, matricula_id: number, where?: Prisma.HistoricoFuncionalWhereInput, select?: Prisma.HistoricoFuncionalSelect){
 
         await this.matriculaService.procurarMatriculaServidor(matricula_id, servidor_id)
 
         return this.prismaModel.findMany({
             where: {
-                matricula_id: matricula_id
-            }
+                matricula_id: matricula_id,
+
+                ...(where ?? undefined)
+            },
+
+            ...(select ? {select}: undefined)
         })
 
     }
 
-    async procurarHistoricoFuncionalServidor(servidor_id: number, matricula_id: number, id_historico_funcional: number){
+    async procurarHistoricoFuncionalServidor(servidor_id: number, matricula_id: number, id_historico_funcional: number, select?: Prisma.HistoricoFuncionalSelect){
 
         await this.matriculaService.procurarMatriculaServidor(matricula_id, servidor_id)
 
@@ -42,7 +47,9 @@ export class HistoricoFuncionalSevice extends CRUDServices<
             where:{
                 id_historico_funcional: id_historico_funcional,
                 matricula_id: matricula_id
-            }
+            },
+
+            ...(select ? {select} : undefined)
 
         })
 

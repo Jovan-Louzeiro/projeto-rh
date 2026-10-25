@@ -34,7 +34,7 @@ export const recursosCadastro: RecursoCadastro[] = [
   { group: "Domínios", label: "Localizações diferenciadas", path: "localizacaoDiferenciada", idKey: "id_localizacao_diferenciada", fields: [descricao(), ativo] },
   { group: "Domínios", label: "Cargos", path: "cargo", idKey: "id_cargo", fields: [descricao(), ativo] },
   { group: "Domínios", label: "Funções", path: "funcao", idKey: "id_funcao", fields: [descricao(), ativo] },
-  { group: "Domínios", label: "Departamentos", path: "departamento", idKey: "id_departamento", fields: [descricao(150), { name: "inep", label: "INEP", required: true, maxLength: 50 }, ativo] },
+  { group: "Domínios", label: "Departamentos", path: "departamento", idKey: "id_departamento", fields: [descricao(150), { name: "inep", label: "INEP", required: false, maxLength: 50 }, ativo] },
   { group: "Domínios", label: "Tipos de vínculo", path: "tipoVinculo", idKey: "id_tipo_vinculo", fields: [descricao(), ativo] },
   { group: "Domínios", label: "Tipos de ensino médio", path: "tipoEnsinoMedioCursado", idKey: "id_tipo_ensino_medio_cursado", fields: [descricao(), ativo] },
   { group: "Domínios", label: "Situações", path: "situacao", idKey: "id_situacao", fields: [descricao(30), ativo] },
@@ -68,4 +68,3 @@ export async function atualizarRegistroCadastro(recurso: RecursoCadastro, id: st
 export async function excluirRegistroCadastro(recurso: RecursoCadastro, id: string | number) {
   return apiDelete<unknown>(`/api/${recurso.path}/${encodeURIComponent(String(id))}`);
 }
-

@@ -144,11 +144,11 @@ export class ServidorService extends CRUDServices<ServidorCreate, ServidorUpdate
 
         }
 
-        console.log(select)
+        console.log(Object.keys(select).length)
 
         const resultados = this.prismaModel.findMany({
             where: where,
-            select: select
+            ...(Object.keys(select).length > 0 ? {select} : {})
         })
 
         return resultados

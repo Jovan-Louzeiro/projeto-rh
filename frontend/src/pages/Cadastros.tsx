@@ -99,6 +99,7 @@ export default function Cadastros() {
       campo.name,
       {
         title: campo.label,
+        ...(campo.required !== undefined ? { required: campo.required } : {}),
         ...(campo.type && campo.type !== "checkbox" ? { type: campo.type } : {}),
         ...(campo.type === "select" ? { options: opcoesCampo(campo) } : {}),
         ...(campo.name === "ativo" ? { defaultValue: true } : {}),

@@ -39,6 +39,7 @@ export type SchemaFormularioResponse = {
 
 export type CampoFormularioConfig = {
   title?: string;
+  required?: boolean;
   type?: "text" | "email" | "password" | "number" | "date" | "select" | "textarea" | "boolean";
   options?: { value: string | number | boolean; label: string }[];
   defaultValue?: unknown;

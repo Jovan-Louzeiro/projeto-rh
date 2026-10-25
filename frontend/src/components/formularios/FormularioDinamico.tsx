@@ -72,7 +72,9 @@ export function FormularioDinamico({
   }
 
   function campoObrigatorio(nome: string): boolean {
-    const condicao = campos[nome]?.requiredWhen;
+    const configuracao = campos[nome];
+    if (configuracao?.required !== undefined) return configuracao.required;
+    const condicao = configuracao?.requiredWhen;
     if (condicao) {
       return String(dados[condicao.field]) === String(condicao.equals);
     }
