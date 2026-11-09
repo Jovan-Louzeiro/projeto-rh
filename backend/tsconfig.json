@@ -19,5 +19,5 @@
     }
   },
 
-  "include": ["src/**/*.ts", "src/schemas/shared/.schemas.ts"]
+  "include": ["src/**/*.ts", "src/schemas/shared/.schemas.ts", "src/modules/documentos/utils/teste.ts"]
 }

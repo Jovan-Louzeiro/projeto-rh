@@ -164,7 +164,7 @@ export class ServidorService extends CRUDServices<ServidorCreate, ServidorUpdate
 
         const where = await this.obterWhere({ filtros })
 
-        const resultado = await prisma.servidor.count({
+        const resultado = await this.prismaModel.count({
             where: where
         })
 

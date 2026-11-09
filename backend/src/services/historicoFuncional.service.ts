@@ -22,15 +22,33 @@ export class HistoricoFuncionalSevice extends CRUDServices<
 
     private matriculaService = new MatriculaService()
 
+    async obterHistoricoFuncionalAtualPorMatricula({
+        servidor_id,
+        matricula_id
+    }: {
+        servidor_id: number,
+        matricula_id: number
+    }){
+
+        await this.matriculaService.procurarMatriculaServidor(matricula_id, servidor_id)
+
+        return this.prismaModel.findUnique({
+            where: {
+                matricula_id: matricula_id,
+                data_fim: null
+            }
+        })
+
+    }
+
     async listarHistoricoFuncionalPorMatricula(servidor_id: number, matricula_id: number, where?: Prisma.HistoricoFuncionalWhereInput, select?: Prisma.HistoricoFuncionalSelect){
 
         await this.matriculaService.procurarMatriculaServidor(matricula_id, servidor_id)
 
         return this.prismaModel.findMany({
             where: {
-                matricula_id: matricula_id,
-
-                ...(where ?? undefined)
+                ...(where ?? {}),
+                matricula_id: matricula_id
             },
 
             ...(select ? {select}: undefined)

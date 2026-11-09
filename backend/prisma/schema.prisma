@@ -113,8 +113,8 @@ model Estado {
   pais    Pais @relation(fields: [pais_id], references: [id_pais])
 
   municipios Municipio[]
-  identidade         Identidade[]        @relation("IdentidadeUF")
-  ctps       CTPS[]      @relation("CtpsUf")
+  identidade Identidade[] @relation("IdentidadeUF")
+  ctps       CTPS[]       @relation("CtpsUf")
 }
 
 model Municipio {
@@ -202,7 +202,7 @@ model Situacao {
 // Documentos
 
 model Certidao {
-  id_certidao   Int          @id @default(autoincrement())
+  id_certidao Int @id @default(autoincrement())
 
   nova_certidao Boolean
 
@@ -239,22 +239,22 @@ model CTPS {
   serie  String? @db.VarChar(5)
 
   uf_ctps_id Int?
-  uf_ctps Estado? @relation("CtpsUf", fields: [uf_ctps_id], references: [id_estado])
+  uf_ctps    Estado? @relation("CtpsUf", fields: [uf_ctps_id], references: [id_estado])
 
   data_emissao DateTime
 
-  servidor_id Int           @unique
-  servidor Servidor @relation(fields: [servidor_id], references:  [id_servidor], onDelete: Cascade)
+  servidor_id Int      @unique
+  servidor    Servidor @relation(fields: [servidor_id], references: [id_servidor], onDelete: Cascade)
 
   @@unique([numero, serie, uf_ctps_id])
 }
 
 model Identidade {
-  id_identidade    Int     @id @default(autoincrement())
+  id_identidade Int @id @default(autoincrement())
 
   tipo_identidade TipoIdentidade
 
-  numero               String?  @db.VarChar(30)
+  numero        String? @db.VarChar(30)
   orgao_emissor String  @db.VarChar(30)
 
   rg_uf_id Int
@@ -269,11 +269,11 @@ model Identidade {
 }
 
 model TituloEleitor {
-  id_titulo_eleitor Int     @id @default(autoincrement())
+  id_titulo_eleitor Int @id @default(autoincrement())
 
-  numero            String  @unique @db.VarChar(12)
-  zona              String  @db.VarChar(4)
-  secao             String  @db.VarChar(4)
+  numero String @unique @db.VarChar(12)
+  zona   String @db.VarChar(4)
+  secao  String @db.VarChar(4)
 
   servidor_id Int      @unique
   servidor    Servidor @relation(fields: [servidor_id], references: [id_servidor], onDelete: Cascade)
@@ -349,7 +349,7 @@ model HistoricoFuncional {
   departamento    Departamento? @relation(fields: [departamento_id], references: [id_departamento])
 
   situacao_historico_funcional_id Int
-  situacao    Situacao @relation(fields: [situacao_historico_funcional_id], references: [id_situacao])
+  situacao                        Situacao @relation(fields: [situacao_historico_funcional_id], references: [id_situacao])
 
   data_inicio DateTime
   data_fim    DateTime?
@@ -369,6 +369,8 @@ model Matricula {
   servidor    Servidor @relation(fields: [servidor_id], references: [id_servidor], onDelete: Cascade)
 
   historicos_funcionais HistoricoFuncional[]
+
+  requerimentos Requerimento[]
 }
 
 model TiposLicenca {
@@ -378,8 +380,32 @@ model TiposLicenca {
   descricao String @db.VarChar(50)
 }
 
+model TipoRequerimento {
+  id_tipo_requerimento Int     @id @default(autoincrement())
+  ativo                Boolean @default(true)
+
+  descricao String @db.VarChar(50)
+
+  requerimentos Requerimento[]
+}
+
 model Requerimento {
   id_requerimento Int @id @default(autoincrement())
+
+  numero_protocolo String @unique
+
+  tipo_requerimento_id Int
+  tipo_requerimento    TipoRequerimento @relation(fields: [tipo_requerimento_id], references: [id_tipo_requerimento])
+
+  servidor_id Int
+  servidor    Servidor @relation(fields: [servidor_id], references: [id_servidor])
+
+  matricula_id Int
+  matricula    Matricula @relation(fields: [matricula_id], references: [id_matricula])
+
+  dados_historicos Json
+
+  criado_em DateTime @default(now())
 }
 
 model Usuario {
@@ -401,7 +427,7 @@ model Servidor {
   ativo       Boolean @default(true)
 
   // Identificação
-  matriculas     Matricula[]
+  matriculas    Matricula[]
   nome_completo String      @db.VarChar(150)
   nome_social   String?     @db.VarChar(150)
   cpf           String      @unique @db.VarChar(11)
@@ -468,9 +494,9 @@ model Servidor {
 
   // Documentos
   certidao       Certidao?
-  cnh CNH?
-  ctps      CTPS?
-  identidade Identidade?
+  cnh            CNH?
+  ctps           CTPS?
+  identidade     Identidade?
   titulo_eleitor TituloEleitor?
 
   // Saúde
@@ -480,6 +506,8 @@ model Servidor {
   // Dados Funcionais
   situacao_id Int
   situacao    Situacao @relation(fields: [situacao_id], references: [id_situacao])
+
+  requerimentos Requerimento[]
 
   escolaridade_id Int?
   escolaridade    Escolaridade? @relation(fields: [escolaridade_id], references: [id_escolaridade])

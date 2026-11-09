@@ -137,7 +137,7 @@ export async function gerarRequerimento({
 
 }
 
-gerarRequerimento({
+/*gerarRequerimento({
     id_servidor: 39,
     id_matricula: 23,
     id_contato: 48,
@@ -145,4 +145,4 @@ gerarRequerimento({
     numero_protocolo: "13/2026",
 
     req_selecionado: 5
-    })
+    })*/

@@ -14,6 +14,7 @@ import { DepartamentoRouter } from "@/routes/dominios/departamento.routes.js";
 import { TipoVinculoRouter } from "@/routes/dominios/tipoVinculo.routes.js";
 import { TipoEnsinoMedioCursadoRouter } from "@/routes/dominios/tipoEnsinoMedio.routes.js";
 import { SituacaoRouter } from "@/routes/dominios/situacao.routes.js";
+import { TipoRequerimentoRouter } from "@/modules/documentos/routes/tipoRequerimento.route.js";
 
 const dominiosRoutes = Router()
 
@@ -46,5 +47,7 @@ dominiosRoutes.use("/tipoVinculo", new TipoVinculoRouter().router)
 dominiosRoutes.use("/tipoEnsinoMedioCursado", new TipoEnsinoMedioCursadoRouter().router)
 
 dominiosRoutes.use("/situacao", new SituacaoRouter().router)
+
+dominiosRoutes.use("/tipoRequerimento", new TipoRequerimentoRouter().router)
 
 export default dominiosRoutes

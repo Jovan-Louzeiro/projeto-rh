@@ -35,4 +35,5 @@ export type prismaModel = {
     create: Function;
     update: Function;
     delete: Function;
+    count: Function
 }
