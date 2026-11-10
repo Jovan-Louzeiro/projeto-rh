@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import {
-  BrowserRouter,
+  HashRouter,
   Navigate,
   Outlet,
   Route,
@@ -93,7 +93,7 @@ export default function App() {
   }, [logged]);
 
   return (
-    <BrowserRouter>
+    <HashRouter>
       <Routes>
         {/* LOGIN */}
         <Route
@@ -107,7 +107,7 @@ export default function App() {
         />
 
         {/* ROTAS PROTEGIDAS */}
-        <Route element={<Protected logged={logged} />}>
+        <Route element={<Protected logged={logged} onLogout={() => { clearToken(); setLogged(false); }} />}>
           {/* Dashboard */}
           <Route
             path="/dashboard"
@@ -325,7 +325,7 @@ export default function App() {
           }
         />
       </Routes>
-    </BrowserRouter>
+    </HashRouter>
   );
 }
 
@@ -335,8 +335,10 @@ export default function App() {
 
 function Protected({
   logged,
+  onLogout,
 }: {
   logged: boolean;
+  onLogout: () => void;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
@@ -374,7 +376,7 @@ function Protected({
 
   return (
     <div className={`app ${sidebarCollapsed ? "sidebar-collapsed" : ""}`}>
-      <Sidebar collapsed={sidebarCollapsed} onToggleCollapsed={() => setSidebarCollapsed(value => !value)} open={menuOpen} onClose={() => setMenuOpen(false)} />
+      <Sidebar collapsed={sidebarCollapsed} onToggleCollapsed={() => setSidebarCollapsed(value => !value)} open={menuOpen} onClose={() => setMenuOpen(false)} onLogout={onLogout} />
 
       <main className="main">
         <Header menuOpen={menuOpen} onMenuToggle={() => setMenuOpen(open => !open)} />

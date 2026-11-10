@@ -6,6 +6,8 @@ import { carregarOpcoesServidor, type OpcoesServidorCompletas } from "../service
 import { carregarDadosGeograficos, type DadosGeograficos } from "../services/localizacao";
 import Icon from "../components/Icon";
 import Status from "../components/Status";
+import DemoNotice from "../components/DemoNotice";
+import { opcoesServidorDemo, servidores as servidoresDemo } from "../data/mock";
 
 type Props = {
   onProfile: (servidor: Servidor) => void;
@@ -278,6 +280,7 @@ export function Servidores({ onProfile, onEdit, onNew }: Props) {
   const [geografia, setGeografia] = useState(dadosGeograficosVazios);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState("");
+  const [avisoDemo, setAvisoDemo] = useState("");
   const [busca, setBusca] = useState("");
   const [filtroStatus, setFiltroStatus] = useState("Todos");
   const [ordenacao, setOrdenacao] = useState<OrdenacaoServidor>({ campo: "nome", direcao: "asc" });
@@ -309,7 +312,14 @@ export function Servidores({ onProfile, onEdit, onNew }: Props) {
         ? Promise.all([carregarOpcoesServidor(signal), carregarDadosGeograficos(signal)])
         : Promise.resolve(null);
       const [lista, dependencias] = await Promise.all([listaPromise, dependenciasPromise]);
-      setServidores(lista);
+      if (lista.length === 0) {
+        setServidores(servidoresDemo);
+        setOpcoesServidor(opcoesServidorDemo);
+        setAvisoDemo("Ainda não há servidores na API. Exibindo dados fictícios para demonstração.");
+      } else {
+        setServidores(lista);
+        setAvisoDemo("");
+      }
       if (dependencias) {
         setOpcoesServidor(dependencias[0]);
         setGeografia(dependencias[1]);
@@ -317,8 +327,9 @@ export function Servidores({ onProfile, onEdit, onNew }: Props) {
     } catch (error) {
       if (signal?.aborted) return;
       console.error(error);
-      setServidores([]);
-      setErro(error instanceof Error ? error.message : "Não foi possível carregar os servidores.");
+      setServidores(servidoresDemo);
+      setOpcoesServidor(opcoesServidorDemo);
+      setAvisoDemo("A API não está disponível. Exibindo dados fictícios para demonstração.");
     } finally {
       if (!signal?.aborted) setLoading(false);
     }
@@ -546,6 +557,7 @@ export function Servidores({ onProfile, onEdit, onNew }: Props) {
         </button>
       </div>
 
+      <DemoNotice message={avisoDemo} />
       <div className="servidores-resumo" aria-label="Resumo de servidores">
         <div className="servidores-resumo-card">
           <span className="servidores-resumo-icon"><Icon name="users" /></span>
@@ -828,17 +840,17 @@ export function Servidores({ onProfile, onEdit, onNew }: Props) {
                       ))}
                       <td>
                         <div className="action-buttons servidores-action-buttons">
-                          <button type="button" className="servidores-action" onClick={() => onProfile(servidor)} aria-label={`Ver perfil de ${servidor.nome}`} title="Ver perfil">
+                          <button type="button" className="servidores-action" disabled={Boolean(avisoDemo)} onClick={() => onProfile(servidor)} aria-label={`Ver perfil de ${servidor.nome}`} title={avisoDemo ? "Indisponível para dados fictícios" : "Ver perfil"}>
                             <Icon name="eye" /><span>Ver</span>
                           </button>
-                          <button type="button" className="servidores-action" onClick={() => onEdit(servidor)} aria-label={`Editar ${servidor.nome}`} title="Editar">
+                          <button type="button" className="servidores-action" disabled={Boolean(avisoDemo)} onClick={() => onEdit(servidor)} aria-label={`Editar ${servidor.nome}`} title={avisoDemo ? "Indisponível para dados fictícios" : "Editar"}>
                             <Icon name="edit" /><span>Editar</span>
                           </button>
                           <button
                             type="button"
                             className="servidores-action danger"
                             onClick={() => void excluir(servidor)}
-                            disabled={excluindo !== null}
+                            disabled={Boolean(avisoDemo) || excluindo !== null}
                             aria-label={`Excluir ${servidor.nome}`}
                             title="Excluir"
                           >

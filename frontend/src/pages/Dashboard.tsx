@@ -4,6 +4,8 @@ import MetricCard from "../components/MetricCard";
 import { carregarOpcoesServidor, type OpcaoServidor } from "../services/opcoesServidor";
 import { contarServidores, listarServidores } from "../services/servidores";
 import type { Servidor } from "../types";
+import DemoNotice from "../components/DemoNotice";
+import { opcoesServidorDemo, servidores as servidoresDemo } from "../data/mock";
 
 type Props = { navigate: (screen: Screen) => void };
 type Categoria = { chave: string; descricao: string; quantidade: number; cor: string };
@@ -86,7 +88,18 @@ export default function Dashboard({ navigate }: Props) {
   const [servidores, setServidores] = useState<Servidor[]>([]);
   const [opcoes, setOpcoes] = useState<Awaited<ReturnType<typeof carregarOpcoesServidor>> | null>(null);
   const [loading, setLoading] = useState(true);
-  const [erro, setErro] = useState("");
+  const [avisoDemo, setAvisoDemo] = useState("");
+
+  function exibirDadosDemo(aviso: string) {
+    const registros = servidoresDemo.map((servidor, indice) => ({
+      ...servidor,
+      matriculas: [{ ativo: true, tipo_vinculo_id: indice % 2 === 0 ? 1 : 2 }],
+    }));
+    setServidoresAtivos(registros.filter(servidor => servidor.status === "Ativo").length);
+    setServidores(registros);
+    setOpcoes(opcoesServidorDemo);
+    setAvisoDemo(aviso);
+  }
 
   useEffect(() => {
     const controller = new AbortController();
@@ -101,13 +114,17 @@ export default function Dashboard({ navigate }: Props) {
           }),
           carregarOpcoesServidor(controller.signal),
         ]);
-        setServidoresAtivos(ativos);
-        setServidores(lista);
-        setOpcoes(opcoesServidor);
+        if (lista.length === 0 || ativos === 0) {
+          exibirDadosDemo("Ainda não há servidores na API. Exibindo dados fictícios para demonstração.");
+        } else {
+          setServidoresAtivos(ativos);
+          setServidores(lista);
+          setOpcoes(opcoesServidor);
+        }
       } catch (error) {
         if (!controller.signal.aborted) {
           console.error(error);
-          setErro(error instanceof Error ? error.message : "Não foi possível carregar o dashboard.");
+          exibirDadosDemo("A API não está disponível. Exibindo dados fictícios para demonstração.");
         }
       } finally {
         if (!controller.signal.aborted) setLoading(false);
@@ -131,7 +148,7 @@ export default function Dashboard({ navigate }: Props) {
       <div className="page-head">
         <div><h1>Dashboard</h1><p>Resumo geral do RH.</p></div>
       </div>
-      {erro && <div className="form-error" role="alert">{erro}</div>}
+      <DemoNotice message={avisoDemo} />
       <div className="cards dashboard-cards">
         <MetricCard
           icon="users"

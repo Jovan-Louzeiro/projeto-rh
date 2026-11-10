@@ -8,6 +8,13 @@ export const autorizacoesPadrao: Autorizacoes = {
     atualizar: [PermissaoUsuario.ADMIN],
     deletar: [PermissaoUsuario.ADMIN],
 };
+
+export const autorizacoesCadastroRh: Autorizacoes = {
+    ...autorizacoesPadrao,
+    adicionar: [PermissaoUsuario.RH, PermissaoUsuario.ADMIN],
+    atualizar: [PermissaoUsuario.RH, PermissaoUsuario.ADMIN],
+    deletar: [PermissaoUsuario.RH, PermissaoUsuario.ADMIN],
+};
 export interface CrudSchema {
     params: ZodType;
     adicionar: ZodType;

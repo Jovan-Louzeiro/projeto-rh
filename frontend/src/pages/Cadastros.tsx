@@ -11,11 +11,29 @@ import {
   type RecursoCadastro,
 } from "../services/cadastros";
 import type { CampoFormularioConfig } from "../types/json-schema.types";
+import { getCurrentUserInfo } from "../services/api";
 
 type Relacoes = { paises: RegistroCadastro[]; estados: RegistroCadastro[] };
+const recursosPermitidosRh = new Set([
+  "pais",
+  "estados",
+  "municipios",
+  "cargo",
+  "funcao",
+  "localizacaoDiferenciada",
+  "departamento",
+]);
 
 export default function Cadastros() {
-  const [recurso, setRecurso] = useState<RecursoCadastro>(recursosCadastro[0]);
+  const permissao = getCurrentUserInfo()?.permissao;
+  const recursosDisponiveis = permissao === "ADMIN"
+    ? recursosCadastro
+    : permissao === "RH"
+      ? recursosCadastro.filter(item => recursosPermitidosRh.has(item.path))
+      : [];
+  const [recurso, setRecurso] = useState<RecursoCadastro>(
+    () => recursosDisponiveis[0] ?? recursosCadastro[0],
+  );
   const [registros, setRegistros] = useState<RegistroCadastro[]>([]);
   const [relacoes, setRelacoes] = useState<Relacoes>({ paises: [], estados: [] });
   const [selecionado, setSelecionado] = useState<RegistroCadastro | null>(null);
@@ -56,7 +74,7 @@ export default function Cadastros() {
       .join(" ").toLowerCase().includes(busca.toLowerCase())), [registros, busca]);
 
   function alterarRecurso(path: string) {
-    const proximo = recursosCadastro.find(item => item.path === path);
+    const proximo = recursosDisponiveis.find(item => item.path === path);
     if (!proximo) return;
     setRecurso(proximo);
     setSelecionado(null);
@@ -111,6 +129,7 @@ export default function Cadastros() {
   );
 
   const tituloPrincipal = (item: RegistroCadastro) => String(item.descricao ?? item.nome ?? item.email ?? item[recurso.idKey] ?? "Registro");
+  const podeGerenciarCadastros = permissao === "ADMIN" || permissao === "RH";
 
   async function salvar(dados: RegistroCadastro) {
     setErro("");
@@ -130,14 +149,14 @@ export default function Cadastros() {
   return <>
     <div className="page-head">
       <div><h1>Cadastros</h1><p>Gerencie domínios, localização e usuários do sistema.</p></div>
-      <button className="btn primary" type="button" onClick={() => { setSelecionado(null); setErro(""); setSucesso(""); }}><Icon name="add" /> Novo cadastro</button>
+      {podeGerenciarCadastros && <button className="btn primary" type="button" onClick={() => { setSelecionado(null); setErro(""); setSucesso(""); }}><Icon name="add" /> Novo cadastro</button>}
     </div>
 
     <div className="card cadastro-resource-picker">
-      {Array.from(new Set(recursosCadastro.map(item => item.group))).map(grupo => <section className="cadastro-resource-group" key={grupo}>
+      {Array.from(new Set(recursosDisponiveis.map(item => item.group))).map(grupo => <section className="cadastro-resource-group" key={grupo}>
         <h2>{grupo}</h2>
         <div className="cadastro-resource-buttons">
-          {recursosCadastro.filter(item => item.group === grupo).map(item => <button
+          {recursosDisponiveis.filter(item => item.group === grupo).map(item => <button
             key={item.path}
             type="button"
             className={`cadastro-resource-button ${recurso.path === item.path ? "active" : ""}`}
@@ -154,7 +173,7 @@ export default function Cadastros() {
 
     {(erro || sucesso) && <p className={erro ? "form-error" : "form-success"} role={erro ? "alert" : "status"} style={{ whiteSpace: "pre-line" }}>{erro || sucesso}</p>}
 
-    {selecionado !== null && <div className="card cadastro-admin-form">
+    {selecionado !== null && podeGerenciarCadastros && <div className="card cadastro-admin-form">
       <div className="section-heading"><h2>Editar {recurso.label}</h2><button className="btn outline" type="button" onClick={() => setSelecionado(null)}>Fechar</button></div>
       <FormularioDinamicoContainer
         key={`${recurso.path}-${String(selecionado[recurso.idKey])}`}
@@ -169,7 +188,7 @@ export default function Cadastros() {
       />
     </div>}
 
-    {selecionado === null && <div className="card cadastro-admin-form">
+    {selecionado === null && podeGerenciarCadastros && <div className="card cadastro-admin-form">
       <div className="section-heading"><h2>Novo {recurso.label}</h2></div>
       <FormularioDinamicoContainer
         key={`${recurso.path}-novo`}
@@ -200,7 +219,7 @@ export default function Cadastros() {
                 }
                 return `${field.label}: ${String(value ?? "—")}`;
               }).join(" · ");
-            return <tr key={String(id)}><td>{tituloPrincipal(item)}</td><td>{detalhes || `ID ${String(id)}`}</td><td>{item.ativo === false ? "Inativo" : "Ativo"}</td><td><div className="cadastro-actions"><button className="btn outline" type="button" onClick={() => { setSelecionado(item); setErro(""); setSucesso(""); }}><Icon name="edit" /> Editar</button><button className="danger-button" type="button" disabled={excluindoId !== null} onClick={() => excluir(item)}><Icon name="trash" /> {String(excluindoId) === String(id) ? "Excluindo..." : "Excluir"}</button></div></td></tr>;
+            return <tr key={String(id)}><td>{tituloPrincipal(item)}</td><td>{detalhes || `ID ${String(id)}`}</td><td>{item.ativo === false ? "Inativo" : "Ativo"}</td><td><div className="cadastro-actions">{podeGerenciarCadastros && <><button className="btn outline" type="button" onClick={() => { setSelecionado(item); setErro(""); setSucesso(""); }}><Icon name="edit" /> Editar</button><button className="danger-button" type="button" disabled={excluindoId !== null} onClick={() => excluir(item)}><Icon name="trash" /> {String(excluindoId) === String(id) ? "Excluindo..." : "Excluir"}</button></>}</div></td></tr>;
           })}
         </tbody>
       </table></div>

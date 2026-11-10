@@ -140,7 +140,7 @@ export class ServidorSchemas extends CrudSchemas {
 
         })
 
-        this.atualizar = baseSchema
+        this.atualizar = this.adicionar
             .partial()
             .refine(
                 data => Object.keys(data).length > 0,

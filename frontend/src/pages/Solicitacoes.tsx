@@ -12,6 +12,8 @@ import {
 import Icon from "../components/Icon";
 import Modal from "../components/Modal";
 import Status from "../components/Status";
+import DemoNotice from "../components/DemoNotice";
+import { carregarListaComDemo, solicitacoesDemo } from "../data/mock";
 
 type Props = {
   onNew: () => void;
@@ -41,6 +43,7 @@ export default function Solicitacoes({ onNew }: Props) {
   const [situacao, setSituacao] = useState("Todos");
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState("");
+  const [avisoDemo, setAvisoDemo] = useState("");
   const [sucesso, setSucesso] = useState("");
   const [selecionada, setSelecionada] = useState<Solicitacao | null>(null);
   const [editando, setEditando] = useState(false);
@@ -49,14 +52,17 @@ export default function Solicitacoes({ onNew }: Props) {
   useEffect(() => {
     const c = new AbortController();
 
-    listarSolicitacoes(c.signal)
-      .then(setItems)
-      .catch(() =>
-        setErro(
-          "Não foi possível carregar os dados. Verifique a conexão com a API."
-        )
-      )
-      .finally(() => setLoading(false));
+    carregarListaComDemo(() => listarSolicitacoes(c.signal), solicitacoesDemo, c.signal)
+      .then(resultado => {
+        setItems(resultado.dados);
+        setAvisoDemo(resultado.aviso);
+      })
+      .catch(() => {
+        if (!c.signal.aborted) setErro("Não foi possível carregar os dados.");
+      })
+      .finally(() => {
+        if (!c.signal.aborted) setLoading(false);
+      });
 
     return () => c.abort();
   }, []);
@@ -130,6 +136,7 @@ export default function Solicitacoes({ onNew }: Props) {
         </button>
       </div>
 
+      <DemoNotice message={avisoDemo} />
       {sucesso && <p className="form-success">{sucesso}</p>}
 
       <div className="card table-card">
@@ -221,6 +228,7 @@ export default function Solicitacoes({ onNew }: Props) {
                       <button
                         className="icon-btn"
                         title="Editar"
+                        disabled={Boolean(avisoDemo)}
                         onClick={() => {
                           setEditando(true);
                           setSelecionada(i);
@@ -232,6 +240,7 @@ export default function Solicitacoes({ onNew }: Props) {
                       <button
                         className="icon-btn danger"
                         title="Excluir"
+                        disabled={Boolean(avisoDemo)}
                         onClick={() => excluir(i)}
                       >
                         <Icon name="trash" />

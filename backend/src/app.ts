@@ -25,7 +25,7 @@ const port = Number(process.env.PORT) || 3000
 app.use(cors({
     origin: [
         "https://projeto-rh-sj48.onrender.com",
-        "https://projeto-rh-1.onrender.com",
+        "https://rh-semed.onrender.com",
         "http://localhost:3000",
         "http://localhost:5173",
         "http://192.168.1.105:5173"
