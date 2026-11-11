@@ -24,7 +24,7 @@ export type Screen =
   | "relatorio-desligamentos"
   | "configuracoes";
 
-export type Status = "Ativo" | "Afastado" | "Licença" | "Férias";
+export type Status = string;
 
 export interface Servidor {
   id: string;
@@ -34,6 +34,8 @@ export interface Servidor {
   secretaria: string;
   status: Status;
   email: string;
+  ativo?: boolean;
+  situacao_id?: string | number | null;
   cpf?: string;
   dataNascimento?: string;
   dataAdmissao?: string;

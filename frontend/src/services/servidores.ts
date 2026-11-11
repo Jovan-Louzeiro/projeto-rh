@@ -321,7 +321,7 @@ export function adaptarServidor(item: Servidor): ServidorTela {
     matricula: typeof raw.matricula === "string" ? raw.matricula : "",
     cargo: String(descricao(raw.cargo) ?? raw.cargo_descricao ?? "Não informado"),
     secretaria: String(descricao(raw.departamento) ?? raw.departamento_descricao ?? "Não informado"),
-    status: String(descricao(raw.situacao) ?? (raw.ativo === false ? "Inativo" : "Ativo")) as ServidorTela["status"],
+    status: String(descricao(raw.situacao) ?? "Situação não informada"),
     email: String(raw.email ?? ""),
     cpf: raw.cpf ?? undefined,
     dataNascimento: raw.data_nascimento ?? undefined,

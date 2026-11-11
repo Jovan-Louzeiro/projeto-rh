@@ -27,7 +27,14 @@ export class ServidorController extends CrudController<ServidorService, Servidor
 
     listarServidores = async (req: Request, res: Response) => {
 
-        const { servidorSelect, matriculasSelect, historicosFuncionaisSelect, ...filtrosQuery } = req.query
+        const {
+            servidorSelect,
+            matriculasSelect,
+            historicosFuncionaisSelect,
+            matricula_ativo: matriculaAtivo,
+            ...queryCompartilhada
+        } = req.query
+        const { ativo: servidorAtivo, ...filtrosQuery } = queryCompartilhada
 
         const camposSelect = {
 
@@ -47,9 +54,15 @@ export class ServidorController extends CrudController<ServidorService, Servidor
 
         const filtrosValidados = {
 
-            servidorFiltro: this.validarQuery(this.schemas.queryParams, filtrosQuery),
+            servidorFiltro: this.validarQuery(this.schemas.queryParams, {
+                ...filtrosQuery,
+                ...(servidorAtivo !== undefined ? { ativo: servidorAtivo } : {}),
+            }),
 
-            matriculasFiltro: this.validarQuery(this.matriculaSchema.queryParams, filtrosQuery),
+            matriculasFiltro: this.validarQuery(this.matriculaSchema.queryParams, {
+                ...filtrosQuery,
+                ...(matriculaAtivo !== undefined ? { ativo: matriculaAtivo } : {}),
+            }),
 
             historicosFuncionaisFiltro: this.validarQuery(this.historicosFuncionaisShemas.queryParams, filtrosQuery)
 
@@ -119,14 +132,20 @@ export class ServidorController extends CrudController<ServidorService, Servidor
 
     contarServidores = async (req: Request, res: Response) => {
 
-        const filtrosQuery = req.query
+        const { matricula_ativo: matriculaAtivo, ativo: servidorAtivo, ...filtrosQuery } = req.query
 
 
         const filtrosValidados = {
 
-            servidorFiltro: this.validarQuery(this.schemas.queryParams, filtrosQuery),
+            servidorFiltro: this.validarQuery(this.schemas.queryParams, {
+                ...filtrosQuery,
+                ...(servidorAtivo !== undefined ? { ativo: servidorAtivo } : {}),
+            }),
 
-            matriculasFiltro: this.validarQuery(this.matriculaSchema.queryParams, filtrosQuery),
+            matriculasFiltro: this.validarQuery(this.matriculaSchema.queryParams, {
+                ...filtrosQuery,
+                ...(matriculaAtivo !== undefined ? { ativo: matriculaAtivo } : {}),
+            }),
 
             historicosFuncionaisFiltro: this.validarQuery(this.historicosFuncionaisShemas.queryParams, filtrosQuery)
 

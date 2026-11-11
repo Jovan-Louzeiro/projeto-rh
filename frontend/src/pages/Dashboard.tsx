@@ -84,7 +84,7 @@ function Distribuicao({ titulo, itens, total }: { titulo: string; itens: Categor
 }
 
 export default function Dashboard({ navigate }: Props) {
-  const [servidoresAtivos, setServidoresAtivos] = useState<number | null>(null);
+  const [servidoresNaoExcluidos, setServidoresNaoExcluidos] = useState<number | null>(null);
   const [servidores, setServidores] = useState<Servidor[]>([]);
   const [opcoes, setOpcoes] = useState<Awaited<ReturnType<typeof carregarOpcoesServidor>> | null>(null);
   const [loading, setLoading] = useState(true);
@@ -95,7 +95,7 @@ export default function Dashboard({ navigate }: Props) {
       ...servidor,
       matriculas: [{ ativo: true, tipo_vinculo_id: indice % 2 === 0 ? 1 : 2 }],
     }));
-    setServidoresAtivos(registros.filter(servidor => servidor.status === "Ativo").length);
+    setServidoresNaoExcluidos(registros.filter(servidor => servidor.ativo !== false).length);
     setServidores(registros);
     setOpcoes(opcoesServidorDemo);
     setAvisoDemo(aviso);
@@ -108,17 +108,18 @@ export default function Dashboard({ navigate }: Props) {
         const [ativos, lista, opcoesServidor] = await Promise.all([
           contarServidores({ ativo: "true" }, controller.signal),
           listarServidores(controller.signal, {
-            servidorSelect: ["id_servidor", "genero_id", "racacor_id"],
+            servidorSelect: ["id_servidor", "ativo", "situacao_id", "genero_id", "racacor_id"],
             matriculasSelect: ["ativo", "tipo_vinculo_id"],
             historicosFuncionaisSelect: [],
           }),
           carregarOpcoesServidor(controller.signal),
         ]);
-        if (lista.length === 0 || ativos === 0) {
+        if (lista.length === 0) {
           exibirDadosDemo("Ainda não há servidores na API. Exibindo dados fictícios para demonstração.");
         } else {
-          setServidoresAtivos(ativos);
-          setServidores(lista);
+          const servidoresNaoExcluidos = lista.filter(servidor => servidor.ativo !== false);
+          setServidoresNaoExcluidos(ativos);
+          setServidores(servidoresNaoExcluidos);
           setOpcoes(opcoesServidor);
         }
       } catch (error) {
@@ -142,6 +143,13 @@ export default function Dashboard({ navigate }: Props) {
     const matricula = matriculas.find(item => item.ativo === true) ?? matriculas[0];
     return matricula?.tipo_vinculo_id;
   }, opcoes?.tiposVinculo ?? []);
+  const descricaoSituacao = (servidor: Servidor) =>
+    opcoes?.situacoes.find(opcao => String(opcao.id) === String(servidor.situacao_id))?.descricao
+      ?? servidor.status;
+  const servidoresComSituacaoAtiva = servidores.filter(servidor =>
+    descricaoSituacao(servidor).trim().toLocaleLowerCase("pt-BR") === "ativo",
+  ).length;
+  const servidoresEmOutrasSituacoes = servidores.length - servidoresComSituacaoAtiva;
 
   return (
     <div className="page dashboard-page">
@@ -152,14 +160,31 @@ export default function Dashboard({ navigate }: Props) {
       <div className="cards dashboard-cards">
         <MetricCard
           icon="users"
-          value={loading ? "—" : numeroPtBr.format(servidoresAtivos ?? 0)}
-          label="Servidores Ativos"
+          value={loading ? "—" : numeroPtBr.format(servidoresNaoExcluidos ?? 0)}
+          label="Servidores ativos"
+          onClick={() => navigate("servidores")}
+        />
+        <MetricCard
+          icon="user-check"
+          value={loading ? "—" : numeroPtBr.format(servidoresComSituacaoAtiva)}
+          label="Situação funcional: Ativo"
+          onClick={() => navigate("servidores")}
+        />
+        <MetricCard
+          icon="users"
+          value={loading ? "—" : numeroPtBr.format(servidoresEmOutrasSituacoes)}
+          label="Outras situações funcionais"
           onClick={() => navigate("servidores")}
         />
       </div>
       <div className="dashboard-visao-geral">
         <h2 className="section-title">Visão geral</h2>
         <div className="dashboard-graficos">
+          <Distribuicao
+            titulo="Situação funcional"
+            itens={agrupar(servidores, servidor => servidor.situacao_id, opcoes?.situacoes ?? [])}
+            total={servidores.length}
+          />
           <Distribuicao
             titulo="Gênero"
             itens={agrupar(servidores, servidor => servidor.genero_id, opcoes?.generos ?? [])}

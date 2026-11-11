@@ -11,13 +11,13 @@ import type {
 import type { OpcoesServidorCompletas } from "../services/opcoesServidor";
 
 export const servidores: Servidor[] = [
-  { id: "1", nome: "João da Silva", matricula: "DEMO-001", cargo: "Professor", secretaria: "Educação", status: "Ativo", ativo: true, email: "joao.silva@example.test", genero_id: 1, racacor_id: 1 },
-  { id: "2", nome: "Maria Oliveira", matricula: "DEMO-002", cargo: "Enfermeira", secretaria: "Saúde", status: "Ativo", ativo: true, email: "maria.oliveira@example.test", genero_id: 2, racacor_id: 2 },
-  { id: "3", nome: "Carlos Lima", matricula: "DEMO-003", cargo: "Técnico Administrativo", secretaria: "Administração", status: "Ativo", ativo: true, email: "carlos.lima@example.test", genero_id: 1, racacor_id: 1 },
-  { id: "4", nome: "Ana Souza", matricula: "DEMO-004", cargo: "Assistente Social", secretaria: "Assistência Social", status: "Ativo", ativo: true, email: "ana.souza@example.test", genero_id: 2, racacor_id: 3 },
-  { id: "5", nome: "Pedro Mendes", matricula: "DEMO-005", cargo: "Vigilante", secretaria: "Infraestrutura", status: "Afastado", ativo: false, email: "pedro.mendes@example.test", genero_id: 1, racacor_id: 2 },
-  { id: "6", nome: "Lucas Pereira", matricula: "DEMO-006", cargo: "Motorista", secretaria: "Transporte", status: "Ativo", ativo: true, email: "lucas.pereira@example.test", genero_id: 1, racacor_id: 1 },
-  { id: "7", nome: "Fernanda Costa", matricula: "DEMO-007", cargo: "Psicóloga", secretaria: "Assistência Social", status: "Ativo", ativo: true, email: "fernanda.costa@example.test", genero_id: 2, racacor_id: 2 },
+  { id: "1", nome: "João da Silva", matricula: "DEMO-001", cargo: "Professor", secretaria: "Educação", status: "Ativo", ativo: true, situacao_id: 1, email: "joao.silva@example.test", genero_id: 1, racacor_id: 1 },
+  { id: "2", nome: "Maria Oliveira", matricula: "DEMO-002", cargo: "Enfermeira", secretaria: "Saúde", status: "Inativo", ativo: true, situacao_id: 2, email: "maria.oliveira@example.test", genero_id: 2, racacor_id: 2 },
+  { id: "3", nome: "Carlos Lima", matricula: "DEMO-003", cargo: "Técnico Administrativo", secretaria: "Administração", status: "Exonerado", ativo: true, situacao_id: 3, email: "carlos.lima@example.test", genero_id: 1, racacor_id: 1 },
+  { id: "4", nome: "Ana Souza", matricula: "DEMO-004", cargo: "Assistente Social", secretaria: "Assistência Social", status: "Aposentado", ativo: true, situacao_id: 4, email: "ana.souza@example.test", genero_id: 2, racacor_id: 3 },
+  { id: "5", nome: "Pedro Mendes", matricula: "DEMO-005", cargo: "Vigilante", secretaria: "Infraestrutura", status: "Ativo", ativo: false, situacao_id: 1, email: "pedro.mendes@example.test", genero_id: 1, racacor_id: 2 },
+  { id: "6", nome: "Lucas Pereira", matricula: "DEMO-006", cargo: "Motorista", secretaria: "Transporte", status: "Ativo", ativo: true, situacao_id: 1, email: "lucas.pereira@example.test", genero_id: 1, racacor_id: 1 },
+  { id: "7", nome: "Fernanda Costa", matricula: "DEMO-007", cargo: "Psicóloga", secretaria: "Assistência Social", status: "Ativo", ativo: true, situacao_id: 1, email: "fernanda.costa@example.test", genero_id: 2, racacor_id: 2 },
 ];
 
 export const opcoesServidorDemo: OpcoesServidorCompletas = {
@@ -34,7 +34,12 @@ export const opcoesServidorDemo: OpcoesServidorCompletas = {
   zonasEndereco: [],
   localizacoesDiferenciadas: [],
   comunidadesIndigenas: [],
-  situacoes: [],
+  situacoes: [
+    { id: 1, descricao: "Ativo" },
+    { id: 2, descricao: "Inativo" },
+    { id: 3, descricao: "Exonerado" },
+    { id: 4, descricao: "Aposentado" },
+  ],
 };
 
 export const feriasDemo: Ferias[] = [

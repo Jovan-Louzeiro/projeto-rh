@@ -38,7 +38,6 @@ type OrdenacaoServidor = { campo: string; direcao: "asc" | "desc" };
 
 const camposServidor: CampoServidor[] = [
   { chave: "id_servidor", rotulo: "Servidor", tipo: "select" },
-  { chave: "ativo", rotulo: "Ativo", tipo: "boolean" },
   { chave: "nome_completo", rotulo: "Nome completo", tipo: "text" },
   { chave: "nome_social", rotulo: "Nome social", tipo: "text" },
   { chave: "cpf", rotulo: "CPF", tipo: "text" },
@@ -87,7 +86,7 @@ const camposFiltroServidor: CampoFiltroServidor[] = [
   ...camposServidor.map(campo => ({
     ...campo,
     escopo: "servidor" as const,
-    localOnly: campo.chave === "ativo" || campo.chave === "numero",
+    localOnly: campo.chave === "numero",
   })),
   { escopo: "matriculas", chave: "matricula_numero", rotulo: "Número da matrícula", tipo: "text", localOnly: true },
   { escopo: "matriculas", chave: "admissao", rotulo: "Data de admissão", tipo: "date" },
@@ -282,7 +281,6 @@ export function Servidores({ onProfile, onEdit, onNew }: Props) {
   const [erro, setErro] = useState("");
   const [avisoDemo, setAvisoDemo] = useState("");
   const [busca, setBusca] = useState("");
-  const [filtroStatus, setFiltroStatus] = useState("Todos");
   const [ordenacao, setOrdenacao] = useState<OrdenacaoServidor>({ campo: "nome", direcao: "asc" });
   const [camposVisiveis, setCamposVisiveis] = useState(camposVisiveisIniciais);
   const [filtrosRascunho, setFiltrosRascunho] = useState<FiltroServidor[]>([]);
@@ -307,19 +305,21 @@ export function Servidores({ onProfile, onEdit, onNew }: Props) {
           )?.localOnly)
           .map(filtro => [filtro.campo, filtro.valor]),
       );
-      const listaPromise = listarServidores(signal, { filtros: filtrosApi });
+      const listaPromise = listarServidores(signal, {
+        filtros: { ...filtrosApi, ativo: "true" },
+      });
       const dependenciasPromise = carregarDependencias
         ? Promise.all([carregarOpcoesServidor(signal), carregarDadosGeograficos(signal)])
         : Promise.resolve(null);
       const [lista, dependencias] = await Promise.all([listaPromise, dependenciasPromise]);
-      if (lista.length === 0) {
-        setServidores(servidoresDemo);
-        setOpcoesServidor(opcoesServidorDemo);
-        setAvisoDemo("Ainda não há servidores na API. Exibindo dados fictícios para demonstração.");
-      } else {
-        setServidores(lista);
-        setAvisoDemo("");
-      }
+      const listaVisivel = lista.filter(servidor => servidor.ativo !== false);
+      setServidores(lista.length === 0
+        ? servidoresDemo.filter(servidor => servidor.ativo !== false)
+        : listaVisivel);
+      setAvisoDemo(lista.length === 0
+        ? "Ainda não há servidores na API. Exibindo dados fictícios para demonstração."
+        : "");
+      if (lista.length === 0) setOpcoesServidor(opcoesServidorDemo);
       if (dependencias) {
         setOpcoesServidor(dependencias[0]);
         setGeografia(dependencias[1]);
@@ -327,7 +327,7 @@ export function Servidores({ onProfile, onEdit, onNew }: Props) {
     } catch (error) {
       if (signal?.aborted) return;
       console.error(error);
-      setServidores(servidoresDemo);
+      setServidores(servidoresDemo.filter(servidor => servidor.ativo !== false));
       setOpcoesServidor(opcoesServidorDemo);
       setAvisoDemo("A API não está disponível. Exibindo dados fictícios para demonstração.");
     } finally {
@@ -350,10 +350,6 @@ export function Servidores({ onProfile, onEdit, onNew }: Props) {
         servidor.matricula,
         servidor.cpf,
       ].some(valor => valor?.toLocaleLowerCase().includes(termo));
-      const ativo = servidor.ativo === true;
-      const correspondeStatus = filtroStatus === "Todos"
-        || (filtroStatus === "Ativos" && ativo)
-        || (filtroStatus === "Inativos" && !ativo);
       const correspondeFiltros = filtrosAplicados.every(filtro => {
         const campo = camposFiltroServidor.find(item =>
           item.escopo === filtro.escopo && item.chave === filtro.campo,
@@ -371,11 +367,10 @@ export function Servidores({ onProfile, onEdit, onNew }: Props) {
         return normalizarValorFiltro(filtro.campo, servidor[filtro.campo])
           === normalizarValorFiltro(filtro.campo, filtro.valor);
       });
-      return correspondeBusca && correspondeStatus && correspondeFiltros;
+      return correspondeBusca && correspondeFiltros;
     });
-  }, [servidores, busca, filtroStatus, filtrosAplicados]);
+  }, [servidores, busca, filtrosAplicados]);
 
-  const ativos = servidores.filter(servidor => servidor.ativo === true).length;
   const camposDeExibicao = [
     ...camposServidor.filter(campo => campo.chave !== "nome_completo"),
     ...camposRelacionados,
@@ -440,9 +435,39 @@ export function Servidores({ onProfile, onEdit, onNew }: Props) {
     escolaridade_id: opcoesServidor.escolaridades.map(opcao => ({ valor: String(opcao.id), descricao: opcao.descricao })),
     tipo_ensino_medio_cursado_id: opcoesServidor.tiposEnsinoMedio.map(opcao => ({ valor: String(opcao.id), descricao: opcao.descricao })),
   };
+  const obterSituacaoServidor = (servidor: Servidor) =>
+    opcoesServidor.situacoes.find(opcao => String(opcao.id) === String(servidor.situacao_id))?.descricao
+      ?? servidor.status;
+  const servidoresComSituacaoAtiva = servidores.filter(servidor =>
+    obterSituacaoServidor(servidor).trim().toLocaleLowerCase("pt-BR") === "ativo",
+  ).length;
+  const normalizarSituacao = (situacao: string) => situacao.trim().toLocaleLowerCase("pt-BR");
+  const situacoesNaoAtivas = opcoesServidor.situacoes
+    .filter(opcao => normalizarSituacao(opcao.descricao) !== "ativo")
+    .map(opcao => ({
+      descricao: opcao.descricao,
+      quantidade: servidores.filter(servidor =>
+        normalizarSituacao(obterSituacaoServidor(servidor)) === normalizarSituacao(opcao.descricao),
+      ).length,
+    }));
+  const situacoesExtras = [...new Set(servidores
+    .map(obterSituacaoServidor)
+    .map(situacao => situacao.trim())
+    .filter(situacao =>
+      situacao !== "" &&
+      normalizarSituacao(situacao) !== "ativo" &&
+      !situacoesNaoAtivas.some(opcao => normalizarSituacao(opcao.descricao) === normalizarSituacao(situacao)),
+    ))]
+    .map(descricao => ({
+      descricao,
+      quantidade: servidores.filter(servidor =>
+        normalizarSituacao(obterSituacaoServidor(servidor)) === normalizarSituacao(descricao),
+      ).length,
+    }));
+  const servidoresSemSituacao = servidores.filter(servidor => !obterSituacaoServidor(servidor).trim()).length;
   const ordenados = [...filtrados].sort((a, b) => {
     const valorOrdenacao = (servidor: Servidor) => {
-      if (ordenacao.campo === "situacao") return servidor.status;
+      if (ordenacao.campo === "situacao") return obterSituacaoServidor(servidor);
       const campo = camposDeExibicao.find(item => item.chave === ordenacao.campo);
       const valor = campo
         ? obterValorExibicao(servidor, campo, filtrosAplicados)
@@ -522,7 +547,6 @@ export function Servidores({ onProfile, onEdit, onNew }: Props) {
     setFiltrosRascunho([]);
     setFiltrosAplicados([]);
     setBusca("");
-    setFiltroStatus("Todos");
     await carregarServidores(undefined, []);
   }
 
@@ -561,16 +585,24 @@ export function Servidores({ onProfile, onEdit, onNew }: Props) {
       <div className="servidores-resumo" aria-label="Resumo de servidores">
         <div className="servidores-resumo-card">
           <span className="servidores-resumo-icon"><Icon name="users" /></span>
-          <div><strong>{servidores.length}</strong><span>Total de servidores</span></div>
+          <div><strong>{servidores.length}</strong><span>Servidores ativos</span></div>
         </div>
         <div className="servidores-resumo-card">
           <span className="servidores-resumo-icon ativo"><Icon name="user-check" /></span>
-          <div><strong>{ativos}</strong><span>Servidores ativos</span></div>
+          <div><strong>{servidoresComSituacaoAtiva}</strong><span>Situação funcional: Ativo</span></div>
         </div>
-        <div className="servidores-resumo-card">
-          <span className="servidores-resumo-icon inativo"><Icon name="user-time" /></span>
-          <div><strong>{servidores.length - ativos}</strong><span>Outras situações</span></div>
-        </div>
+        {[...situacoesNaoAtivas, ...situacoesExtras].map(({ descricao, quantidade }) => (
+          <div className="servidores-resumo-card" key={descricao}>
+            <span className="servidores-resumo-icon inativo"><Icon name="users" /></span>
+            <div><strong>{quantidade}</strong><span>Situação funcional: {descricao}</span></div>
+          </div>
+        ))}
+        {servidoresSemSituacao > 0 && (
+          <div className="servidores-resumo-card">
+            <span className="servidores-resumo-icon inativo"><Icon name="users" /></span>
+            <div><strong>{servidoresSemSituacao}</strong><span>Situação funcional: Não informada</span></div>
+          </div>
+        )}
       </div>
 
       {sucesso && <p className="form-success" role="status">{sucesso}</p>}
@@ -602,11 +634,6 @@ export function Servidores({ onProfile, onEdit, onNew }: Props) {
                 placeholder="Buscar por nome, CPF ou matrícula"
               />
             </label>
-            <select aria-label="Filtrar por situação" value={filtroStatus} onChange={event => setFiltroStatus(event.target.value)}>
-              <option>Todos</option>
-              <option>Ativos</option>
-              <option>Inativos</option>
-            </select>
           </div>
         </div>
 
@@ -824,7 +851,7 @@ export function Servidores({ onProfile, onEdit, onNew }: Props) {
                           )}
                         </div>
                       </td>
-                      <td><Status tone={servidor.status === "Ativo" ? "green" : "yellow"}>{servidor.status}</Status></td>
+                      <td><Status tone={tomSituacao(obterSituacaoServidor(servidor))}>{obterSituacaoServidor(servidor)}</Status></td>
                       {colunasAdicionais.map(campo => (
                         <td
                           className={[
@@ -906,3 +933,12 @@ export function Servidores({ onProfile, onEdit, onNew }: Props) {
 }
 
 export default Servidores;
+
+function tomSituacao(situacao: string): "green" | "yellow" | "blue" | "red" {
+  const normalizada = situacao.toLocaleLowerCase("pt-BR");
+  if (normalizada === "ativo") return "green";
+  if (["inativ", "exoner", "aposent", "demit", "deslig"].some(termo => normalizada.includes(termo))) {
+    return "red";
+  }
+  return "yellow";
+}
