@@ -6,8 +6,10 @@ import {
 
 import {
   cadastrarServidor,
+  verificarCpfDisponivel,
   type NovoServidorDados,
 } from "../services/servidores";
+import { ApiError } from "../services/api";
 
 import {
   listarCargos,
@@ -119,6 +121,10 @@ export default function NovoServidor({
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [cpfStatus, setCpfStatus] = useState<
+    "idle" | "checking" | "available" | "taken" | "invalid" | "error"
+  >("idle");
+  const [cpfStatusMessage, setCpfStatusMessage] = useState("");
 
   const [opcoes, setOpcoes] =
     useState<Opcoes>(opcoesVazias);
@@ -133,6 +139,9 @@ export default function NovoServidor({
   const proximoDocumentoId = useRef(0);
   const proximoMatriculaId = useRef(0);
   const proximoHistoricoId = useRef(0);
+  const cpfCheckTimeout = useRef<number | null>(null);
+  const cpfCheckController = useRef<AbortController | null>(null);
+  const cpfCheckSequence = useRef(0);
   const documentosIncluidos = {
     certidao: documentos.some(documento => documento.tipo === "certidao"),
     cnh: documentos.some(documento => documento.tipo === "cnh"),
@@ -140,6 +149,66 @@ export default function NovoServidor({
     identidade: documentos.some(documento => documento.tipo === "identidade"),
     tituloEleitor: documentos.some(documento => documento.tipo === "tituloEleitor"),
   };
+
+  function verificarCpfAoDigitar(nome: string, valor: string | number | boolean) {
+    if (nome !== "cpf" || typeof valor !== "string") return;
+
+    if (cpfCheckTimeout.current !== null) {
+      window.clearTimeout(cpfCheckTimeout.current);
+      cpfCheckTimeout.current = null;
+    }
+    cpfCheckController.current?.abort();
+    cpfCheckController.current = null;
+
+    const sequencia = ++cpfCheckSequence.current;
+    const cpf = valor.replace(/\D/g, "");
+    if (cpf.length !== 11) {
+      setCpfStatus("idle");
+      setCpfStatusMessage("");
+      return;
+    }
+
+    setCpfStatus("checking");
+    setCpfStatusMessage("Verificando CPF...");
+    cpfCheckTimeout.current = window.setTimeout(() => {
+      cpfCheckTimeout.current = null;
+      const controller = new AbortController();
+      cpfCheckController.current = controller;
+
+      void verificarCpfDisponivel(cpf, controller.signal)
+        .then(disponivel => {
+          if (cpfCheckSequence.current !== sequencia) return;
+          setCpfStatus(disponivel ? "available" : "taken");
+          setCpfStatusMessage(
+            disponivel ? "CPF disponível" : "CPF já cadastrado",
+          );
+        })
+        .catch((erro: unknown) => {
+          if (controller.signal.aborted || cpfCheckSequence.current !== sequencia) return;
+          if (erro instanceof ApiError && erro.status === 422) {
+            setCpfStatus("invalid");
+            setCpfStatusMessage("CPF inválido");
+            return;
+          }
+
+          setCpfStatus("error");
+          setCpfStatusMessage("Não foi possível verificar o CPF. Tente novamente.");
+        })
+        .finally(() => {
+          if (cpfCheckController.current === controller) {
+            cpfCheckController.current = null;
+          }
+        });
+    }, 450);
+  }
+
+  useEffect(() => () => {
+    if (cpfCheckTimeout.current !== null) {
+      window.clearTimeout(cpfCheckTimeout.current);
+    }
+    cpfCheckSequence.current += 1;
+    cpfCheckController.current?.abort();
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -634,6 +703,12 @@ export default function NovoServidor({
      */
 
     try {
+       const cpfDisponivel = await verificarCpfDisponivel(dados.cpf);
+       if (!cpfDisponivel) {
+         setError("Já existe um servidor cadastrado com este CPF.");
+         return;
+       }
+
       await cadastrarServidor(dados);
 
       onBack();
@@ -830,6 +905,23 @@ export default function NovoServidor({
     titulo_eleitor: { hidden: true },
     contatos: { hidden: true },
   };
+
+  const indicadorCpf = cpfStatus === "idle" ? undefined : (
+    <span
+      className={`cpf-verificacao ${cpfStatus}`}
+      role="status"
+      aria-label={cpfStatusMessage}
+      title={cpfStatusMessage}
+    >
+      {cpfStatus === "checking"
+        ? <span className="cpf-verificacao-spinner" />
+        : cpfStatus === "available"
+          ? "✓"
+          : cpfStatus === "error"
+            ? "!"
+            : "×"}
+    </span>
+  );
   const secoes = [
     {
       titulo: "Identificação",
@@ -929,6 +1021,8 @@ export default function NovoServidor({
           desabilitado={loading || saving}
           textoSalvar="Cadastrar servidor"
           textoSalvando="Cadastrando..."
+          indicadoresCampos={{ cpf: indicadorCpf }}
+          onCampoAlterado={verificarCpfAoDigitar}
           onSubmit={submit}
           onCancel={onBack}
         >

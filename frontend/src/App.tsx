@@ -651,9 +651,6 @@ function RequerimentosRoute() {
 
   return (
     <Requerimentos
-      onNew={() =>
-        navigate("/requerimentos/novo")
-      }
       onView={(id) =>
         navigate(`/requerimentos/${id}`)
       }
@@ -666,21 +663,34 @@ function RequerimentosRoute() {
 
 function NovoRequerimentoRoute() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const estado = location.state;
+  const servidorIdEstado = typeof estado === "object"
+    && estado !== null
+    && "servidorId" in estado
+    && (typeof estado.servidorId === "string" || typeof estado.servidorId === "number")
+    ? String(estado.servidorId)
+    : null;
+  const servidorId = servidorIdEstado ?? new URLSearchParams(location.search).get("servidorId");
+
+  if (!servidorId || !/^[1-9]\d*$/.test(servidorId)) {
+    return <Navigate to="/servidores" replace />;
+  }
+
+  const retorno = `/servidores/${encodeURIComponent(servidorId)}?aba=requerimentos`;
 
   return (
     <NovoRequerimento
-      onBack={() =>
-        navigate("/requerimentos")
-      }
-      onSaved={(id) =>
-        navigate(`/requerimentos/${id}`)
-      }
+      servidorIdInicial={servidorId}
+      onBack={() => navigate(retorno)}
+      onSaved={() => navigate(retorno)}
     />
   );
 }
 
 function EditarRequerimentoRoute() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { id } = useParams();
 
   if (!id) {
@@ -692,21 +702,20 @@ function EditarRequerimentoRoute() {
     );
   }
 
+  const returnTo = obterRetornoPerfil(location.state, "/requerimentos");
+
   return (
     <NovoRequerimento
       id={id}
-      onBack={() =>
-        navigate(`/requerimentos/${id}`)
-      }
-      onSaved={(salvo) =>
-        navigate(`/requerimentos/${salvo}`)
-      }
+      onBack={() => navigate(`/requerimentos/${id}`, { state: { returnTo } })}
+      onSaved={salvo => navigate(`/requerimentos/${salvo}`, { state: { returnTo } })}
     />
   );
 }
 
 function DetalheRequerimentoRoute() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { id } = useParams();
 
   if (!id) {
@@ -718,17 +727,28 @@ function DetalheRequerimentoRoute() {
     );
   }
 
+  const returnTo = obterRetornoPerfil(location.state, "/requerimentos");
+
   return (
     <DetalheRequerimento
       id={id}
-      onBack={() =>
-        navigate("/requerimentos")
-      }
-      onEdit={() =>
-        navigate(`/requerimentos/${id}/editar`)
-      }
+      onBack={() => navigate(returnTo)}
+      onEdit={() => navigate(`/requerimentos/${id}/editar`, { state: { returnTo } })}
     />
   );
+}
+
+function obterRetornoPerfil(state: unknown, fallback: string): string {
+  if (
+    typeof state === "object"
+    && state !== null
+    && "returnTo" in state
+    && typeof state.returnTo === "string"
+    && state.returnTo.startsWith("/servidores/")
+  ) {
+    return state.returnTo;
+  }
+  return fallback;
 }
 
 /* =========================================================
@@ -743,6 +763,9 @@ function PerfilRoute() {
     && location.state !== null
     && "editar" in location.state
     && location.state.editar === true;
+  const abaInicial = new URLSearchParams(location.search).get("aba") === "requerimentos"
+    ? "requerimentos"
+    : "dados";
 
   const [perfil, setPerfil] = useState<{
     servidor: Servidor;
@@ -799,6 +822,8 @@ function PerfilRoute() {
     );
   }
 
+  if (!id) return <Navigate to="/servidores" replace />;
+
   if (!perfil) {
     return (
       <p className="table-message">
@@ -814,9 +839,25 @@ function PerfilRoute() {
       geografia={perfil.geografia}
       opcoes={perfil.opcoes}
       iniciarEdicao={iniciarEdicao}
+      abaInicial={abaInicial}
       onUpdated={() => setVersaoPerfil(versao => versao + 1)}
       onQuinquenios={() =>
         navigate("/quinquenios")
+      }
+      onNovoRequerimento={() =>
+        navigate("/requerimentos/novo", {
+          state: { servidorId: id },
+        })
+      }
+      onVerRequerimento={requerimentoId =>
+        navigate(`/requerimentos/${requerimentoId}`, {
+          state: { returnTo: `/servidores/${id}?aba=requerimentos` },
+        })
+      }
+      onEditarRequerimento={requerimentoId =>
+        navigate(`/requerimentos/${requerimentoId}/editar`, {
+          state: { returnTo: `/servidores/${id}?aba=requerimentos` },
+        })
       }
     />
   );

@@ -10,6 +10,7 @@ import { apiPost, apiPut } from "../services/api";
 import Icon from "../components/Icon";
 import Status from "../components/Status";
 import RegistrosServidor from "../components/RegistrosServidor";
+import RequerimentosServidor from "../components/RequerimentosServidor";
 
 type Props = {
   servidor: Servidor;
@@ -17,7 +18,11 @@ type Props = {
   geografia: DadosGeograficos;
   opcoes: OpcoesServidorCompletas;
   iniciarEdicao?: boolean;
+  abaInicial?: "dados" | "requerimentos";
   onQuinquenios: () => void;
+  onNovoRequerimento: () => void;
+  onVerRequerimento: (id: string) => void;
+  onEditarRequerimento: (id: string) => void;
   onUpdated: () => void;
 };
 
@@ -109,11 +114,25 @@ function Documento({ idServidor, recurso, titulo, item, campos, configuracoes, o
   </section>;
 }
 
-export default function PerfilServidor({ servidor, detalhes, geografia, opcoes, iniciarEdicao = false, onQuinquenios, onUpdated }: Props) {
+export default function PerfilServidor({
+  servidor,
+  detalhes,
+  geografia,
+  opcoes,
+  iniciarEdicao = false,
+  abaInicial = "dados",
+  onQuinquenios,
+  onNovoRequerimento,
+  onVerRequerimento,
+  onEditarRequerimento,
+  onUpdated,
+}: Props) {
   const [registro, setRegistro] = useState<Registro>(detalhes as Registro);
   const [editando, setEditando] = useState(iniciarEdicao);
   const [salvo, setSalvo] = useState(false);
+  const [aba, setAba] = useState<"dados" | "requerimentos">(abaInicial);
   useEffect(() => setRegistro(detalhes as Registro), [detalhes]);
+  useEffect(() => setAba(abaInicial), [abaInicial]);
   const pais = (id: unknown) => geografia.paises.find(item => item.id_pais === Number(id))?.nome ?? "—";
   const estado = (id: unknown) => {
     const item = geografia.estados.find(value => value.id_estado === Number(id));
@@ -140,6 +159,9 @@ export default function PerfilServidor({ servidor, detalhes, geografia, opcoes, 
           : valor,
       ]),
     ) as NovoServidorDados;
+    payload.nome_social = typeof dados.nome_social === "string" && dados.nome_social.trim()
+      ? dados.nome_social.trim()
+      : null;
     await atualizarServidor(servidor.id, payload);
     setRegistro(current => ({ ...current, ...payload }));
     setEditando(false);
@@ -392,7 +414,7 @@ export default function PerfilServidor({ servidor, detalhes, geografia, opcoes, 
   return <>
     <div className="page-head">
       <div><h1>Perfil do Servidor</h1><p>Servidores / {String(registro.nome_completo ?? servidor.nome)}</p></div>
-      <button type="button" className="btn primary" onClick={() => { setEditando(value => !value); setSalvo(false); }}><Icon name="edit" /> {editando ? "Cancelar edição" : "Editar dados"}</button>
+      {aba === "dados" && <button type="button" className="btn primary" onClick={() => { setEditando(value => !value); setSalvo(false); }}><Icon name="edit" /> {editando ? "Cancelar edição" : "Editar dados"}</button>}
     </div>
 
     <div className="profile">
@@ -406,11 +428,20 @@ export default function PerfilServidor({ servidor, detalhes, geografia, opcoes, 
       </aside>
 
       <div className="card">
-        <div className="tabs">
-          <button type="button" className="tab active">Dados do servidor</button>
+        <div className="tabs perfil-servidor-tabs" aria-label="Seções do perfil do servidor">
+          <button type="button" aria-pressed={aba === "dados"} className={`tab ${aba === "dados" ? "active" : ""}`} onClick={() => setAba("dados")}>Dados do servidor</button>
+          <button type="button" aria-pressed={aba === "requerimentos"} className={`tab ${aba === "requerimentos" ? "active" : ""}`} onClick={() => setAba("requerimentos")}>Requerimentos</button>
           <button type="button" className="tab" onClick={onQuinquenios}>Quinquênios</button>
         </div>
 
+        {aba === "requerimentos" ? (
+          <RequerimentosServidor
+            servidorId={String(servidor.id)}
+            onNew={onNovoRequerimento}
+            onView={onVerRequerimento}
+            onEdit={onEditarRequerimento}
+          />
+        ) : <>
         {salvo && <p className="form-success" role="status">Dados do servidor atualizados.</p>}
         {editando ? <>
           <FormularioDinamicoContainer
@@ -513,6 +544,7 @@ export default function PerfilServidor({ servidor, detalhes, geografia, opcoes, 
             </div>
           </section>
         </div>
+        </>}
         </>}
       </div>
     </div>

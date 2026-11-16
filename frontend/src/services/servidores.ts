@@ -88,6 +88,7 @@ const camposServidorListagem = [
 
 export type NovoServidorDados = {
   nome_completo: string;
+  nome_social?: string | null;
 
   contatos?: {
     tipo_contato: "TELEFONE_FIXO" | "TELEFONE_MOVEL" | "EMAIL";
@@ -364,6 +365,23 @@ export async function cadastrarServidor(
     "/api/servidores",
     dados,
   );
+}
+
+export async function verificarCpfDisponivel(
+  cpf: string,
+  signal?: AbortSignal,
+): Promise<boolean> {
+  const resposta = await apiPost<{ disponivel: boolean }>(
+    "/api/servidores/cpf-disponivel",
+    { cpf },
+    { signal },
+  );
+
+  if (typeof resposta.disponivel !== "boolean") {
+    throw new Error("A API retornou uma verificação de CPF inválida.");
+  }
+
+  return resposta.disponivel;
 }
 
 

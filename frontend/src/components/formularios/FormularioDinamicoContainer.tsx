@@ -23,6 +23,8 @@ type Props = {
   textoSalvando?: string;
   desabilitado?: boolean;
   onCancel?: () => void;
+  indicadoresCampos?: Record<string, ReactNode>;
+  onCampoAlterado?: (nome: string, valor: string | number | boolean) => void;
   children?: ReactNode;
   onSubmit: (dados: Record<string, unknown>, formulario: FormData) => void | Promise<void>;
 };
@@ -39,6 +41,8 @@ export function FormularioDinamicoContainer({
   textoSalvando,
   desabilitado,
   onCancel,
+  indicadoresCampos,
+  onCampoAlterado,
   children,
   onSubmit,
 }: Props) {
@@ -108,6 +112,8 @@ export function FormularioDinamicoContainer({
       textoSalvando={textoSalvando}
       desabilitado={desabilitado}
       onCancel={onCancel}
+      indicadoresCampos={indicadoresCampos}
+      onCampoAlterado={onCampoAlterado}
       children={children}
       onSubmit={onSubmit}
     />

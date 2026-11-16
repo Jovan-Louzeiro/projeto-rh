@@ -8,7 +8,6 @@ import {
   atualizarRequerimento,
   criarRequerimento,
   LIMITE_ANEXO_REQUERIMENTO,
-  obterProximoProtocolo,
   obterRequerimento,
   TIPOS_ARQUIVO_REQUERIMENTO,
 } from "../services/requerimentos";
@@ -21,7 +20,12 @@ import type {
 } from "../types";
 import { TIPOS_REQUERIMENTO } from "./requerimentosConfig";
 
-type Props = { onBack: () => void; onSaved: (id: string) => void; id?: string };
+type Props = {
+  onBack: () => void;
+  onSaved: (id: string) => void;
+  id?: string;
+  servidorIdInicial?: string;
+};
 type Registro = Record<string, unknown>;
 
 const hoje = () => new Date().toISOString().slice(0, 10);
@@ -54,14 +58,31 @@ function dataIso(valor: unknown): string | undefined {
 }
 
 function obterDadosServidor(servidor: Servidor, detalhes?: DetalhesServidor | null): Servidor {
-  const matriculas = registros(servidor.matriculas);
+  const dadosDetalhados = registro(detalhes?.servidor) ?? registro(detalhes);
+  const dadosServidor = { ...servidor, ...dadosDetalhados } as Servidor;
+  const matriculasDaLista = registros(servidor.matriculas);
+  const matriculasDetalhadas = registros(dadosDetalhados?.matriculas);
+  const matriculas: Registro[] = matriculasDetalhadas.length
+    ? matriculasDetalhadas.map(matriculaDetalhada => {
+        const matriculaLista = matriculasDaLista.find(
+          item => String(item.id_matricula) === String(matriculaDetalhada.id_matricula),
+        );
+        return {
+          ...matriculaLista,
+          ...matriculaDetalhada,
+          historicos_funcionais: registros(matriculaDetalhada.historicos_funcionais).length
+            ? matriculaDetalhada.historicos_funcionais
+            : matriculaLista?.historicos_funcionais,
+        };
+      })
+    : matriculasDaLista;
   const matricula = matriculas.find(item => item.ativo === true) ?? matriculas[0];
   const historicos = registros(matricula?.historicos_funcionais);
   const historico = historicos
     .filter(item => item.data_fim == null)
     .sort((a, b) => String(b.data_inicio ?? "").localeCompare(String(a.data_inicio ?? "")))[0]
     ?? historicos.sort((a, b) => String(b.data_inicio ?? "").localeCompare(String(a.data_inicio ?? "")))[0];
-  const contatos = registros(detalhes?.contatos ?? servidor.contatos)
+  const contatos = registros(detalhes?.contatos ?? dadosDetalhados?.contatos ?? servidor.contatos)
     .filter(item => item.ativo !== false
       && (item.tipo_contato === "TELEFONE_MOVEL" || item.tipo_contato === "TELEFONE_FIXO"));
   const telefone = contatos
@@ -72,27 +93,37 @@ function obterDadosServidor(servidor: Servidor, detalhes?: DetalhesServidor | nu
     })
     .map(item => texto(item.contato))
     .find(Boolean);
-  const municipio = registro(servidor.municipio_endereco);
+  const municipio = registro(dadosServidor.municipio_endereco);
 
   return {
-    ...servidor,
+    ...dadosServidor,
+    id: String(dadosServidor.id_servidor ?? servidor.id),
+    nome: texto(dadosServidor.nome_completo) ?? servidor.nome,
+    matriculaId: texto(matricula?.id_matricula) ?? servidor.matriculaId,
     matricula: texto(matricula?.numero) ?? servidor.matricula,
+    cpf: texto(dadosServidor.cpf) ?? servidor.cpf,
     cargo: descricao(historico?.cargo) ?? (servidor.cargo === "Não informado" ? "" : servidor.cargo),
     secretaria: descricao(historico?.departamento) ?? (servidor.secretaria === "Não informado" ? "" : servidor.secretaria),
     lotacao: descricao(historico?.departamento) ?? servidor.lotacao,
     dataAdmissao: dataIso(matricula?.admissao) ?? servidor.dataAdmissao,
+    endereco: texto(dadosServidor.logradouro) ?? servidor.endereco,
+    numeroEndereco: texto(dadosServidor.numero) ?? servidor.numeroEndereco,
+    bairro: texto(dadosServidor.bairro) ?? servidor.bairro,
     telefone: telefone ?? servidor.telefone,
     cidade: texto(municipio?.nome) ?? servidor.cidade,
   };
 }
 
-export default function NovoRequerimento({ onBack, onSaved, id }: Props) {
+export default function NovoRequerimento({ onBack, onSaved, id, servidorIdInicial }: Props) {
   const [servidores, setServidores] = useState<Servidor[]>([]);
   const [existente, setExistente] = useState<Requerimento | null>(null);
   const [detalhesServidor, setDetalhesServidor] = useState<DetalhesServidor | null>(null);
   const [protocolo, setProtocolo] = useState("");
+  const [numeroProtocolo, setNumeroProtocolo] = useState("");
+  const [anoProtocolo, setAnoProtocolo] = useState(String(new Date().getFullYear()));
   const [dataEntrada, setDataEntrada] = useState(hoje());
-  const [servidorId, setServidorId] = useState("");
+  const [servidorId, setServidorId] = useState(servidorIdInicial ?? "");
+  const [nomeCompleto, setNomeCompleto] = useState("");
   const [tipos, setTipos] = useState<TipoRequerimento[]>([]);
   const [outro, setOutro] = useState("");
   const [justificativa, setJustificativa] = useState("");
@@ -105,7 +136,10 @@ export default function NovoRequerimento({ onBack, onSaved, id }: Props) {
 
   useEffect(() => {
     const controller = new AbortController();
-    void listarServidores(controller.signal, {
+    if (servidorIdInicial) {
+      setServidorId(servidorIdInicial);
+    } else {
+      void listarServidores(controller.signal, {
       servidorSelect: [
         "id_servidor", "ativo", "nome_completo", "nome_social", "cpf",
         "logradouro", "numero", "bairro", "municipio_endereco_id",
@@ -117,13 +151,14 @@ export default function NovoRequerimento({ onBack, onSaved, id }: Props) {
         "funcao_id", "funcao", "departamento_id", "departamento",
         "situacao_historico_funcional_id", "situacao",
       ],
-    })
+      })
       .then(setServidores)
       .catch(error => {
         if (!controller.signal.aborted) {
           setErro(error instanceof Error ? error.message : "Não foi possível carregar os servidores.");
         }
       });
+    }
 
     if (id) {
       void obterRequerimento(id, controller.signal)
@@ -133,14 +168,10 @@ export default function NovoRequerimento({ onBack, onSaved, id }: Props) {
             setErro(error instanceof Error ? error.message : "Não foi possível carregar o requerimento.");
           }
         });
-    } else {
-      void obterProximoProtocolo()
-        .then(setProtocolo)
-        .catch(error => setErro(error instanceof Error ? error.message : "Não foi possível gerar o protocolo."));
     }
 
     return () => controller.abort();
-  }, [id]);
+  }, [id, servidorIdInicial]);
 
   useEffect(() => {
     if (!servidorId) {
@@ -173,8 +204,12 @@ export default function NovoRequerimento({ onBack, onSaved, id }: Props) {
   function preencher(item: Requerimento) {
     setExistente(item);
     setProtocolo(item.protocolo);
+    const partesProtocolo = item.protocolo.match(/^(\d{1,4})\/(\d{4})$/);
+    setNumeroProtocolo(partesProtocolo?.[1] ?? item.protocolo);
+    setAnoProtocolo(partesProtocolo?.[2] ?? "");
     setDataEntrada(item.dataEntrada);
     setServidorId(item.servidorId);
+    setNomeCompleto(item.servidor);
     setTipos(item.tipos);
     setOutro(item.outroEspecificacao ?? "");
     setJustificativa(item.justificativa);
@@ -186,6 +221,7 @@ export default function NovoRequerimento({ onBack, onSaved, id }: Props) {
     const item = listado ?? (existente?.servidorId === servidorId
       ? {
           id: existente.servidorId,
+          matriculaId: existente.matriculaId,
           nome: existente.servidor,
           matricula: existente.matricula,
           cargo: existente.cargo,
@@ -201,9 +237,29 @@ export default function NovoRequerimento({ onBack, onSaved, id }: Props) {
           cidade: existente.cidade,
           telefone: existente.telefone,
         } satisfies Servidor
-      : undefined);
+      : servidorIdInicial && servidorId === servidorIdInicial
+        ? {
+            id: servidorIdInicial,
+            nome: "Servidor selecionado",
+            matricula: "",
+            cargo: "",
+            secretaria: "",
+            status: "",
+            email: "",
+          } satisfies Servidor
+        : undefined);
     return item ? obterDadosServidor(item, detalhesServidor) : undefined;
-  }, [detalhesServidor, existente, servidorId, servidores]);
+  }, [detalhesServidor, existente, servidorId, servidorIdInicial, servidores]);
+
+  useEffect(() => {
+    if (existente?.servidorId === servidorId) {
+      setNomeCompleto(existente.servidor);
+      return;
+    }
+
+    const nomeAtual = texto(servidor?.nome_completo) ?? texto(servidor?.nome);
+    if (nomeAtual) setNomeCompleto(nomeAtual);
+  }, [existente, servidor, servidorId]);
 
   function alternarTipo(tipo: TipoRequerimento) {
     setTipos(atual => atual.includes(tipo)
@@ -215,6 +271,10 @@ export default function NovoRequerimento({ onBack, onSaved, id }: Props) {
     if (!files) return;
     const validos: File[] = [];
     for (const file of Array.from(files)) {
+      if (anexos.length + (existente?.anexos.length ?? 0) + validos.length >= 10) {
+        setErro("É possível anexar no máximo 10 arquivos por requerimento.");
+        break;
+      }
       if (!TIPOS_ARQUIVO_REQUERIMENTO.includes(file.type)) {
         setErro("Envie arquivos PDF, JPG, JPEG ou PNG.");
         continue;
@@ -230,18 +290,29 @@ export default function NovoRequerimento({ onBack, onSaved, id }: Props) {
 
   async function salvar() {
     if (!servidor) return setErro("Selecione o servidor.");
+    if (!nomeCompleto.trim()) return setErro("Informe o nome completo do servidor.");
+    if (!servidor.matriculaId) return setErro("O servidor selecionado não possui uma matrícula válida.");
     if (!tipos.length) return setErro("Selecione ao menos um tipo de requerimento.");
     if (tipos.includes("Outros") && !outro.trim()) return setErro("Especifique o outro requerimento.");
-    if (!justificativa.trim()) return setErro("Informe a justificativa do requerimento.");
+    if (!id) {
+      if (!numeroProtocolo.trim()) return setErro("Informe o número do requerimento.");
+      if (!anoProtocolo.trim()) return setErro("Informe o ano do requerimento.");
+      if (!/^\d{1,4}$/.test(numeroProtocolo.trim()) || !/^\d{4}$/.test(anoProtocolo.trim())) {
+        return setErro("Informe até quatro dígitos no número e quatro dígitos no ano.");
+      }
+    }
     if (!aceite) return setErro("É necessário concordar com a declaração do servidor.");
 
     setSalvando(true);
     setErro("");
+    const protocoloFinal = id ? protocolo : `${numeroProtocolo.trim()}/${anoProtocolo.trim()}`;
     const dados = {
-      protocolo,
+      protocolo: protocoloFinal,
       dataEntrada,
       servidorId: servidor.id,
-      servidor: servidor.nome,
+      matriculaId: servidor.matriculaId,
+      nomeCompleto: nomeCompleto.trim(),
+      servidor: nomeCompleto.trim(),
       matricula: servidor.matricula,
       cpf: servidor.cpf,
       cargo: servidor.cargo,
@@ -256,9 +327,9 @@ export default function NovoRequerimento({ onBack, onSaved, id }: Props) {
       tipos,
       outroEspecificacao: tipos.includes("Outros") ? outro.trim() : undefined,
       justificativa: justificativa.trim(),
+      aceite: true as const,
       situacao: existente?.situacao ?? "Pendente" as SituacaoRequerimento,
       responsavel: existente?.responsavel,
-      assinatura: { aceite, dataHora: new Date().toISOString() },
     };
 
     try {
@@ -294,10 +365,15 @@ export default function NovoRequerimento({ onBack, onSaved, id }: Props) {
         <section className="form-section">
           <h2>Protocolo</h2>
           <div className="form-grid">
-            <label>Nº do protocolo<input value={protocolo} readOnly /></label>
+            {id ? (
+              <label>Nº do protocolo<input value={protocolo} readOnly /></label>
+            ) : <>
+              <label>Número do requerimento<input inputMode="numeric" value={numeroProtocolo} onChange={event => setNumeroProtocolo(event.target.value.replace(/\D/g, "").slice(0, 4))} maxLength={4} placeholder="0001" required /></label>
+              <label>Ano<input inputMode="numeric" value={anoProtocolo} onChange={event => setAnoProtocolo(event.target.value.replace(/\D/g, "").slice(0, 4))} maxLength={4} placeholder="2026" required /></label>
+            </>}
             <label>Data de entrada<input type="date" value={dataEntrada} readOnly /></label>
           </div>
-          <p className="muted">O protocolo e a data de entrada são controlados pela API e só podem ser alterados por usuários autorizados.</p>
+          <p className="muted">O número e o ano serão combinados no protocolo, por exemplo 0001/2026. Após o cadastro, o protocolo não pode ser alterado.</p>
         </section>
 
         <section className="form-section">
@@ -307,6 +383,7 @@ export default function NovoRequerimento({ onBack, onSaved, id }: Props) {
               Servidor
               <select
                 value={servidorId}
+                disabled={Boolean(servidorIdInicial && !id)}
                 onChange={event => {
                   const novoId = event.target.value;
                   if (novoId !== existente?.servidorId) setAceite(false);
@@ -315,6 +392,9 @@ export default function NovoRequerimento({ onBack, onSaved, id }: Props) {
                 }}
               >
                 <option value="">Selecione o servidor</option>
+                {servidorIdInicial && !servidores.some(item => item.id === servidorIdInicial) && (
+                  <option value={servidorIdInicial}>{servidor?.nome || "Servidor vinculado ao perfil"}</option>
+                )}
                 {existente && !servidores.some(item => item.id === existente.servidorId) && (
                   <option value={existente.servidorId}>{existente.servidor} — {existente.matricula}</option>
                 )}
@@ -322,6 +402,16 @@ export default function NovoRequerimento({ onBack, onSaved, id }: Props) {
                   <option value={item.id} key={item.id}>{item.nome} — {item.matricula}</option>
                 ))}
               </select>
+            </label>
+            <label className="full-col">
+              Nome completo
+              <input
+                value={nomeCompleto}
+                onChange={event => setNomeCompleto(event.target.value)}
+                maxLength={150}
+                disabled={!servidorId || carregandoServidor}
+                required
+              />
             </label>
             {dado("Matrícula", servidor?.matricula ?? (servidorExistenteSelecionado ? existente?.matricula : undefined))}
             {dado("CPF", servidor?.cpf ?? (servidorExistenteSelecionado ? existente?.cpf : undefined))}
@@ -334,6 +424,9 @@ export default function NovoRequerimento({ onBack, onSaved, id }: Props) {
             {dado("Bairro", servidor?.bairro ?? (servidorExistenteSelecionado ? existente?.bairro : undefined))}
             {dado("Cidade", servidor?.cidade ?? (servidorExistenteSelecionado ? existente?.cidade : undefined))}
           </div>
+          {servidorIdInicial && !id && (
+            <p className="muted">Servidor selecionado pelo perfil e vinculado a este requerimento.</p>
+          )}
           {carregandoServidor && <p className="muted" role="status">Carregando os dados completos do servidor...</p>}
           {erroServidor && <p className="form-error" role="alert">{erroServidor}</p>}
           {!servidorId && (
@@ -367,7 +460,6 @@ export default function NovoRequerimento({ onBack, onSaved, id }: Props) {
               value={justificativa}
               maxLength={3000}
               onChange={event => setJustificativa(event.target.value)}
-              placeholder="Informe a justificativa do requerimento..."
             />
           </label>
           <p className="muted text-right">{justificativa.length}/3000 caracteres</p>
@@ -376,7 +468,7 @@ export default function NovoRequerimento({ onBack, onSaved, id }: Props) {
         <section className="form-section">
           <h2>Documentos anexos</h2>
           <label>Anexar documentos<input type="file" multiple accept="application/pdf,image/jpeg,image/png" onChange={event => anexar(event.target.files)} /></label>
-          <p className="muted">PDF, JPG, JPEG ou PNG. Limite por arquivo: {Math.round(LIMITE_ANEXO_REQUERIMENTO / 1024 / 1024)} MB.</p>
+          <p className="muted">PDF, JPG, JPEG ou PNG. Até 10 arquivos, com limite de {Math.round(LIMITE_ANEXO_REQUERIMENTO / 1024 / 1024)} MB por arquivo.</p>
           <ul className="anexo-list">
             {existente?.anexos.map(anexo => (
               <li key={anexo.id || anexo.nome}>{anexo.nome} <span>{Math.ceil(anexo.tamanho / 1024)} KB</span></li>

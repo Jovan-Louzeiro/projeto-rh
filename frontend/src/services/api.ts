@@ -350,7 +350,8 @@ export async function apiFetch<T = unknown>(
    * existe um body e o serviço ainda não definiu
    * outro Content-Type.
    */
-  if (options.body && !headers.has("Content-Type")) {
+  const bodyIsFormData = typeof FormData !== "undefined" && options.body instanceof FormData;
+  if (options.body && !bodyIsFormData && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
 
@@ -509,6 +510,44 @@ export function apiDelete<T = unknown>(
     ...options,
     method: "DELETE",
   });
+}
+
+export async function apiBlob(
+  endpoint: string,
+  options: RequestInit = {},
+): Promise<Blob> {
+  const normalizedEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+  const headers = new Headers(getAuthHeaders());
+  if (options.headers) {
+    new Headers(options.headers).forEach((value, key) => headers.set(key, value));
+  }
+
+  let response: Response;
+  try {
+    response = await fetch(`${API_URL}${normalizedEndpoint}`, { ...options, headers });
+  } catch (error) {
+    if (options.signal?.aborted || (error instanceof Error && error.name === "AbortError")) {
+      throw error;
+    }
+    throw new ApiError(
+      error instanceof Error ? `Não foi possível conectar à API: ${error.message}` : "Não foi possível conectar à API.",
+      0,
+    );
+  }
+
+  if (response.status === 401) {
+    if (getToken()) {
+      clearToken();
+      window.dispatchEvent(new Event(AUTH_EXPIRED_EVENT));
+    }
+    const data = await parseResponse(response);
+    throw new ApiError(getErrorMessage(data, response.status), response.status, data);
+  }
+  if (!response.ok) {
+    const data = await parseResponse(response);
+    throw new ApiError(getErrorMessage(data, response.status), response.status, data);
+  }
+  return response.blob();
 }
 
 /**

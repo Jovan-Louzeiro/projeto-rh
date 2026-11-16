@@ -4,8 +4,6 @@ import MetricCard from "../components/MetricCard";
 import { carregarOpcoesServidor, type OpcaoServidor } from "../services/opcoesServidor";
 import { contarServidores, listarServidores } from "../services/servidores";
 import type { Servidor } from "../types";
-import DemoNotice from "../components/DemoNotice";
-import { opcoesServidorDemo, servidores as servidoresDemo } from "../data/mock";
 
 type Props = { navigate: (screen: Screen) => void };
 type Categoria = { chave: string; descricao: string; quantidade: number; cor: string };
@@ -152,18 +150,7 @@ export default function Dashboard({ navigate }: Props) {
   const [servidores, setServidores] = useState<Servidor[]>([]);
   const [opcoes, setOpcoes] = useState<Awaited<ReturnType<typeof carregarOpcoesServidor>> | null>(null);
   const [loading, setLoading] = useState(true);
-  const [avisoDemo, setAvisoDemo] = useState("");
-
-  function exibirDadosDemo(aviso: string) {
-    const registros = servidoresDemo.map((servidor, indice) => ({
-      ...servidor,
-      matriculas: [{ ativo: true, tipo_vinculo_id: indice % 2 === 0 ? 1 : 2 }],
-    }));
-    setServidoresNaoExcluidos(registros.filter(servidor => servidor.ativo !== false).length);
-    setServidores(registros);
-    setOpcoes(opcoesServidorDemo);
-    setAvisoDemo(aviso);
-  }
+  const [erro, setErro] = useState("");
 
   useEffect(() => {
     const controller = new AbortController();
@@ -178,18 +165,17 @@ export default function Dashboard({ navigate }: Props) {
           }),
           carregarOpcoesServidor(controller.signal),
         ]);
-        if (lista.length === 0) {
-          exibirDadosDemo("Ainda não há servidores na API. Exibindo dados fictícios para demonstração.");
-        } else {
-          const servidoresNaoExcluidos = lista.filter(servidor => servidor.ativo !== false);
-          setServidoresNaoExcluidos(ativos);
-          setServidores(servidoresNaoExcluidos);
-          setOpcoes(opcoesServidor);
-        }
+        const servidoresNaoExcluidos = lista.filter(servidor => servidor.ativo !== false);
+        setServidoresNaoExcluidos(ativos);
+        setServidores(servidoresNaoExcluidos);
+        setOpcoes(opcoesServidor);
       } catch (error) {
         if (!controller.signal.aborted) {
           console.error(error);
-          exibirDadosDemo("A API não está disponível. Exibindo dados fictícios para demonstração.");
+          setErro(error instanceof Error ? error.message : "Não foi possível carregar o resumo de servidores.");
+          setServidoresNaoExcluidos(null);
+          setServidores([]);
+          setOpcoes(null);
         }
       } finally {
         if (!controller.signal.aborted) setLoading(false);
@@ -220,11 +206,11 @@ export default function Dashboard({ navigate }: Props) {
       <div className="page-head">
         <div><h1>Dashboard</h1><p>Resumo geral do RH.</p></div>
       </div>
-      <DemoNotice message={avisoDemo} />
+      {erro && <p className="form-error" role="alert">{erro}</p>}
       <div className="cards dashboard-cards">
         <MetricCard
           icon="users"
-          value={loading ? "—" : numeroPtBr.format(servidoresNaoExcluidos ?? 0)}
+          value={loading || erro ? "—" : numeroPtBr.format(servidoresNaoExcluidos ?? 0)}
           label="Servidores ativos"
           onClick={() => navigate("servidores")}
         />

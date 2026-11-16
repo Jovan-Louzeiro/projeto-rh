@@ -1,17 +1,262 @@
 import { useEffect, useMemo, useState } from "react";
-import type { Requerimento, SituacaoRequerimento } from "../types";
-import { alterarSituacaoRequerimento, excluirRequerimento, gerarPdfRequerimento, listarRequerimentos } from "../services/requerimentos";
-import Icon from "../components/Icon"; import MetricCard from "../components/MetricCard"; import Modal from "../components/Modal"; import Status from "../components/Status";
-import DemoNotice from "../components/DemoNotice";
-import { carregarListaComDemo, requerimentosDemo } from "../data/mock";
-import { SITUACOES_REQUERIMENTO, TIPOS_REQUERIMENTO, TRANSICOES_REQUERIMENTO, formatarData, tomRequerimento } from "./requerimentosConfig";
-type Props = { onNew: () => void; onView: (id: string) => void; onEdit: (id: string) => void };
-export default function Requerimentos({ onNew, onView, onEdit }: Props) { const [items, setItems] = useState<Requerimento[]>([]); const [busca, setBusca] = useState(""); const [situacao, setSituacao] = useState("Todos"); const [tipo, setTipo] = useState("Todos"); const [inicio, setInicio] = useState(""); const [fim, setFim] = useState(""); const [loading, setLoading] = useState(true); const [erro, setErro] = useState(""); const [avisoDemo, setAvisoDemo] = useState(""); const [sucesso, setSucesso] = useState(""); const [alterando, setAlterando] = useState<Requerimento | null>(null); const [novaSituacao, setNovaSituacao] = useState<SituacaoRequerimento | "">(""); const [observacao, setObservacao] = useState("");
-  useEffect(() => { const c = new AbortController(); carregarListaComDemo(() => listarRequerimentos({}, c.signal), requerimentosDemo, c.signal).then(resultado => { setItems(resultado.dados); setAvisoDemo(resultado.aviso); }).catch(() => { if (!c.signal.aborted) setErro("Não foi possível carregar os requerimentos."); }).finally(() => { if (!c.signal.aborted) setLoading(false); }); return () => c.abort(); }, []);
-  const filtrados = useMemo(() => items.filter(i => { const texto = `${i.protocolo} ${i.servidor} ${i.matricula} ${i.tipos.join(" ")}`.toLocaleLowerCase(); return (!busca || texto.includes(busca.toLocaleLowerCase())) && (situacao === "Todos" || i.situacao === situacao) && (tipo === "Todos" || i.tipos.includes(tipo as never)) && (!inicio || i.dataEntrada >= inicio) && (!fim || i.dataEntrada <= fim); }), [items, busca, situacao, tipo, inicio, fim]);
-  async function mudarSituacao() { if (!alterando || !novaSituacao) return setErro("Selecione a nova situação."); try { const salvo = await alterarSituacaoRequerimento(alterando.id, novaSituacao, observacao.trim()); setItems(atual => atual.map(i => i.id === salvo.id ? salvo : i)); setAlterando(null); setSucesso("Situação atualizada e registrada no histórico."); } catch (e) { setErro(e instanceof Error ? e.message : "Não foi possível alterar a situação."); } }
-  async function excluir(item: Requerimento) { if (!window.confirm(`Excluir o requerimento ${item.protocolo}? Esta ação deve ser autorizada pela API.`)) return; try { await excluirRequerimento(item.id); setItems(atual => atual.filter(i => i.id !== item.id)); setSucesso("Requerimento excluído com sucesso."); } catch (e) { setErro(e instanceof Error ? e.message : "Não foi possível excluir o requerimento."); } }
-  async function pdf(id: string) { try { const blob = await gerarPdfRequerimento(id); const url = URL.createObjectURL(blob); window.open(url, "_blank", "noopener,noreferrer"); setTimeout(() => URL.revokeObjectURL(url), 60000); } catch (e) { setErro(e instanceof Error ? e.message : "Não foi possível gerar o PDF."); } }
-  const total = (s?: SituacaoRequerimento) => String(s ? items.filter(i => i.situacao === s).length : items.length); const limpar = () => { setBusca(""); setSituacao("Todos"); setTipo("Todos"); setInicio(""); setFim(""); };
-  return <><div className="page-head"><div><h1>Requerimentos</h1><p>Gerencie solicitações e requerimentos funcionais dos servidores.</p></div><button className="btn primary" onClick={onNew}><Icon name="add" /> Novo Requerimento</button></div><DemoNotice message={avisoDemo} /><div className="cards"><MetricCard icon="document" value={total()} label="Total de requerimentos" /><MetricCard icon="time-past" value={total("Pendente")} label="Pendentes" /><MetricCard icon="search-alt" value={total("Em análise")} label="Em análise" /><MetricCard icon="check" value={total("Deferido")} label="Deferidos" /><MetricCard icon="cross-circle" value={total("Indeferido")} label="Indeferidos" /></div>{sucesso && <p className="form-success">{sucesso}</p>}{erro && <p className="form-error">{erro}</p>}<div className="card table-card"><div className="filters requerimentos-filtros"><div className="filter-search"><Icon name="search" /><input value={busca} onChange={e => setBusca(e.target.value)} placeholder="Buscar por servidor, matrícula ou protocolo..." /></div><select aria-label="Filtrar por situação" value={situacao} onChange={e => setSituacao(e.target.value)}><option>Todos</option>{SITUACOES_REQUERIMENTO.map(s => <option key={s}>{s}</option>)}</select><select aria-label="Filtrar por tipo" value={tipo} onChange={e => setTipo(e.target.value)}><option>Todos</option>{TIPOS_REQUERIMENTO.map(t => <option key={t}>{t}</option>)}</select><input aria-label="Data inicial" type="date" value={inicio} onChange={e => setInicio(e.target.value)} /><input aria-label="Data final" type="date" value={fim} onChange={e => setFim(e.target.value)} /><button className="btn outline" onClick={limpar}><Icon name="filter-slash" /> Limpar filtros</button></div><div className="table-scroll"><table className="table"><thead><tr><th>Nº do Protocolo</th><th>Servidor</th><th>Matrícula</th><th>Tipo</th><th>Data de Entrada</th><th>Situação</th><th>Responsável</th><th>Ações</th></tr></thead><tbody>{loading ? <Mensagem>Carregando requerimentos...</Mensagem> : filtrados.length === 0 ? <Mensagem>Nenhum requerimento encontrado.</Mensagem> : filtrados.map(i => <tr key={i.id}><td>{i.protocolo}</td><td>{i.servidor}</td><td>{i.matricula}</td><td>{i.tipos.join(", ")}</td><td>{formatarData(i.dataEntrada)}</td><td><Status tone={tomRequerimento(i.situacao)}>{i.situacao}</Status></td><td>{i.responsavel || "—"}</td><td className="action-buttons"><button className="icon-btn" title="Visualizar" disabled={Boolean(avisoDemo)} onClick={() => onView(i.id)}><Icon name="eye" /></button><button className="icon-btn" title="Editar" disabled={Boolean(avisoDemo)} onClick={() => onEdit(i.id)}><Icon name="edit" /></button><button className="icon-btn" title="Alterar situação" disabled={Boolean(avisoDemo) || !TRANSICOES_REQUERIMENTO[i.situacao].length} onClick={() => { setAlterando(i); setNovaSituacao(""); setObservacao(""); }}><Icon name="refresh" /></button><button className="icon-btn" title="Imprimir" disabled={Boolean(avisoDemo)} onClick={() => onView(i.id)}><Icon name="print" /></button><button className="icon-btn" title="Gerar PDF" disabled={Boolean(avisoDemo)} onClick={() => pdf(i.id)}><Icon name="file-pdf" /></button><button className="icon-btn danger" title="Excluir" disabled={Boolean(avisoDemo)} onClick={() => excluir(i)}><Icon name="trash" /></button></td></tr>)}</tbody></table></div></div>{alterando && <Modal title="Alterar situação do requerimento" onClose={() => setAlterando(null)}><p className="muted">{alterando.protocolo} — {alterando.servidor}</p><label>Nova situação<select value={novaSituacao} onChange={e => setNovaSituacao(e.target.value as SituacaoRequerimento)}><option value="">Selecione</option>{TRANSICOES_REQUERIMENTO[alterando.situacao].map(s => <option key={s}>{s}</option>)}</select></label><label>Observação<textarea value={observacao} onChange={e => setObservacao(e.target.value)} placeholder="Informe o motivo ou observação da alteração" /></label><div className="form-actions"><button className="btn outline" onClick={() => setAlterando(null)}>Cancelar</button><button className="btn primary" onClick={mudarSituacao}>Confirmar alteração</button></div></Modal>}</>; }
-function Mensagem({ children }: { children: string }) { return <tr><td colSpan={8} className="table-message">{children}</td></tr>; }
+import type { Requerimento, SituacaoRequerimento, TipoRequerimento } from "../types";
+import {
+  alterarSituacaoRequerimento,
+  excluirRequerimento,
+  gerarDocumentoRequerimento,
+  listarRequerimentos,
+} from "../services/requerimentos";
+import Icon from "../components/Icon";
+import MetricCard from "../components/MetricCard";
+import Modal from "../components/Modal";
+import Status from "../components/Status";
+import {
+  SITUACOES_REQUERIMENTO,
+  TIPOS_REQUERIMENTO,
+  formatarData,
+  tomRequerimento,
+} from "./requerimentosConfig";
+
+type Props = {
+  onView: (id: string) => void;
+  onEdit: (id: string) => void;
+};
+
+export default function Requerimentos({ onView, onEdit }: Props) {
+  const [items, setItems] = useState<Requerimento[]>([]);
+  const [busca, setBusca] = useState("");
+  const [situacao, setSituacao] = useState("Todos");
+  const [tipo, setTipo] = useState("Todos");
+  const [inicio, setInicio] = useState("");
+  const [fim, setFim] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState("");
+  const [sucesso, setSucesso] = useState("");
+  const [alterando, setAlterando] = useState<Requerimento | null>(null);
+  const [novaSituacao, setNovaSituacao] = useState<SituacaoRequerimento | "">("");
+  const [observacao, setObservacao] = useState("");
+
+  useEffect(() => {
+    const controller = new AbortController();
+    listarRequerimentos({}, controller.signal)
+      .then(setItems)
+      .catch(error => {
+        if (!controller.signal.aborted) {
+          setErro(error instanceof Error ? error.message : "Não foi possível carregar os requerimentos.");
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+    return () => controller.abort();
+  }, []);
+
+  const filtrados = useMemo(() => items.filter(item => {
+    const texto = `${item.protocolo} ${item.servidor} ${item.matricula} ${item.tipos.join(" ")}`
+      .toLocaleLowerCase();
+    return (!busca || texto.includes(busca.toLocaleLowerCase()))
+      && (situacao === "Todos" || item.situacao === situacao)
+      && (tipo === "Todos" || item.tipos.includes(tipo as TipoRequerimento))
+      && (!inicio || item.dataEntrada >= inicio)
+      && (!fim || item.dataEntrada <= fim);
+  }), [items, busca, situacao, tipo, inicio, fim]);
+
+  async function mudarSituacao() {
+    if (!alterando || !novaSituacao) {
+      setErro("Selecione a nova situação.");
+      return;
+    }
+
+    setErro("");
+    try {
+      const salvo = await alterarSituacaoRequerimento(alterando.id, novaSituacao, observacao.trim());
+      setItems(atual => atual.map(item => item.id === salvo.id ? salvo : item));
+      setAlterando(null);
+      setSucesso("Situação atualizada e registrada no histórico.");
+    } catch (error) {
+      setErro(error instanceof Error ? error.message : "Não foi possível alterar a situação.");
+    }
+  }
+
+  async function excluir(item: Requerimento) {
+    if (!window.confirm(`Excluir o requerimento ${item.protocolo}? Esta ação deve ser autorizada pela API.`)) return;
+
+    setErro("");
+    try {
+      await excluirRequerimento(item.id);
+      setItems(atual => atual.filter(registro => registro.id !== item.id));
+      setSucesso("Requerimento excluído com sucesso.");
+    } catch (error) {
+      setErro(error instanceof Error ? error.message : "Não foi possível excluir o requerimento.");
+    }
+  }
+
+  async function baixarDocumento(item: Requerimento) {
+    try {
+      const blob = await gerarDocumentoRequerimento(item.id);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `requerimento-${item.protocolo}.docx`;
+      link.click();
+      window.setTimeout(() => URL.revokeObjectURL(url), 60000);
+    } catch (error) {
+      setErro(error instanceof Error ? error.message : "Não foi possível gerar o documento.");
+    }
+  }
+
+  const total = (status?: SituacaoRequerimento) =>
+    String(status ? items.filter(item => item.situacao === status).length : items.length);
+
+  function limparFiltros() {
+    setBusca("");
+    setSituacao("Todos");
+    setTipo("Todos");
+    setInicio("");
+    setFim("");
+  }
+
+  return (
+    <>
+      <div className="page-head requerimentos-page-head">
+        <div>
+          <span className="requerimento-eyebrow">GESTÃO FUNCIONAL</span>
+          <h1>Requerimentos</h1>
+          <p>Acompanhe, analise e atualize as solicitações dos servidores.</p>
+        </div>
+        <div className="requerimentos-head-note">
+          <Icon name="document-signed" />
+          <span>Cadastro realizado pelo perfil de cada servidor</span>
+        </div>
+      </div>
+
+      <div className="cards requerimentos-metrics">
+        <MetricCard icon="document" value={total()} label="Total de requerimentos" />
+        <MetricCard icon="time-past" value={total("Pendente")} label="Pendentes" />
+        <MetricCard icon="search-alt" value={total("Em análise")} label="Em análise" />
+        <MetricCard icon="check" value={total("Deferido")} label="Deferidos" />
+        <MetricCard icon="cross-circle" value={total("Indeferido")} label="Indeferidos" />
+      </div>
+
+      {sucesso && <p className="form-success">{sucesso}</p>}
+      {erro && <p className="form-error" role="alert">{erro}</p>}
+
+      <div className="card table-card">
+        <div className="requerimentos-lista-heading">
+          <div>
+            <h2>Controle de requerimentos</h2>
+            <p>{loading ? "Carregando registros..." : `${filtrados.length} de ${items.length} registro(s)`}</p>
+          </div>
+          <span className="requerimentos-controle-tag"><Icon name="settings" /> Painel de controle</span>
+        </div>
+        <div className="filters requerimentos-filtros">
+          <div className="filter-search">
+            <Icon name="search" />
+            <input
+              value={busca}
+              onChange={event => setBusca(event.target.value)}
+              placeholder="Buscar por servidor, matrícula ou protocolo..."
+            />
+          </div>
+          <select aria-label="Filtrar por situação" value={situacao} onChange={event => setSituacao(event.target.value)}>
+            <option>Todos</option>
+            {SITUACOES_REQUERIMENTO.map(status => <option key={status}>{status}</option>)}
+          </select>
+          <select aria-label="Filtrar por tipo" value={tipo} onChange={event => setTipo(event.target.value)}>
+            <option>Todos</option>
+            {TIPOS_REQUERIMENTO.map(tipoRequerimento => <option key={tipoRequerimento}>{tipoRequerimento}</option>)}
+          </select>
+          <label className="requerimentos-data-filtro">
+            <span>Data inicial</span>
+            <input type="date" value={inicio} onChange={event => setInicio(event.target.value)} />
+          </label>
+          <label className="requerimentos-data-filtro">
+            <span>Data final</span>
+            <input type="date" value={fim} onChange={event => setFim(event.target.value)} />
+          </label>
+          <button className="btn outline" onClick={limparFiltros}><Icon name="filter-slash" /> Limpar filtros</button>
+        </div>
+
+        <div className="table-scroll">
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Nº do Protocolo</th>
+                <th>Servidor</th>
+                <th>Matrícula</th>
+                <th>Tipo</th>
+                <th>Data de Entrada</th>
+                <th>Situação</th>
+                <th>Responsável</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <Mensagem>Carregando requerimentos...</Mensagem>
+              ) : filtrados.length === 0 ? (
+                <Mensagem>Nenhum requerimento encontrado.</Mensagem>
+              ) : filtrados.map(item => (
+                <tr key={item.id}>
+                  <td>{item.protocolo}</td>
+                  <td>{item.servidor}</td>
+                  <td>{item.matricula}</td>
+                  <td>{item.tipos.join(", ")}</td>
+                  <td>{formatarData(item.dataEntrada)}</td>
+                  <td><Status tone={tomRequerimento(item.situacao)}>{item.situacao}</Status></td>
+                  <td>{item.responsavel || "—"}</td>
+                  <td className="action-buttons">
+                    <button className="icon-btn" title="Visualizar" onClick={() => onView(item.id)}><Icon name="eye" /></button>
+                    <button className="icon-btn" title="Editar" onClick={() => onEdit(item.id)}><Icon name="edit" /></button>
+                    <button
+                      className="icon-btn"
+                      title="Alterar situação"
+                      onClick={() => {
+                        setAlterando(item);
+                        setNovaSituacao("");
+                        setObservacao("");
+                      }}
+                    >
+                      <Icon name="refresh" />
+                    </button>
+                    <button className="icon-btn" title="Baixar DOCX" onClick={() => baixarDocumento(item)}><Icon name="document" /></button>
+                    <button className="icon-btn danger" title="Excluir" onClick={() => void excluir(item)}><Icon name="trash" /></button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {alterando && (
+        <Modal title="Alterar situação do requerimento" onClose={() => setAlterando(null)}>
+          <p className="muted">{alterando.protocolo} — {alterando.servidor}</p>
+          <label>
+            Nova situação
+            <select value={novaSituacao} onChange={event => setNovaSituacao(event.target.value as SituacaoRequerimento)}>
+              <option value="">Selecione</option>
+              {SITUACOES_REQUERIMENTO.map(status => <option key={status}>{status}</option>)}
+            </select>
+          </label>
+          <label>
+            Observação
+            <textarea
+              value={observacao}
+              onChange={event => setObservacao(event.target.value)}
+              placeholder="Informe o motivo ou observação da alteração"
+            />
+          </label>
+          <div className="form-actions">
+            <button className="btn outline" onClick={() => setAlterando(null)}>Cancelar</button>
+            <button className="btn primary" onClick={() => void mudarSituacao()}>Confirmar alteração</button>
+          </div>
+        </Modal>
+      )}
+    </>
+  );
+}
+
+function Mensagem({ children }: { children: string }) {
+  return <tr><td colSpan={8} className="table-message">{children}</td></tr>;
+}

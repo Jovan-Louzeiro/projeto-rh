@@ -21,6 +21,8 @@ type Props = {
   textoSalvando?: string;
   desabilitado?: boolean;
   onCancel?: () => void;
+  indicadoresCampos?: Record<string, ReactNode>;
+  onCampoAlterado?: (nome: string, valor: string | number | boolean) => void;
   children?: ReactNode;
   onSubmit: (dados: Record<string, unknown>, formulario: FormData) => void | Promise<void>;
 };
@@ -34,6 +36,8 @@ export function FormularioDinamico({
   textoSalvando = "Enviando...",
   desabilitado = false,
   onCancel,
+  indicadoresCampos,
+  onCampoAlterado,
   children,
   onSubmit,
 }: Props) {
@@ -144,6 +148,7 @@ export function FormularioDinamico({
       });
       return novosDados;
     });
+    onCampoAlterado?.(nome, valor);
     setErrosCampos((anteriores) => {
       if (!anteriores[nome]) return anteriores;
       const proximos = { ...anteriores };
@@ -154,7 +159,9 @@ export function FormularioDinamico({
   }
 
   function preencherCpfDeTeste(nome: string) {
-    setDados(anteriores => ({ ...anteriores, [nome]: gerarCpf() }));
+    const cpf = gerarCpf();
+    setDados(anteriores => ({ ...anteriores, [nome]: cpf }));
+    onCampoAlterado?.(nome, cpf);
     setErrosCampos(anteriores => {
       if (!anteriores[nome]) return anteriores;
       const proximos = { ...anteriores };
@@ -365,6 +372,7 @@ export function FormularioDinamico({
                 aria-describedby={erroCampo ? idErro : undefined}
                 onChange={(evento) => atualizarCampo(nome, evento)}
               />
+              {indicadoresCampos?.[nome]}
               <button
                 type="button"
                 className="btn outline gerar-cpf"

@@ -5,10 +5,8 @@ import type {
   Ferias,
   LicencaAfastamento,
   Quinquenio,
-  Requerimento,
   Solicitacao,
 } from "../types";
-import type { OpcoesServidorCompletas } from "../services/opcoesServidor";
 
 export const servidores: Servidor[] = [
   { id: "1", nome: "João da Silva", matricula: "DEMO-001", cargo: "Professor", secretaria: "Educação", status: "Ativo", ativo: true, situacao_id: 1, email: "joao.silva@example.test", genero_id: 1, racacor_id: 1 },
@@ -19,28 +17,6 @@ export const servidores: Servidor[] = [
   { id: "6", nome: "Lucas Pereira", matricula: "DEMO-006", cargo: "Motorista", secretaria: "Transporte", status: "Ativo", ativo: true, situacao_id: 1, email: "lucas.pereira@example.test", genero_id: 1, racacor_id: 1 },
   { id: "7", nome: "Fernanda Costa", matricula: "DEMO-007", cargo: "Psicóloga", secretaria: "Assistência Social", status: "Ativo", ativo: true, situacao_id: 1, email: "fernanda.costa@example.test", genero_id: 2, racacor_id: 2 },
 ];
-
-export const opcoesServidorDemo: OpcoesServidorCompletas = {
-  sexos: [],
-  generos: [{ id: 1, descricao: "Masculino" }, { id: 2, descricao: "Feminino" }],
-  racasCor: [{ id: 1, descricao: "Branca" }, { id: 2, descricao: "Parda" }, { id: 3, descricao: "Preta" }],
-  estadosCivis: [],
-  cargos: [],
-  funcoes: [],
-  departamentos: [],
-  tiposVinculo: [{ id: 1, descricao: "Efetivo" }, { id: 2, descricao: "Temporário" }],
-  escolaridades: [],
-  tiposEnsinoMedio: [],
-  zonasEndereco: [],
-  localizacoesDiferenciadas: [],
-  comunidadesIndigenas: [],
-  situacoes: [
-    { id: 1, descricao: "Ativo" },
-    { id: 2, descricao: "Inativo" },
-    { id: 3, descricao: "Exonerado" },
-    { id: 4, descricao: "Aposentado" },
-  ],
-};
 
 function servidoresParaDemo(lista: readonly Servidor[]): Servidor[] {
   return [
@@ -223,11 +199,6 @@ export const solicitacoesDemo: Solicitacao[] = [
 export const documentosDemo: Documento[] = [
   { id: "demo-documento-1", servidorId: "1", servidor: "João da Silva", tipo: "Diploma", categoria: "Funcional", numero: "DOC-DEMO-101", dataDocumento: "2020-03-15", dataValidade: "", descricao: "Diploma fictício para demonstração.", arquivoNome: "diploma-demonstracao.pdf", arquivoUrl: "" },
   { id: "demo-documento-2", servidorId: "4", servidor: "Ana Souza", tipo: "Certificado", categoria: "Funcional", numero: "DOC-DEMO-102", dataDocumento: "2024-08-02", dataValidade: "2028-08-02", descricao: "Certificado fictício para demonstração.", arquivoNome: "certificado-demonstracao.pdf", arquivoUrl: "" },
-];
-
-export const requerimentosDemo: Requerimento[] = [
-  { id: "demo-requerimento-1", protocolo: "REQ-DEMO-0001", dataEntrada: "2026-10-29", servidorId: "2", servidor: "Maria Oliveira", matricula: "DEMO-002", cpf: "Dado fictício", cargo: "Enfermeira", secretaria: "Saúde", tipos: ["Declaração"], justificativa: "Solicitação de declaração funcional para fins demonstrativos.", anexos: [], situacao: "Pendente", responsavel: "Equipe de RH (demonstração)", assinatura: { aceite: true, dataHora: "2026-10-29T10:00:00" }, historico: [] },
-  { id: "demo-requerimento-2", protocolo: "REQ-DEMO-0002", dataEntrada: "2026-10-25", servidorId: "1", servidor: "João da Silva", matricula: "DEMO-001", cpf: "Dado fictício", cargo: "Professor", secretaria: "Educação", tipos: ["Férias"], justificativa: "Solicitação fictícia de férias para demonstração.", anexos: [], situacao: "Em análise", responsavel: "Equipe de RH (demonstração)", assinatura: { aceite: true, dataHora: "2026-10-25T14:30:00" }, historico: [] },
 ];
 
 export type ResultadoListaDemo<T> = {

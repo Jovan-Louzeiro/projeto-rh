@@ -30,6 +30,7 @@ export interface Servidor {
   id: string;
   nome: string;
   matricula: string;
+  matriculaId?: string;
   cargo: string;
   secretaria: string;
   status: Status;
@@ -52,7 +53,7 @@ export interface Servidor {
 
 export type SituacaoRequerimento = "Pendente" | "Em análise" | "Deferido" | "Indeferido" | "Finalizado" | "Cancelado";
 export type TipoRequerimento = "Licença para qualificação profissional" | "Revisão de proventos" | "Aposentadoria" | "Afastamento para mandato eletivo" | "Licença paternidade" | "Promoção docente" | "Licença para tratar de interesse particular" | "Pagamento de atrasados" | "Licença maternidade" | "Licença motivo doença pessoa da família" | "Mudança de dados pessoais" | "Declaração" | "Licença para tratamento de saúde" | "Licença prêmio por assiduidade" | "Férias" | "Remoção" | "Certidão de tempo de serviço" | "Outros";
-export interface AnexoRequerimento { id?: string; nome: string; tipo: string; tamanho: number; url?: string; enviadoEm?: string; }
+export interface AnexoRequerimento { id?: string; nome: string; tipo: string; tamanho: number; url?: string; enviadoEm?: string; assinado?: boolean; }
 export interface HistoricoRequerimento { id: string; dataHora: string; situacaoAnterior?: SituacaoRequerimento; situacaoNova: SituacaoRequerimento; responsavel: string; observacao?: string; }
 export interface AssinaturaRequerimento { aceite: boolean; dataHora?: string; usuario?: string; ip?: string; }
 export interface Requerimento {
@@ -60,6 +61,7 @@ export interface Requerimento {
   protocolo: string;
   dataEntrada: string;
   servidorId: string;
+  matriculaId?: string;
   servidor: string;
   matricula: string;
   cpf?: string;

@@ -4,7 +4,13 @@ import PrefeituraLogo from "./PrefeituraLogo";
 import { getCurrentUserInfo, getCurrentUserName } from "../services/api";
 
 const items = [
-  { path: "/dashboard", label: "Dashboard", icon: "home" }, { path: "/servidores", label: "Servidores", icon: "users" }, { path: "/ferias", label: "Férias", icon: "calendar-days" }, { path: "/licencas", label: "Licenças", icon: "file-medical" }, { path: "/contratos", label: "Contratos", icon: "briefcase" }, { path: "/quinquenios", label: "Quinquênios", icon: "trophy" }, { path: "/solicitacoes", label: "Solicitações", icon: "envelope" }, { path: "/requerimentos", label: "Requerimentos", icon: "document-signed" }, { path: "/documentos", label: "Documentos", icon: "folder" }, { path: "/relatorios", label: "Relatórios", icon: "chart-histogram" }, { path: "/cadastros", label: "Cadastros", icon: "list" }, { path: "/configuracoes", label: "Configurações", icon: "settings" },
+  { path: "/dashboard", label: "Dashboard", icon: "home" },
+  { path: "/servidores", label: "Servidores", icon: "users" },
+  { path: "/requerimentos", label: "Requerimentos", icon: "document-signed" },
+  { path: "/licencas", label: "Licenças", icon: "file-medical" },
+  { path: "/ferias", label: "Férias", icon: "calendar-days" },
+  { path: "/quinquenios", label: "Quinquênios", icon: "trophy" },
+  { path: "/cadastros", label: "Cadastros", icon: "list" },
 ];
 type SidebarProps = {
   collapsed: boolean;
@@ -37,7 +43,6 @@ export default function Sidebar({ collapsed, onToggleCollapsed, open = false, on
         </button>
       </div>
       <nav className="sidebar-nav">{items.map(item => <NavLink key={item.path} to={item.path} title={collapsed ? item.label : undefined} aria-label={collapsed ? item.label : undefined} onClick={onClose} className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}><Icon name={item.icon} /><span>{item.label}</span></NavLink>)}</nav>
-      <div className="help-box"><strong>Precisa de ajuda?</strong><p>Fale com o suporte do sistema.</p><button className="btn outline full"><Icon name="headset" /> Abrir chamado</button><a href="https://www.flaticon.com/uicons" target="_blank" rel="noreferrer" className="flaticon-credit">Uicons by Flaticon</a></div>
       <div className="user-mini"><div className="avatar">{initials}</div><div><strong>{userName}</strong><span>{nomePermissao}</span></div></div>
       <button
         className="nav-item sidebar-logout"
