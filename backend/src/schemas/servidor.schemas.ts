@@ -16,6 +16,7 @@ export class ServidorSchemas extends CrudSchemas {
     public readonly atualizar
     public readonly queryParams
     public readonly select
+    public readonly cpfDisponibilidade
 
     constructor() {
 
@@ -33,6 +34,9 @@ export class ServidorSchemas extends CrudSchemas {
 
         const matriculas = new MatriculaSchemas()
 
+        this.cpfDisponibilidade = z.strictObject({
+            cpf: this.cpfSchema("CPF"),
+        })
 
         const baseSchema = z.strictObject({
 

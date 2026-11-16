@@ -406,6 +406,21 @@ model Requerimento {
   dados_historicos Json
 
   criado_em DateTime @default(now())
+
+  anexos RequerimentoAnexo[]
+}
+
+model RequerimentoAnexo {
+  id_anexo_requerimento Int      @id @default(autoincrement())
+  nome                  String   @db.VarChar(255)
+  tipo                  String   @db.VarChar(100)
+  tamanho               Int
+  conteudo              Bytes
+  enviado_em            DateTime @default(now())
+  assinado              Boolean  @default(false)
+
+  requerimento_id Int
+  requerimento    Requerimento @relation(fields: [requerimento_id], references: [id_requerimento], onDelete: Cascade)
 }
 
 model Usuario {

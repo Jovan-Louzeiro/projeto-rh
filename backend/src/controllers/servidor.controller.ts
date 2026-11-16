@@ -165,6 +165,13 @@ export class ServidorController extends CrudController<ServidorService, Servidor
 
     }
 
+    verificarCpf = async (req: Request, res: Response) => {
+        const { cpf } = this.validarBody(this.schemas.cpfDisponibilidade, req.body)
+        const disponivel = await this.service.cpfDisponivel(cpf)
+
+        return res.json({ disponivel })
+    }
+
     detalharServidor = async (req: Request, res: Response) => {
 
         const { idServidor } = this.validarParams(req.params)

@@ -45,8 +45,6 @@ export class HistoricoFuncionalController extends CrudController<HistoricoFuncio
 
         const data = this.validarBody(this.schemas.adicionar, req.body)
 
-        console.log(data)
-
         const resposta = await this.service.adicionarHistoricoFuncional(usuario.nome, idServidor, data)
 
         return res.status(201).json({

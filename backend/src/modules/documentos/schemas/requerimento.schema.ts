@@ -1,66 +1,94 @@
-import { CrudSchemas } from "@/schemas/crud.schemas.js";
-import z from "zod";
+import { z } from "zod";
 
-export class RequerimentoSchemas extends CrudSchemas {
+export const TIPOS_REQUERIMENTO = [
+    "Licença para qualificação profissional",
+    "Revisão de proventos",
+    "Aposentadoria",
+    "Afastamento para mandato eletivo",
+    "Licença paternidade",
+    "Promoção docente",
+    "Licença para tratar de interesse particular",
+    "Pagamento de atrasados",
+    "Licença maternidade",
+    "Licença motivo doença pessoa da família",
+    "Mudança de dados pessoais",
+    "Declaração",
+    "Licença para tratamento de saúde",
+    "Licença prêmio por assiduidade",
+    "Férias",
+    "Remoção",
+    "Certidão de tempo de serviço",
+    "Outros",
+] as const;
 
-    public dados_historicos = z.strictObject({
+export const SITUACOES_REQUERIMENTO = [
+    "Pendente",
+    "Em análise",
+    "Deferido",
+    "Indeferido",
+    "Finalizado",
+    "Cancelado",
+] as const;
 
-            numero_protocolo: this.stringSchema("Numero Protocolo"),
-            data_entrada: this.dataSchema("Data de Entrada").transform(date => date.toLocaleDateString("pt-br", {timeZone: "UTC"})),
+export const RequerimentoInputSchema = z.strictObject({
+    protocolo: z.string().trim().min(1, "Informe o número do protocolo.").max(100),
+    servidorId: z.coerce.number().int().positive(),
+    matriculaId: z.coerce.number().int().positive(),
+    nomeCompleto: z.string().trim().min(1, "Informe o nome completo do servidor.").max(150).optional(),
+    tipos: z.array(z.enum(TIPOS_REQUERIMENTO)).min(1),
+    outroEspecificacao: z.string().trim().max(1000).optional(),
+    justificativa: z.string().trim().max(3000),
+    aceite: z.literal(true),
+}).superRefine((dados, contexto) => {
+    if (dados.tipos.includes("Outros") && !dados.outroEspecificacao?.trim()) {
+        contexto.addIssue({
+            code: "custom",
+            path: ["outroEspecificacao"],
+            message: "Especifique o outro requerimento.",
+        });
+    }
+});
 
-            nome_completo: this.stringSchema("Nome Completo"),
-            matricula_numero: this.stringSchema("Numero da Matrícula"),
-            admissao_matricula: this.stringSchema("Admissao da Matrícula"),
+export const SituacaoRequerimentoSchema = z.strictObject({
+    situacao: z.enum(SITUACOES_REQUERIMENTO),
+    observacao: z.string().trim().max(1000).default(""),
+});
 
-            cargo_descricao: this.stringSchema("Descrição do Cargo"),
-            funcao_descricao: this.stringSchema("Descrição da Função"),
-            departamento_descricao: this.stringSchema("Descrição do Departamento"),
+export type RequerimentoInput = z.infer<typeof RequerimentoInputSchema>;
+export type SituacaoRequerimento = z.infer<typeof SituacaoRequerimentoSchema>["situacao"];
 
-            endereco_logradouro: this.stringSchema("Logradouro de Endereço"),
-            numero_endereco: this.stringSchema("Número de Endereço"),
-            bairro_endereco: this.stringSchema("Bairro"),
-            cidade_endereco: this.stringSchema("Cidade"),
-
-            telefone: this.stringSchema("Número de Telefone"),
-
-            requerimento_nome: this.stringSchema("Nome do Requerimento"),
-
-        })
-
-
-    private baseSchema = z.strictObject({
-
-        numero_protocolo: this.stringSchema("Numero do Protocolo", 1),
-
-        tipo_requerimento_id: this.idExternoSchema("Tipo Requerimento"),
-
-        servidor_id: this.idExternoSchema("Servidor"),
-
-        matricula_id: this.idExternoSchema("Matricula"),
-
-        dados_historicos: this.dados_historicos
-        
-    })
-
-    public adicionar = this.baseSchema
-
-    public atualizar = this.baseSchema
-
-    public where = this.baseSchema.omit({
-        dados_historicos: true
-    }).partial()
-
-}
-
-export type RequerimentoCreate = z.infer<
-    RequerimentoSchemas["adicionar"]
->
-
-
-export type RequerimentoUpdate = z.infer<
-    RequerimentoSchemas["atualizar"]
->
-
-export type RequerimentoDadosHistoricos = z.infer<
-    RequerimentoSchemas["dados_historicos"]
->
+export type RequerimentoDadosHistoricos = {
+    numero_protocolo: string;
+    data_entrada: string;
+    nome_completo: string;
+    matricula_numero: string;
+    admissao_matricula: string;
+    cargo_descricao: string;
+    funcao_descricao: string;
+    departamento_descricao: string;
+    endereco_logradouro: string;
+    numero_endereco: string;
+    bairro_endereco: string;
+    cidade_endereco: string;
+    telefone: string;
+    cpf: string;
+    tipos: RequerimentoInput["tipos"][number][];
+    outro_especificacao?: string;
+    justificativa: string;
+    situacao: SituacaoRequerimento;
+    responsavel: string;
+    assinatura: {
+        aceite: boolean;
+        dataHora: string;
+        usuario: string;
+        ip?: string;
+    };
+    historico: {
+        id: string;
+        dataHora: string;
+        situacaoAnterior?: SituacaoRequerimento;
+        situacaoNova: SituacaoRequerimento;
+        responsavel: string;
+        observacao?: string;
+    }[];
+};

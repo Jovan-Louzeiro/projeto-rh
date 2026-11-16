@@ -766,6 +766,42 @@ DELETE /api/{dominio}/:id
 | Tipo de Vínculo              | `/api/tipoVinculo`             |
 | Tipo de Ensino Médio Cursado | `/api/tipoEnsinoMedioCursado`  |
 | Situação                     | `/api/situacao`                |
+| Requerimentos                | `/api/requerimentos`           |
+
+## Requerimentos
+
+As rotas de requerimentos exigem autenticação e permissão de RH ou administrador,
+exceto a exclusão, reservada ao administrador:
+
+```text
+GET    /api/requerimentos?servidorId=<id>
+POST   /api/requerimentos
+GET    /api/requerimentos/:id
+PUT    /api/requerimentos/:id
+POST   /api/requerimentos/:id/assinado
+PATCH  /api/requerimentos/:id/status
+GET    /api/requerimentos/:id/historico
+GET    /api/requerimentos/:id/anexos/:anexoId
+DELETE /api/requerimentos/:id/anexos/:anexoId
+GET    /api/requerimentos/:id/documento
+POST   /api/requerimentos/:id/pdf
+DELETE /api/requerimentos/:id
+```
+
+No frontend, um novo requerimento é iniciado pela aba **Requerimentos** no perfil
+do servidor. O painel geral é destinado ao acompanhamento e à atualização das
+solicitações. A listagem da API pode ser filtrada por `servidorId`. As situações
+disponíveis são Pendente, Em análise, Deferido, Indeferido, Finalizado e Cancelado.
+
+Cadastro e atualização recebem `multipart/form-data`: o campo `dados` contém
+`protocolo`, `servidorId`, `matriculaId`, `tipos`, `outroEspecificacao`,
+`justificativa` (opcional) e `aceite`; anexos PDF/JPG/PNG podem ser enviados no
+campo `anexos` (até 10 arquivos, 10 MB por arquivo). O protocolo é informado
+pelo usuário no formato `N/AAAA` a `NNNN/AAAA` (por exemplo, `0001/2026`) e deve ser único; a API registra a data de entrada, responsável,
+assinatura e histórico, e gera o requerimento em DOCX ou PDF.
+O PDF assinado pelo servidor pode ser enviado em `multipart/form-data` no campo
+`arquivo` da rota `/api/requerimentos/:id/assinado`; ele é validado e armazenado
+separadamente dos demais anexos.
 
 ---
 
@@ -829,6 +865,34 @@ Endpoint:
 ```text
 /api/departamento
 ```
+
+As 36 escolas municipais de Carutapera e seus códigos INEP podem ser cadastrados
+ou completados de forma idempotente executando o comando abaixo no diretório
+`backend`:
+
+```sh
+npm run seed:departamentos-carutapera
+```
+
+A lista foi conferida em
+[Escol.as](https://www.escol.as/cidades/500-carutapera/dependencia/municipal);
+o script interrompe a transação e informa conflitos de nome ou INEP, sem
+substituir dados divergentes.
+
+Para adicionar 15 cargos e 15 funções da área de educação aos catálogos, execute
+`npm run seed:cargos-funcoes-educacao` no diretório `backend`. O seed ignora
+descrições que já existam.
+
+Para popular o ambiente com 100 servidores sintéticos de Carutapera, incluindo
+telefone, matrícula e histórico funcional atual, execute
+`npm run seed:servidores-demonstracao` no diretório `backend`. O seed é
+idempotente; os registros ficam marcados na observação como dados fictícios de
+simulação e não representam pessoas reais.
+
+Para criar 60 requerimentos sintéticos vinculados aos servidores de demonstração,
+com protocolos do ano corrente, situações variadas e histórico de tramitação,
+execute `npm run seed:requerimentos-demonstracao` no diretório `backend`. O seed
+é idempotente e identifica os dados sintéticos no histórico interno do registro.
 
 ---
 
@@ -1345,6 +1409,16 @@ servidor_id = 10
 │   ├── /:idServidor/identidade
 │   └── /:idServidor/tituloEleitor
 │
+├── /requerimentos
+│   ├── /:id
+│   ├── POST /:id/assinado
+│   ├── /:id/status
+│   ├── /:id/historico
+│   ├── /:id/anexos/:anexoId
+│   ├── DELETE /:id/anexos/:anexoId
+│   ├── /:id/documento
+│   └── POST /:id/pdf
+│
 ├── /pais
 ├── /estados
 ├── /municipios
@@ -1620,7 +1694,8 @@ PostgreSQL
 
 # ⚠️ Observação sobre o frontend atual
 
-O frontend presente neste repositório ainda possui alguns serviços que seguem um contrato anterior da API.
+O fluxo de requerimentos do frontend está integrado à API `/api/requerimentos`.
+Outros serviços do frontend ainda seguem contratos anteriores da API.
 
 Por exemplo, o serviço atual de documentos utiliza:
 

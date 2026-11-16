@@ -3,6 +3,7 @@ import { ZodError } from "zod";
 
 import { tratarErroPrisma } from "@/errors/prisma.errors.js";
 import { AppError } from "@/errors/app.errors.js";
+import { MulterError } from "multer";
 
 function tratarErroZod(error: ZodError) {
     const detalhes = error.issues.map((issue) => {
@@ -64,6 +65,18 @@ export function errorHandler(
         return res.status(erroFinal.status).json({
             erro: erroFinal.name,
             mensagem: erroFinal.message
+        });
+    }
+
+    if (error instanceof MulterError) {
+        const status = error.code === "LIMIT_FILE_SIZE" || error.code === "LIMIT_FILE_COUNT"
+            ? 413
+            : 400;
+        return res.status(status).json({
+            erro: error.code,
+            mensagem: status === 413
+                ? "O limite de tamanho ou quantidade de anexos foi excedido."
+                : "Não foi possível processar os anexos enviados."
         });
     }
 

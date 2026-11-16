@@ -1,6 +1,9 @@
 import { prisma } from "@/lib/prisma.js";
 import type { ServidorCreate, ServidorUpdate } from "@/schemas/servidor.schemas.js";
-import { RegistroNaoEncontradoError } from "@/errors/dominios.errors.js";
+import {
+    RegistroJaExistenteError,
+    RegistroNaoEncontradoError
+} from "@/errors/dominios.errors.js";
 import { CRUDServices } from "@/services/crud.service.js";
 import { includes, string } from "zod";
 import { Prisma } from "#/generated/prisma/client.js";
@@ -183,7 +186,20 @@ export class ServidorService extends CRUDServices<ServidorCreate, ServidorUpdate
                 identidade: true,
                 titulo_eleitor: true,
                 contatos: true,
-                matriculas: true
+                municipio_endereco: true,
+                matriculas: {
+                    include: {
+                        historicos_funcionais: {
+                            orderBy: { data_inicio: "desc" },
+                            include: {
+                                cargo: true,
+                                funcao: true,
+                                departamento: true,
+                                situacao: true,
+                            },
+                        },
+                    },
+                },
             }
         })
 
@@ -195,6 +211,9 @@ export class ServidorService extends CRUDServices<ServidorCreate, ServidorUpdate
     }
 
     async adicionar(usuario: string, data: ServidorCreate) {
+        if (!(await this.cpfDisponivel(data.cpf))) {
+            throw new RegistroJaExistenteError("CPF")
+        }
 
         const {
             certidao,
@@ -268,5 +287,14 @@ export class ServidorService extends CRUDServices<ServidorCreate, ServidorUpdate
             }
         })
 
+    }
+
+    async cpfDisponivel(cpf: string): Promise<boolean> {
+        const servidor = await prisma.servidor.findUnique({
+            where: { cpf },
+            select: { id_servidor: true },
+        })
+
+        return !servidor
     }
 }

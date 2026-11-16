@@ -12,13 +12,6 @@ export function validate(
     ) => {
         const dados = req[tipoValidacao];
 
-        console.log("VALIDAÇÃO:", {
-            metodo: req.method,
-            rota: req.originalUrl,
-            tipo: tipoValidacao,
-            dados,
-        });
-
         const resultado = schema.safeParse(dados);
 
         if (!resultado.success) {
@@ -36,8 +29,6 @@ export function validate(
         }
 
         req[tipoValidacao] = resultado.data;
-
-        console.log("VALIDAÇÃO APROVADA:", req.originalUrl);
 
         return next();
     };

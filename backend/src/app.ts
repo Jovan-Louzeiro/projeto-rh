@@ -15,6 +15,7 @@ import { UsuariosSchemas } from "@/schemas/usuario.schema.js"
 import { UsuariosRouter } from "@/routes/usuarios.routes.js"
 import { MunicipioRouter } from "@/routes/municipio.routes.js"
 import { ServidorRouter } from "@/routes/servidor.routes.js"
+import { RequerimentoRouter } from "@/modules/documentos/routes/requerimento.route.js"
 
 
 dotenv.config()
@@ -49,6 +50,8 @@ app.use("/api/estados", new EstadoRouter().router)
 app.use("/api/municipios", new MunicipioRouter().router)
 
 app.use("/api/servidores", new ServidorRouter().router)
+
+app.use("/api/requerimentos", new RequerimentoRouter().router)
 
 app.use(errorHandler)
 

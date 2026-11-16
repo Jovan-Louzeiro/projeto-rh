@@ -50,6 +50,12 @@ export class ServidorRouter extends CrudRoutes<ServidorController>{
 
     private outrosMetodos(): void {
 
+        this.router.post(
+            "/cpf-disponivel",
+            autorizar(...this.autorizacoes.adicionar),
+            this.controller.verificarCpf
+        )
+
         this.router.get(
             `/contar`,
             autorizar(...this.autorizacoes.procurar),
