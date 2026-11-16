@@ -2826,13 +2826,60 @@ img, svg, canvas { max-width: 100%; }
     gap: 16px;
 }
 
+.dashboard-chart {
+    position: relative;
+    display: grid;
+    flex: none;
+    place-items: center;
+}
+
 .dashboard-donut {
+    display: block;
     width: clamp(112px, 12vw, 145px);
     height: clamp(112px, 12vw, 145px);
+    overflow: visible;
+}
+
+.dashboard-donut-segment {
+    cursor: pointer;
+    pointer-events: stroke;
+    transition: opacity 160ms ease, stroke-width 160ms ease;
+}
+
+.dashboard-donut-segment:focus-visible {
+    outline: none;
+    filter: drop-shadow(0 0 3px #264d38);
+}
+
+.dashboard-donut-center {
+    position: absolute;
+    display: grid;
+    width: 52%;
+    height: 52%;
+    place-items: center;
+    border-radius: 50%;
+    background: #fff;
+    font-size: 20px;
+    font-weight: 800;
+    pointer-events: none;
+}
+
+.dashboard-chart-tooltip {
+    min-height: 18px;
+    margin: 12px 0 0;
+    color: #64746b;
+    font-size: 11px;
 }
 
 .dashboard-legend-row {
     align-items: flex-start;
+    cursor: default;
+    border-radius: 6px;
+    transition: background-color 160ms ease, opacity 160ms ease;
+}
+
+.dashboard-legend-row.is-active {
+    background: #f1f7f3;
 }
 
 .dashboard-legend-row > span {
@@ -2851,6 +2898,11 @@ img, svg, canvas { max-width: 100%; }
     color: #87958e;
     font-size: 10px;
     font-weight: 500;
+}
+
+.dashboard-legend-row:focus-visible {
+    outline: 2px solid #4388e8;
+    outline-offset: 2px;
 }
 
 @media (max-width: 1100px) {

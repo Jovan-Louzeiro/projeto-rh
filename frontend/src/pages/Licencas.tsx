@@ -1,16 +1,44 @@
 import { useEffect, useMemo, useState } from "react";
 import type { LicencaAfastamento, SituacaoLicenca } from "../types";
 import { cancelarLicenca, listarLicencas, salvarLicenca } from "../services/licencas";
+import { listarServidores } from "../services/servidores";
 import Icon from "../components/Icon";
 import Modal from "../components/Modal";
 import Status from "../components/Status";
 import DemoNotice from "../components/DemoNotice";
-import { carregarListaComDemo, licencasDemo } from "../data/mock";
+import { carregarListaComDemo, gerarLicencasDemo, servidores as servidoresDemo } from "../data/mock";
 type Props = { onNew: () => void };
 const situacoes: SituacaoLicenca[] = ["Pendente", "Em análise", "Aprovada", "Rejeitada", "Em andamento", "Encerrada", "Cancelada"];
 export default function Licencas({ onNew }: Props) {
   const [items, setItems] = useState<LicencaAfastamento[]>([]); const [query, setQuery] = useState(""); const [filtro, setFiltro] = useState("Todos"); const [loading, setLoading] = useState(true); const [erro, setErro] = useState(""); const [avisoDemo, setAvisoDemo] = useState(""); const [selecionada, setSelecionada] = useState<LicencaAfastamento | null>(null); const [editando, setEditando] = useState(false); const [salvando, setSalvando] = useState(false);
-  useEffect(() => { const c = new AbortController(); carregarListaComDemo(() => listarLicencas(c.signal), licencasDemo, c.signal).then(resultado => { setItems(resultado.dados); setAvisoDemo(resultado.aviso); }).catch(() => { if (!c.signal.aborted) setErro("Não foi possível carregar os dados."); }).finally(() => { if (!c.signal.aborted) setLoading(false); }); return () => c.abort(); }, []);
+  useEffect(() => {
+    const c = new AbortController();
+    async function carregarDados() {
+      try {
+        const listaServidores = await carregarListaComDemo(
+          () => listarServidores(c.signal),
+          servidoresDemo,
+          c.signal,
+        );
+        const resultado = await carregarListaComDemo(
+          () => listarLicencas(c.signal),
+          gerarLicencasDemo(listaServidores.dados),
+          c.signal,
+        );
+        if (c.signal.aborted) return;
+        setItems(resultado.dados);
+        setAvisoDemo(resultado.demonstracao
+          ? `Exibindo licenças simuladas vinculadas a ${listaServidores.demonstracao ? "servidores de demonstração" : "servidores cadastrados"}; elas não foram salvas na API.`
+          : listaServidores.aviso);
+      } catch {
+        if (!c.signal.aborted) setErro("Não foi possível carregar os dados.");
+      } finally {
+        if (!c.signal.aborted) setLoading(false);
+      }
+    }
+    void carregarDados();
+    return () => c.abort();
+  }, []);
   const filtrados = useMemo(() => items.filter(i => (filtro === "Todos" || i.situacao === filtro) && `${i.servidor} ${i.matricula} ${i.tipo}`.toLowerCase().includes(query.toLowerCase())), [items, filtro, query]);
   async function salvarEdicao() { if (!selecionada) return; if (selecionada.termino && selecionada.termino < selecionada.inicio) return setErro("A data de término deve ser posterior à data de início."); setSalvando(true); try { const salvo = await salvarLicenca(semId(selecionada), selecionada.id); setItems(atual => atual.map(i => i.id === salvo.id ? salvo : i)); setSelecionada(null); } catch { setErro("Não foi possível salvar a licença. Verifique a conexão com a API."); } finally { setSalvando(false); } }
   async function cancelar(item: LicencaAfastamento) { if (!window.confirm(`Cancelar o registro de ${item.servidor}?`)) return; try { await cancelarLicenca(item.id); setItems(atual => atual.map(i => i.id === item.id ? { ...i, situacao: "Cancelada" } : i)); } catch { setErro("Não foi possível cancelar a licença."); } }

@@ -6,7 +6,7 @@ import Icon from "../components/Icon";
 import Modal from "../components/Modal";
 import Status from "../components/Status";
 import DemoNotice from "../components/DemoNotice";
-import { carregarListaComDemo, feriasDemo, servidores as servidoresDemo } from "../data/mock";
+import { carregarListaComDemo, gerarFeriasDemo, servidores as servidoresDemo } from "../data/mock";
 
 type FormDataFerias = Omit<FeriasRegistro, "id" | "servidor" | "matricula" | "cpf" | "cargo" | "secretaria" | "dias" | "situacao"> & { id?: string; situacao?: FeriasRegistro["situacao"] };
 const vazio: FormDataFerias = { servidorId: "", periodoAquisitivoInicio: "", periodoAquisitivoFim: "", diasDireito: 30, inicio: "", fim: "", abonoPecuniario: false, antecipacaoDecimoTerceiro: false, observacoes: "" };
@@ -14,7 +14,38 @@ const vazio: FormDataFerias = { servidorId: "", periodoAquisitivoInicio: "", per
 type Props = { onNew: () => void };
 export default function Ferias({ onNew }: Props) {
   const [registros, setRegistros] = useState<FeriasRegistro[]>([]); const [servidores, setServidores] = useState<Servidor[]>([]); const [query, setQuery] = useState(""); const [loading, setLoading] = useState(true); const [erro, setErro] = useState(""); const [avisoDemo, setAvisoDemo] = useState(""); const [form, setForm] = useState<FormDataFerias | null>(null); const [visualizando, setVisualizando] = useState(false); const [salvando, setSalvando] = useState(false);
-  useEffect(() => { const c = new AbortController(); Promise.all([carregarListaComDemo(() => listarFerias(c.signal), feriasDemo, c.signal), carregarListaComDemo(() => listarServidores(c.signal), servidoresDemo, c.signal)]).then(([ferias, listaServidores]) => { setRegistros(ferias.dados); setServidores(listaServidores.dados); setAvisoDemo([ferias.aviso, listaServidores.aviso].filter(Boolean).join(" ")); }).catch(() => { if (!c.signal.aborted) setErro("Não foi possível carregar os dados."); }).finally(() => { if (!c.signal.aborted) setLoading(false); }); return () => c.abort(); }, []);
+  useEffect(() => {
+    const c = new AbortController();
+    async function carregarDados() {
+      try {
+        const listaServidores = await carregarListaComDemo(
+          () => listarServidores(c.signal),
+          servidoresDemo,
+          c.signal,
+        );
+        const ferias = await carregarListaComDemo(
+          () => listarFerias(c.signal),
+          gerarFeriasDemo(listaServidores.dados),
+          c.signal,
+        );
+        if (c.signal.aborted) return;
+        setRegistros(ferias.dados);
+        setServidores(listaServidores.dados);
+        setAvisoDemo([
+          ferias.demonstracao
+            ? `Exibindo períodos de férias simulados vinculados a ${listaServidores.demonstracao ? "servidores de demonstração" : "servidores cadastrados"}; esses períodos não foram salvos na API.`
+            : "",
+          !ferias.demonstracao ? listaServidores.aviso : "",
+        ].filter(Boolean).join(" "));
+      } catch {
+        if (!c.signal.aborted) setErro("Não foi possível carregar os dados.");
+      } finally {
+        if (!c.signal.aborted) setLoading(false);
+      }
+    }
+    void carregarDados();
+    return () => c.abort();
+  }, []);
   const filtrados = useMemo(() => registros.filter(r => `${r.servidor} ${r.matricula} ${r.situacao}`.toLowerCase().includes(query.toLowerCase())), [registros, query]);
   const servidor = servidores.find(s => s.id === form?.servidorId); const dias = diasEntre(form?.inicio, form?.fim);
   const atualizar = <K extends keyof FormDataFerias>(campo: K, valor: FormDataFerias[K]) => setForm(atual => atual ? { ...atual, [campo]: valor } : atual);

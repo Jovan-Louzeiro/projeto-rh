@@ -14,15 +14,33 @@ type Registro = Record<string, unknown>;
 const cores = ["#0aa15a", "#4285e9", "#f6a21a", "#8a65d8", "#d95368", "#16a6a1", "#9b6b4b", "#a0aaa5"];
 const numeroPtBr = new Intl.NumberFormat("pt-BR");
 const percentualPtBr = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 1 });
+const coresGenero = {
+  feminino: "#e85d9e",
+  masculino: "#4388e8",
+  naoBinario: "#8866d9",
+  outro: "#f0a43a",
+  naoInformado: "#9aa6a0",
+};
 
 function idOpcao(valor: unknown): string | null {
   return typeof valor === "string" || typeof valor === "number" ? String(valor) : null;
+}
+
+function corGenero(descricao: string): string | undefined {
+  const normalizada = descricao.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("pt-BR");
+  if (normalizada.includes("fem") || normalizada.includes("mulher")) return coresGenero.feminino;
+  if (normalizada.includes("masc") || normalizada.includes("homem")) return coresGenero.masculino;
+  if (normalizada.includes("nao informado") || normalizada.includes("prefiro nao")) return coresGenero.naoInformado;
+  if (normalizada.includes("nao binar") || normalizada.includes("binari")) return coresGenero.naoBinario;
+  if (normalizada.includes("outro")) return coresGenero.outro;
+  return undefined;
 }
 
 function agrupar(
   servidores: Servidor[],
   obterId: (servidor: Servidor) => unknown,
   opcoes: OpcaoServidor[],
+  obterCor?: (descricao: string) => string | undefined,
 ): Categoria[] {
   const descricoes = new Map(opcoes.map(opcao => [String(opcao.id), opcao.descricao]));
   const contagens = new Map<string, number>();
@@ -37,19 +55,22 @@ function agrupar(
       chave,
       descricao: chave === "nao-informado" ? "Não informado" : descricoes.get(chave) ?? `ID ${chave}`,
       quantidade,
-      cor: cores[indice % cores.length],
+      cor: obterCor?.(chave === "nao-informado" ? "Não informado" : descricoes.get(chave) ?? `ID ${chave}`)
+        ?? cores[indice % cores.length],
     }))
     .sort((a, b) => b.quantidade - a.quantidade || a.descricao.localeCompare(b.descricao, "pt-BR"));
 }
 
 function Distribuicao({ titulo, itens, total }: { titulo: string; itens: Categoria[]; total: number }) {
-  let percentualAcumulado = 0;
+  const [realce, setRealce] = useState<string | null>(null);
+  const circunferencia = 2 * Math.PI * 56;
+  let quantidadeAcumulada = 0;
   const segmentos = itens.map(item => {
-    const inicio = percentualAcumulado;
-    percentualAcumulado += total ? (item.quantidade / total) * 100 : 0;
-    return `${item.cor} ${inicio}% ${percentualAcumulado}%`;
+    const inicio = quantidadeAcumulada;
+    quantidadeAcumulada += item.quantidade;
+    return { ...item, inicio, percentual: total ? item.quantidade / total : 0 };
   });
-  const gradiente = total ? `conic-gradient(${segmentos.join(", ")})` : "#e7eee9";
+  const ativo = segmentos.find(item => item.chave === realce);
 
   return (
     <section className="card dashboard-distribuicao" aria-label={`Distribuição por ${titulo}`}>
@@ -57,27 +78,70 @@ function Distribuicao({ titulo, itens, total }: { titulo: string; itens: Categor
       {total === 0 ? (
         <p className="muted">Não há servidores para exibir.</p>
       ) : (
-        <div className="chart-wrap">
-          <div
-            className="donut dashboard-donut"
-            role="img"
-            aria-label={`Distribuição de ${titulo.toLocaleLowerCase()} entre ${numeroPtBr.format(total)} servidores`}
-            style={{ background: gradiente }}
-          >
-            <span className="donut-center">{numeroPtBr.format(total)}</span>
+        <>
+          <div className="chart-wrap">
+            <div className="dashboard-chart">
+              <svg
+                className="dashboard-donut"
+                viewBox="0 0 160 160"
+                role="img"
+                aria-label={`Distribuição de ${titulo.toLocaleLowerCase()} entre ${numeroPtBr.format(total)} servidores`}
+                onMouseLeave={() => setRealce(null)}
+              >
+                {segmentos.map(item => (
+                  <circle
+                    key={item.chave}
+                    className="dashboard-donut-segment"
+                    cx="80"
+                    cy="80"
+                    r="56"
+                    fill="none"
+                    stroke={item.cor}
+                    strokeWidth={realce === item.chave ? 30 : 24}
+                    strokeDasharray={`${circunferencia * item.percentual} ${circunferencia}`}
+                    strokeDashoffset={-circunferencia * item.inicio / total}
+                    transform="rotate(-90 80 80)"
+                    opacity={realce && realce !== item.chave ? 0.35 : 1}
+                    tabIndex={0}
+                    role="graphics-symbol"
+                    aria-label={`${item.descricao}: ${numeroPtBr.format(item.quantidade)} servidores, ${percentualPtBr.format(item.percentual * 100)}%`}
+                    onMouseEnter={() => setRealce(item.chave)}
+                    onFocus={() => setRealce(item.chave)}
+                    onBlur={() => setRealce(null)}
+                  >
+                    <title>{`${item.descricao}: ${numeroPtBr.format(item.quantidade)} (${percentualPtBr.format(item.percentual * 100)}%)`}</title>
+                  </circle>
+                ))}
+              </svg>
+              <span className="dashboard-donut-center">{numeroPtBr.format(total)}</span>
+            </div>
+            <div className="legend" role="list" aria-label={`Legenda: ${titulo}`}>
+              {segmentos.map(item => (
+                <div
+                  className={`legend-row dashboard-legend-row${realce === item.chave ? " is-active" : ""}`}
+                  key={item.chave}
+                  role="listitem"
+                  tabIndex={0}
+                  onMouseEnter={() => setRealce(item.chave)}
+                  onMouseLeave={() => setRealce(null)}
+                  onFocus={() => setRealce(item.chave)}
+                  onBlur={() => setRealce(null)}
+                >
+                  <span><i className="dot" style={{ backgroundColor: item.cor }} />{item.descricao}</span>
+                  <strong>
+                    {percentualPtBr.format(item.percentual * 100)}%
+                    <small>{numeroPtBr.format(item.quantidade)}</small>
+                  </strong>
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="legend">
-            {itens.map(item => (
-              <div className="legend-row dashboard-legend-row" key={item.chave}>
-                <span><i className="dot" style={{ backgroundColor: item.cor }} />{item.descricao}</span>
-                <strong>
-                  {percentualPtBr.format((item.quantidade / total) * 100)}%
-                  <small>{numeroPtBr.format(item.quantidade)}</small>
-                </strong>
-              </div>
-            ))}
-          </div>
-        </div>
+          <p className="dashboard-chart-tooltip" aria-live="polite">
+            {ativo
+              ? `${ativo.descricao}: ${numeroPtBr.format(ativo.quantidade)} servidores (${percentualPtBr.format(ativo.percentual * 100)}%)`
+              : "Passe o mouse ou foque uma categoria para ver os detalhes."}
+          </p>
+        </>
       )}
     </section>
   );
@@ -187,7 +251,7 @@ export default function Dashboard({ navigate }: Props) {
           />
           <Distribuicao
             titulo="Gênero"
-            itens={agrupar(servidores, servidor => servidor.genero_id, opcoes?.generos ?? [])}
+            itens={agrupar(servidores, servidor => servidor.genero_id, opcoes?.generos ?? [], corGenero)}
             total={servidores.length}
           />
           <Distribuicao
