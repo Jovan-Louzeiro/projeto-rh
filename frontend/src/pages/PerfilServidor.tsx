@@ -1,16 +1,25 @@
 import { useEffect, useState } from "react";
 import type { Servidor } from "../types";
-import { atualizarServidor, type DetalhesServidor, type NovoServidorDados } from "../services/servidores";
+import {
+  atualizarServidor,
+  baixarDocumentoDigitalizado,
+  salvarDocumentoServidor,
+  type DetalhesServidor,
+  type NovoServidorDados,
+  type TipoDocumentoServidor,
+} from "../services/servidores";
 import type { DadosGeograficos } from "../services/localizacao";
 import type { OpcoesServidorCompletas } from "../services/opcoesServidor";
 import { FormularioDinamicoContainer } from "../components/formularios/FormularioDinamicoContainer";
 import { criarSchemaLocal } from "../components/formularios/schemaLocal";
 import type { CampoFormularioConfig, SecaoFormularioConfig } from "../types/json-schema.types";
-import { apiPost, apiPut } from "../services/api";
 import Icon from "../components/Icon";
 import Status from "../components/Status";
 import RegistrosServidor from "../components/RegistrosServidor";
 import RequerimentosServidor from "../components/RequerimentosServidor";
+import FeriasServidor from "../components/FeriasServidor";
+import LicencasServidor from "../components/LicencasServidor";
+import QuinqueniosServidor from "../components/QuinqueniosServidor";
 
 type Props = {
   servidor: Servidor;
@@ -18,17 +27,28 @@ type Props = {
   geografia: DadosGeograficos;
   opcoes: OpcoesServidorCompletas;
   iniciarEdicao?: boolean;
-  abaInicial?: "dados" | "requerimentos";
-  onQuinquenios: () => void;
+  abaInicial?: "dados" | "requerimentos" | "ferias" | "licencas" | "quinquenios";
   onNovoRequerimento: () => void;
+  onNovaFerias: () => void;
+  onNovaLicenca: () => void;
+  onNovoQuinquenio: () => void;
   onVerRequerimento: (id: string) => void;
   onEditarRequerimento: (id: string) => void;
+  onEditarQuinquenio: (id: string) => void;
   onUpdated: () => void;
 };
 
 type Registro = Record<string, unknown>;
+type AnexoDocumento = { tipo: string; nome: string };
 
 const dataInput = (value: unknown) => value ? String(value).slice(0, 10) : "";
+const tipoAnexoPorRecurso: Record<TipoDocumentoServidor, string> = {
+  certidao: "CERTIDAO",
+  cnh: "CNH",
+  ctps: "CTPS",
+  identidade: "IDENTIDADE",
+  tituloEleitor: "TITULO_ELEITOR",
+};
 
 const valor = (item: unknown): string => {
   if (item === null || item === undefined || item === "") return "—";
@@ -57,17 +77,19 @@ function Info({ label, value }: { label: string; value: unknown }) {
   return <div className="info"><small>{label}</small><strong>{valor(value)}</strong></div>;
 }
 
-function Documento({ idServidor, recurso, titulo, item, campos, configuracoes, onSaved, formatar }: {
+function Documento({ idServidor, recurso, titulo, item, anexo, campos, configuracoes, onSaved, formatar }: {
   idServidor: string | number;
-  recurso: "certidao" | "cnh" | "ctps" | "identidade" | "tituloEleitor";
+  recurso: TipoDocumentoServidor;
   titulo: string;
   item: unknown;
+  anexo?: AnexoDocumento;
   campos: [string, string, boolean?][];
   configuracoes: Record<string, CampoFormularioConfig>;
   onSaved: (dados: Record<string, unknown>) => void;
   formatar?: (key: string, value: unknown) => unknown;
 }) {
   const [editando, setEditando] = useState(false);
+  const [erroAnexo, setErroAnexo] = useState("");
   const existente = Boolean(item && typeof item === "object");
   const registro = existente ? item as Registro : {};
   const valoresIniciais = Object.fromEntries(
@@ -77,15 +99,25 @@ function Documento({ idServidor, recurso, titulo, item, campos, configuracoes, o
     ]),
   );
 
-  async function salvar(dados: Record<string, unknown>) {
-    const endpoint = `/api/servidores/${encodeURIComponent(String(idServidor))}/${recurso}`;
-    if (existente) {
-      await apiPut(endpoint, dados);
-    } else {
-      await apiPost(endpoint, dados);
-    }
+  async function salvar(dados: Record<string, unknown>, formulario: FormData) {
+    const arquivoSelecionado = formulario.get("arquivo");
+    const arquivo = arquivoSelecionado instanceof File && arquivoSelecionado.size > 0
+      ? arquivoSelecionado
+      : undefined;
+    await salvarDocumentoServidor(idServidor, recurso, dados, arquivo, existente);
+    setErroAnexo("");
     onSaved(dados);
     setEditando(false);
+  }
+
+  async function baixarAnexo() {
+    if (!anexo) return;
+    setErroAnexo("");
+    try {
+      await baixarDocumentoDigitalizado(idServidor, recurso, anexo.nome);
+    } catch (error) {
+      setErroAnexo(error instanceof Error ? error.message : "Não foi possível baixar o documento digitalizado.");
+    }
   }
 
   return <section className="document-profile">
@@ -107,9 +139,29 @@ function Documento({ idServidor, recurso, titulo, item, campos, configuracoes, o
         textoSalvando="Salvando..."
         onSubmit={salvar}
         onCancel={() => setEditando(false)}
-      />
+      >
+        <div className="full-col">
+          {anexo && <>
+            <p>Arquivo atual: {anexo.nome}</p>
+            <button type="button" className="btn outline" onClick={() => void baixarAnexo()}>Baixar arquivo atual</button>
+          </>}
+          {erroAnexo && <p className="form-error" role="alert">{erroAnexo}</p>}
+          <label>Documento digitalizado (PDF, JPG ou PNG; até 10 MB)
+            <input
+              name="arquivo"
+              type="file"
+              accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+            />
+          </label>
+        </div>
+      </FormularioDinamicoContainer>
     </> : existente ? <div className="info-grid">
       {campos.map(([chave, nome, isData]) => <Info key={chave} label={nome} value={isData ? data(registro[chave]) : formatar ? formatar(chave, registro[chave]) : registro[chave]} />)}
+      {anexo && <div className="full-col">
+        <Info label="Documento digitalizado" value={anexo.nome} />
+        <button type="button" className="btn outline" onClick={() => void baixarAnexo()}>Baixar arquivo</button>
+      </div>}
+      {erroAnexo && <p className="form-error full-col" role="alert">{erroAnexo}</p>}
     </div> : <p className="muted">Não cadastrado</p>}
   </section>;
 }
@@ -121,16 +173,19 @@ export default function PerfilServidor({
   opcoes,
   iniciarEdicao = false,
   abaInicial = "dados",
-  onQuinquenios,
   onNovoRequerimento,
+  onNovaFerias,
+  onNovaLicenca,
+  onNovoQuinquenio,
   onVerRequerimento,
   onEditarRequerimento,
+  onEditarQuinquenio,
   onUpdated,
 }: Props) {
   const [registro, setRegistro] = useState<Registro>(detalhes as Registro);
   const [editando, setEditando] = useState(iniciarEdicao);
   const [salvo, setSalvo] = useState(false);
-  const [aba, setAba] = useState<"dados" | "requerimentos">(abaInicial);
+  const [aba, setAba] = useState<"dados" | "requerimentos" | "ferias" | "licencas" | "quinquenios">(abaInicial);
   useEffect(() => setRegistro(detalhes as Registro), [detalhes]);
   useEffect(() => setAba(abaInicial), [abaInicial]);
   const pais = (id: unknown) => geografia.paises.find(item => item.id_pais === Number(id))?.nome ?? "—";
@@ -147,6 +202,11 @@ export default function PerfilServidor({
   const dominio = (nome: keyof OpcoesServidorCompletas, id: unknown) =>
     opcoes[nome].find(item => String(item.id) === String(id))?.descricao ?? "—";
   const situacao = dominio("situacoes", registro.situacao_id);
+  const anexosDocumentos = Array.isArray(registro.documentos_digitalizados)
+    ? registro.documentos_digitalizados as AnexoDocumento[]
+    : [];
+  const obterAnexoDocumento = (recurso: TipoDocumentoServidor) =>
+    anexosDocumentos.find(anexo => anexo.tipo === tipoAnexoPorRecurso[recurso]);
 
   async function salvarEdicao(dados: Record<string, unknown>) {
     setSalvo(false);
@@ -431,7 +491,9 @@ export default function PerfilServidor({
         <div className="tabs perfil-servidor-tabs" aria-label="Seções do perfil do servidor">
           <button type="button" aria-pressed={aba === "dados"} className={`tab ${aba === "dados" ? "active" : ""}`} onClick={() => setAba("dados")}>Dados do servidor</button>
           <button type="button" aria-pressed={aba === "requerimentos"} className={`tab ${aba === "requerimentos" ? "active" : ""}`} onClick={() => setAba("requerimentos")}>Requerimentos</button>
-          <button type="button" className="tab" onClick={onQuinquenios}>Quinquênios</button>
+          <button type="button" aria-pressed={aba === "ferias"} className={`tab ${aba === "ferias" ? "active" : ""}`} onClick={() => setAba("ferias")}>Férias</button>
+          <button type="button" aria-pressed={aba === "licencas"} className={`tab ${aba === "licencas" ? "active" : ""}`} onClick={() => setAba("licencas")}>Licenças/Afastamentos</button>
+          <button type="button" aria-pressed={aba === "quinquenios"} className={`tab ${aba === "quinquenios" ? "active" : ""}`} onClick={() => setAba("quinquenios")}>Quinquênios</button>
         </div>
 
         {aba === "requerimentos" ? (
@@ -440,6 +502,22 @@ export default function PerfilServidor({
             onNew={onNovoRequerimento}
             onView={onVerRequerimento}
             onEdit={onEditarRequerimento}
+          />
+        ) : aba === "ferias" ? (
+          <FeriasServidor
+            servidorId={String(servidor.id)}
+            onNew={onNovaFerias}
+          />
+        ) : aba === "licencas" ? (
+          <LicencasServidor
+            servidorId={String(servidor.id)}
+            onNew={onNovaLicenca}
+          />
+        ) : aba === "quinquenios" ? (
+          <QuinqueniosServidor
+            servidorId={String(servidor.id)}
+            onNew={onNovoQuinquenio}
+            onEdit={onEditarQuinquenio}
           />
         ) : <>
         {salvo && <p className="form-success" role="status">Dados do servidor atualizados.</p>}
@@ -502,11 +580,11 @@ export default function PerfilServidor({
           <section className="perfil-servidor-secao">
             <h3>Documentos</h3>
             <div className="perfil-servidor-documentos">
-              <Documento idServidor={servidor.id} recurso="certidao" titulo="Certidão" item={registro.certidao} configuracoes={camposDocumento.certidao} onSaved={dados => { atualizarDocumento("certidao", dados); onUpdated(); }} campos={[["tipo_certidao", "Tipo"], ["nova_certidao", "Modelo novo"], ["matricula", "Matrícula"], ["termo", "Termo"], ["folha", "Folha"], ["livro", "Livro"], ["data_emissao", "Data de emissão", true]]} />
-              <Documento idServidor={servidor.id} recurso="cnh" titulo="CNH" item={registro.cnh} configuracoes={camposDocumento.cnh} onSaved={dados => { atualizarDocumento("cnh", dados); onUpdated(); }} campos={[["numero", "Número"], ["categoria", "Categoria"], ["data_emissao", "Data de emissão", true], ["data_validade", "Validade", true]]} />
-              <Documento idServidor={servidor.id} recurso="ctps" titulo="CTPS" item={registro.ctps} configuracoes={camposDocumento.ctps} onSaved={dados => { atualizarDocumento("ctps", dados); onUpdated(); }} campos={[["tipo_ctps", "Tipo"], ["numero", "Número"], ["serie", "Série"], ["uf_ctps_id", "UF"], ["data_emissao", "Data de emissão", true]]} formatar={(key, value) => key === "uf_ctps_id" ? estado(value) : value} />
-              <Documento idServidor={servidor.id} recurso="identidade" titulo="Identidade" item={registro.identidade} configuracoes={camposDocumento.identidade} onSaved={dados => { atualizarDocumento("identidade", dados); onUpdated(); }} campos={[["tipo_identidade", "Tipo"], ["numero", "Número"], ["orgao_emissor", "Órgão emissor"], ["rg_uf_id", "UF"], ["rg_data_emissao", "Data de emissão", true]]} formatar={(key, value) => key === "rg_uf_id" ? estado(value) : value} />
-              <Documento idServidor={servidor.id} recurso="tituloEleitor" titulo="Título de eleitor" item={registro.titulo_eleitor} configuracoes={camposDocumento.tituloEleitor} onSaved={dados => { atualizarDocumento("tituloEleitor", dados); onUpdated(); }} campos={[["numero", "Número"], ["zona", "Zona"], ["secao", "Seção"]]} />
+              <Documento idServidor={servidor.id} recurso="certidao" titulo="Certidão" item={registro.certidao} anexo={obterAnexoDocumento("certidao")} configuracoes={camposDocumento.certidao} onSaved={dados => { atualizarDocumento("certidao", dados); onUpdated(); }} campos={[["tipo_certidao", "Tipo"], ["nova_certidao", "Modelo novo"], ["matricula", "Matrícula"], ["termo", "Termo"], ["folha", "Folha"], ["livro", "Livro"], ["data_emissao", "Data de emissão", true]]} />
+              <Documento idServidor={servidor.id} recurso="cnh" titulo="CNH" item={registro.cnh} anexo={obterAnexoDocumento("cnh")} configuracoes={camposDocumento.cnh} onSaved={dados => { atualizarDocumento("cnh", dados); onUpdated(); }} campos={[["numero", "Número"], ["categoria", "Categoria"], ["data_emissao", "Data de emissão", true], ["data_validade", "Validade", true]]} />
+              <Documento idServidor={servidor.id} recurso="ctps" titulo="CTPS" item={registro.ctps} anexo={obterAnexoDocumento("ctps")} configuracoes={camposDocumento.ctps} onSaved={dados => { atualizarDocumento("ctps", dados); onUpdated(); }} campos={[["tipo_ctps", "Tipo"], ["numero", "Número"], ["serie", "Série"], ["uf_ctps_id", "UF"], ["data_emissao", "Data de emissão", true]]} formatar={(key, value) => key === "uf_ctps_id" ? estado(value) : value} />
+              <Documento idServidor={servidor.id} recurso="identidade" titulo="Identidade" item={registro.identidade} anexo={obterAnexoDocumento("identidade")} configuracoes={camposDocumento.identidade} onSaved={dados => { atualizarDocumento("identidade", dados); onUpdated(); }} campos={[["tipo_identidade", "Tipo"], ["numero", "Número"], ["orgao_emissor", "Órgão emissor"], ["rg_uf_id", "UF"], ["rg_data_emissao", "Data de emissão", true]]} formatar={(key, value) => key === "rg_uf_id" ? estado(value) : value} />
+              <Documento idServidor={servidor.id} recurso="tituloEleitor" titulo="Título de eleitor" item={registro.titulo_eleitor} anexo={obterAnexoDocumento("tituloEleitor")} configuracoes={camposDocumento.tituloEleitor} onSaved={dados => { atualizarDocumento("tituloEleitor", dados); onUpdated(); }} campos={[["numero", "Número"], ["zona", "Zona"], ["secao", "Seção"]]} />
             </div>
           </section>
 

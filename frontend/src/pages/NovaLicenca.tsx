@@ -3,12 +3,11 @@ import { useEffect, useMemo, useState } from "react";
 import type {
   LicencaAfastamento,
   Servidor,
-  SituacaoLicenca,
 } from "../types";
 
 import {
-  listarLicencas,
-  salvarLicenca,
+  criarLicencaParaServidor,
+  listarLicencasServidor,
 } from "../services/licencas";
 
 import { listarServidores } from "../services/servidores";
@@ -16,22 +15,22 @@ import { listarServidores } from "../services/servidores";
 import Icon from "../components/Icon";
 
 type Props = {
+  servidorIdInicial: string;
   onBack: () => void;
 };
 
-type Form = Omit<
-  LicencaAfastamento,
-  | "id"
-  | "servidor"
-  | "matricula"
-  | "cpf"
-  | "cargo"
-  | "secretaria"
-  | "dias"
-  | "situacao"
-> & {
+type Form = {
+  servidorId: string;
+  tipo: string;
+  inicio: string;
+  termino: string | null;
+  semDataTermino: boolean;
+  previsaoRetorno: string | null;
   documento: string;
-  situacao: SituacaoLicenca;
+  numeroDocumento: string;
+  dataDocumento: string;
+  orgaoEmissor: string;
+  observacoes: string;
 };
 
 const inicial: Form = {
@@ -46,46 +45,35 @@ const inicial: Form = {
   dataDocumento: "",
   orgaoEmissor: "",
   observacoes: "",
-  situacao: "Pendente",
 };
 
-const situacoes: SituacaoLicenca[] = [
-  "Pendente",
-  "Em análise",
-  "Aprovada",
-  "Rejeitada",
-  "Em andamento",
-  "Encerrada",
-  "Cancelada",
-];
-
-export default function NovaLicenca({ onBack }: Props) {
-  const [form, setForm] = useState<Form>(inicial);
+export default function NovaLicenca({ servidorIdInicial, onBack }: Props) {
+  const [form, setForm] = useState<Form>(() => ({ ...inicial, servidorId: servidorIdInicial }));
   const [servidores, setServidores] = useState<Servidor[]>([]);
   const [registros, setRegistros] = useState<LicencaAfastamento[]>([]);
   const [erro, setErro] = useState("");
-  const [erroLicencas, setErroLicencas] = useState("");
   const [salvando, setSalvando] = useState(false);
+  const [arquivo, setArquivo] = useState<File | null>(null);
   const [carregandoServidores, setCarregandoServidores] =
     useState(true);
 
   useEffect(() => {
     const controller = new AbortController();
 
-    async function carregarServidores() {
+    async function carregarDados() {
       setCarregandoServidores(true);
 
       try {
-        const lista = await listarServidores(controller.signal);
+        const [lista, licencas] = await Promise.all([
+          listarServidores(controller.signal),
+          listarLicencasServidor(servidorIdInicial, controller.signal),
+        ]);
 
         if (controller.signal.aborted) return;
 
-        console.log(
-          "[NovaLicenca] Servidores carregados:",
-          lista
-        );
-
         setServidores(lista);
+        setRegistros(licencas);
+        setForm({ ...inicial, servidorId: servidorIdInicial });
         setErro("");
       } catch (erro: unknown) {
         if (
@@ -96,14 +84,14 @@ export default function NovaLicenca({ onBack }: Props) {
         }
 
         console.error(
-          "[NovaLicenca] Erro ao carregar servidores:",
+          "[NovaLicenca] Erro ao carregar dados:",
           erro
         );
 
         setErro(
           erro instanceof Error
             ? erro.message
-            : "Não foi possível carregar os servidores."
+            : "Não foi possível carregar os dados para registrar a licença."
         );
       } finally {
         if (!controller.signal.aborted) {
@@ -112,38 +100,10 @@ export default function NovaLicenca({ onBack }: Props) {
       }
     }
 
-    async function carregarLicencas() {
-      try {
-        const lista = await listarLicencas(controller.signal);
-
-        if (controller.signal.aborted) return;
-
-        setRegistros(lista);
-        setErroLicencas("");
-      } catch (erro: unknown) {
-        if (
-          erro instanceof DOMException &&
-          erro.name === "AbortError"
-        ) {
-          return;
-        }
-
-        console.error(
-          "[NovaLicenca] Erro ao carregar licenças:",
-          erro
-        );
-
-        setErroLicencas(
-          "Não foi possível carregar os registros anteriores de licenças."
-        );
-      }
-    }
-
-    carregarServidores();
-    carregarLicencas();
+    carregarDados();
 
     return () => controller.abort();
-  }, []);
+  }, [servidorIdInicial]);
 
   const servidor = useMemo(
     () =>
@@ -169,7 +129,7 @@ export default function NovaLicenca({ onBack }: Props) {
     setErro("");
 
     if (!servidor) {
-      setErro("Selecione um servidor cadastrado.");
+      setErro("Não foi possível localizar o servidor deste perfil.");
       return;
     }
 
@@ -183,19 +143,11 @@ export default function NovaLicenca({ onBack }: Props) {
     setSalvando(true);
 
     try {
-      await salvarLicenca({
+      await criarLicencaParaServidor(servidorIdInicial, {
         ...form,
-        servidor: servidor.nome,
-        matricula: servidor.matricula,
-        cpf: servidor.cpf ?? "",
-        cargo: servidor.cargo,
-        secretaria: servidor.secretaria,
-        dias: form.semDataTermino ? null : dias,
         termino: form.semDataTermino ? null : form.termino,
-        previsaoRetorno: form.semDataTermino
-          ? form.previsaoRetorno
-          : form.previsaoRetorno ?? form.termino,
-      });
+        previsaoRetorno: form.previsaoRetorno ?? form.termino,
+      }, arquivo);
 
       onBack();
     } catch (erro: unknown) {
@@ -231,30 +183,7 @@ export default function NovaLicenca({ onBack }: Props) {
 
       <div className="card cadastro-servidor">
         <div className="form-grid ferias-form">
-          <label className="full-col">
-            Servidor
-
-            <select
-              value={form.servidorId}
-              onChange={(e) =>
-                atualizar("servidorId", e.target.value)
-              }
-              disabled={carregandoServidores}
-              required
-            >
-              <option value="">
-                {carregandoServidores
-                  ? "Carregando servidores..."
-                  : "Selecione o servidor"}
-              </option>
-
-              {servidores.map((s) => (
-                <option key={s.id} value={String(s.id)}>
-                  {s.nome}
-                </option>
-              ))}
-            </select>
-          </label>
+          <Info label="Servidor" value={servidor?.nome ?? (carregandoServidores ? "Carregando..." : "Servidor não encontrado")} />
 
           <Info
             label="Matrícula"
@@ -339,12 +268,27 @@ export default function NovaLicenca({ onBack }: Props) {
 
             <input
               type="file"
-              onChange={(e) =>
-                atualizar(
-                  "documento",
-                  e.target.files?.[0]?.name ?? ""
-                )
-              }
+              accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+              onChange={(e) => {
+                const selecionado = e.target.files?.[0] ?? null;
+                if (selecionado && selecionado.size > 10 * 1024 * 1024) {
+                  setErro("O documento não pode ultrapassar 10 MB.");
+                  e.target.value = "";
+                  setArquivo(null);
+                  atualizar("documento", "");
+                  return;
+                }
+                if (selecionado && !["application/pdf", "image/jpeg", "image/png"].includes(selecionado.type)) {
+                  setErro("O anexo deve ser PDF, JPG ou PNG.");
+                  e.target.value = "";
+                  setArquivo(null);
+                  atualizar("documento", "");
+                  return;
+                }
+                setErro("");
+                setArquivo(selecionado);
+                atualizar("documento", selecionado?.name ?? "");
+              }}
             />
           </label>
 
@@ -372,26 +316,6 @@ export default function NovaLicenca({ onBack }: Props) {
             onChange={(v) => atualizar("orgaoEmissor", v)}
           />
 
-          <label>
-            Situação
-
-            <select
-              value={form.situacao}
-              onChange={(e) =>
-                atualizar(
-                  "situacao",
-                  e.target.value as SituacaoLicenca
-                )
-              }
-            >
-              {situacoes.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
-          </label>
-
           <label className="full-col">
             Observações
 
@@ -406,10 +330,6 @@ export default function NovaLicenca({ onBack }: Props) {
         </div>
 
         {erro && <p className="form-error">{erro}</p>}
-
-        {erroLicencas && (
-          <p className="form-error">{erroLicencas}</p>
-        )}
 
         <div className="form-actions">
           <button

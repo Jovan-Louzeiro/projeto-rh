@@ -4,6 +4,7 @@ import { autorizar } from "@/middlewares/auth.js";
 import { validate } from "@/middlewares/validate.js";
 import { CrudRoutes } from "@/routes/crud.routes.js";
 import { DominioController } from "@/controllers/dominios/dominios.controller.js";
+import { uploadDocumentoDigitalizado } from "@/middlewares/upload-documento-digitalizado.js";
 
 export class DocumentosRoute
 <TDocumentoController extends DocumentosController<any, any>>
@@ -34,12 +35,14 @@ extends CrudRoutes<TDocumentoController>{
             this.router.post(
                 "/",
                 autorizar(...this.autorizacoes.adicionar),
+                uploadDocumentoDigitalizado,
                 this.controller.adicionar
             );
     
             this.router.put(
                 "/",
                 autorizar(...this.autorizacoes.atualizar),
+                uploadDocumentoDigitalizado,
                 this.controller.atualizar
             );
     

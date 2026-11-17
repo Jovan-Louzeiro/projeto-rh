@@ -23,7 +23,7 @@ export class CnhSchemas extends DocumentosSchema {
 
         this.atualizar = baseSchema;
 
-        this.schemaServidor = baseSchema.partial({servidor_id: true})
+        this.schemaServidor = baseSchema.omit({servidor_id: true})
     }
 }
 

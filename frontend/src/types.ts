@@ -84,7 +84,7 @@ export interface Requerimento {
   historico?: HistoricoRequerimento[];
 }
 
-export type SituacaoFerias = "Pendente" | "Aprovada" | "Cancelada";
+export type SituacaoFerias = "Aprovada" | "Em andamento" | "Encerrada" | "Cancelada";
 
 export interface Ferias {
   id: string;
@@ -106,7 +106,7 @@ export interface Ferias {
   situacao: SituacaoFerias;
 }
 
-export type SituacaoLicenca = "Pendente" | "Em análise" | "Aprovada" | "Rejeitada" | "Em andamento" | "Encerrada" | "Cancelada";
+export type SituacaoLicenca = "Aprovada" | "Em andamento" | "Encerrada" | "Cancelada";
 
 export interface LicencaAfastamento {
   id: string;
@@ -158,7 +158,7 @@ export interface Contrato {
   outrosDocumentos?: string[];
 }
 
-export type SituacaoQuinquenio = "Em análise" | "Aguardando concessão" | "Concedido" | "Implantado" | "Suspenso" | "Cancelado";
+export type SituacaoQuinquenio = "Aguardando concessão" | "Concedido" | "Implantado" | "Suspenso" | "Cancelado";
 export interface Quinquenio {
   id: string;
   servidorId: string;

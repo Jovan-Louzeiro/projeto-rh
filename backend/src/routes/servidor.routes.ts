@@ -10,6 +10,9 @@ import { IdentidadeRouter } from "@/routes/documentos/identidade.routes.js";
 import { TituloEleitorRouter } from "@/routes/documentos/tituloEleitor.routes.js";
 import { ContatoRouter } from "@/routes/contato.routes.js";
 import { MatriculaRouter } from "@/routes/matricula.routes.js";
+import { uploadDocumentosDigitalizadosServidor } from "@/middlewares/upload-documento-digitalizado.js";
+import { FeriasServidorRouter } from "@/routes/ferias-servidor.routes.js";
+import { LicencasServidorRouter } from "@/routes/licencas-servidor.routes.js";
 
 export class ServidorRouter extends CrudRoutes<ServidorController>{
 
@@ -25,7 +28,7 @@ export class ServidorRouter extends CrudRoutes<ServidorController>{
        this.outrosMetodos()
        
         //Genericos
-        this.registrarAdicionar()
+        this.registrarAdicionarServidor()
         this.registrarAtualizar()
         this.registrarProcurar()
         this.registrarDeletar()
@@ -67,6 +70,21 @@ export class ServidorRouter extends CrudRoutes<ServidorController>{
             autorizar(...this.autorizacoes.procurar),
             this.controller.detalharServidor
         )
+
+        this.router.get(
+            `/:${this.parametroId}/documentos/:tipo/arquivo`,
+            autorizar(...this.autorizacoes.procurar),
+            this.controller.baixarDocumentoDigitalizado
+        )
+    }
+
+    private registrarAdicionarServidor(): void {
+        this.router.post(
+            "/",
+            autorizar(...this.autorizacoes.adicionar),
+            uploadDocumentosDigitalizadosServidor,
+            this.controller.adicionar
+        )
     }
 
     private registrosServidor(): void {
@@ -84,6 +102,10 @@ export class ServidorRouter extends CrudRoutes<ServidorController>{
         this.router.use(`/:${this.parametroId}/contatos`, new ContatoRouter().router)
 
         this.router.use(`/:${this.parametroId}/matriculas`, new MatriculaRouter().router)
+
+        this.router.use(`/:${this.parametroId}/ferias`, new FeriasServidorRouter().router)
+
+        this.router.use(`/:${this.parametroId}/licencas`, new LicencasServidorRouter().router)
     }
 
 }

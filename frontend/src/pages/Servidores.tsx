@@ -16,7 +16,7 @@ type Props = {
 type CampoServidor = {
   chave: string;
   rotulo: string;
-  tipo: "text" | "date" | "boolean" | "select";
+  tipo: "text" | "date" | "year" | "boolean" | "select";
 };
 
 type CampoFiltroServidor = CampoServidor & {
@@ -87,7 +87,7 @@ const camposFiltroServidor: CampoFiltroServidor[] = [
     localOnly: campo.chave === "numero",
   })),
   { escopo: "matriculas", chave: "matricula_numero", rotulo: "Número da matrícula", tipo: "text", localOnly: true },
-  { escopo: "matriculas", chave: "admissao", rotulo: "Data de admissão", tipo: "date" },
+  { escopo: "matriculas", chave: "admissao", rotulo: "Ano de admissão", tipo: "year", localOnly: true },
   { escopo: "matriculas", chave: "tipo_vinculo_id", rotulo: "Tipo de vínculo", tipo: "select" },
   { escopo: "historicos_funcionais", chave: "cargo_id", rotulo: "Cargo", tipo: "select" },
   { escopo: "historicos_funcionais", chave: "funcao_id", rotulo: "Função", tipo: "select" },
@@ -187,10 +187,16 @@ function escolherHistorico(
 }
 
 function correspondeFiltro(valor: unknown, filtro: FiltroServidor): boolean {
-  const normalizado = (item: unknown) =>
-    ["admissao", "data_inicio", "data_fim"].includes(filtro.campo) && item
-      ? String(item).slice(0, 10)
-      : normalizarValorFiltro(filtro.campo, item);
+  const campo = camposFiltroServidor.find(item =>
+    item.escopo === filtro.escopo && item.chave === filtro.campo,
+  );
+  const normalizado = (item: unknown) => {
+    if (campo?.tipo === "year") return item ? String(item).slice(0, 4) : "";
+    if (["admissao", "data_inicio", "data_fim"].includes(filtro.campo) && item) {
+      return String(item).slice(0, 10);
+    }
+    return normalizarValorFiltro(filtro.campo, item);
+  };
   return normalizado(valor) === normalizado(filtro.valor);
 }
 
@@ -350,8 +356,10 @@ export function Servidores({ onProfile, onEdit, onNew }: Props) {
             ? servidor.matriculas as Record<string, unknown>[]
             : [];
           return matriculas.some(matricula =>
-            normalizarValorFiltro(filtro.campo, matricula.numero)
-              === normalizarValorFiltro(filtro.campo, filtro.valor),
+            correspondeFiltro(
+              filtro.campo === "matricula_numero" ? matricula.numero : matricula[filtro.campo],
+              filtro,
+            ),
           );
         }
         return normalizarValorFiltro(filtro.campo, servidor[filtro.campo])
@@ -428,33 +436,6 @@ export function Servidores({ onProfile, onEdit, onNew }: Props) {
   const obterSituacaoServidor = (servidor: Servidor) =>
     opcoesServidor.situacoes.find(opcao => String(opcao.id) === String(servidor.situacao_id))?.descricao
       ?? servidor.status;
-  const servidoresComSituacaoAtiva = servidores.filter(servidor =>
-    obterSituacaoServidor(servidor).trim().toLocaleLowerCase("pt-BR") === "ativo",
-  ).length;
-  const normalizarSituacao = (situacao: string) => situacao.trim().toLocaleLowerCase("pt-BR");
-  const situacoesNaoAtivas = opcoesServidor.situacoes
-    .filter(opcao => normalizarSituacao(opcao.descricao) !== "ativo")
-    .map(opcao => ({
-      descricao: opcao.descricao,
-      quantidade: servidores.filter(servidor =>
-        normalizarSituacao(obterSituacaoServidor(servidor)) === normalizarSituacao(opcao.descricao),
-      ).length,
-    }));
-  const situacoesExtras = [...new Set(servidores
-    .map(obterSituacaoServidor)
-    .map(situacao => situacao.trim())
-    .filter(situacao =>
-      situacao !== "" &&
-      normalizarSituacao(situacao) !== "ativo" &&
-      !situacoesNaoAtivas.some(opcao => normalizarSituacao(opcao.descricao) === normalizarSituacao(situacao)),
-    ))]
-    .map(descricao => ({
-      descricao,
-      quantidade: servidores.filter(servidor =>
-        normalizarSituacao(obterSituacaoServidor(servidor)) === normalizarSituacao(descricao),
-      ).length,
-    }));
-  const servidoresSemSituacao = servidores.filter(servidor => !obterSituacaoServidor(servidor).trim()).length;
   const ordenados = [...filtrados].sort((a, b) => {
     const valorOrdenacao = (servidor: Servidor) => {
       if (ordenacao.campo === "situacao") return obterSituacaoServidor(servidor);
@@ -569,29 +550,6 @@ export function Servidores({ onProfile, onEdit, onNew }: Props) {
         <button className="btn primary" type="button" onClick={onNew}>
           <Icon name="add" /> Novo servidor
         </button>
-      </div>
-
-      <div className="servidores-resumo" aria-label="Resumo de servidores">
-        <div className="servidores-resumo-card">
-          <span className="servidores-resumo-icon"><Icon name="users" /></span>
-          <div><strong>{servidores.length}</strong><span>Servidores ativos</span></div>
-        </div>
-        <div className="servidores-resumo-card">
-          <span className="servidores-resumo-icon ativo"><Icon name="user-check" /></span>
-          <div><strong>{servidoresComSituacaoAtiva}</strong><span>Situação funcional: Ativo</span></div>
-        </div>
-        {[...situacoesNaoAtivas, ...situacoesExtras].map(({ descricao, quantidade }) => (
-          <div className="servidores-resumo-card" key={descricao}>
-            <span className="servidores-resumo-icon inativo"><Icon name="users" /></span>
-            <div><strong>{quantidade}</strong><span>Situação funcional: {descricao}</span></div>
-          </div>
-        ))}
-        {servidoresSemSituacao > 0 && (
-          <div className="servidores-resumo-card">
-            <span className="servidores-resumo-icon inativo"><Icon name="users" /></span>
-            <div><strong>{servidoresSemSituacao}</strong><span>Situação funcional: Não informada</span></div>
-          </div>
-        )}
       </div>
 
       {sucesso && <p className="form-success" role="status">{sucesso}</p>}
@@ -742,7 +700,20 @@ export function Servidores({ onProfile, onEdit, onNew }: Props) {
                       ) : campo.tipo === "date" ? (
                         <input
                           required
-                          type={campo.tipo}
+                          type="date"
+                          value={filtro.valor}
+                          onChange={event => setFiltrosRascunho(atual => atual.map(item =>
+                            item.id === filtro.id ? { ...item, valor: event.target.value } : item,
+                          ))}
+                        />
+                      ) : campo.tipo === "year" ? (
+                        <input
+                          required
+                          type="number"
+                          min="1900"
+                          max={new Date().getFullYear()}
+                          step="1"
+                          placeholder="AAAA"
                           value={filtro.valor}
                           onChange={event => setFiltrosRascunho(atual => atual.map(item =>
                             item.id === filtro.id ? { ...item, valor: event.target.value } : item,

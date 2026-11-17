@@ -4,9 +4,9 @@ import { ZodType } from "zod";
 export const autorizacoesPadrao: Autorizacoes = {
     listar: [PermissaoUsuario.RH, PermissaoUsuario.ADMIN],
     procurar: [PermissaoUsuario.RH, PermissaoUsuario.ADMIN],
-    adicionar: [PermissaoUsuario.ADMIN],
-    atualizar: [PermissaoUsuario.ADMIN],
-    deletar: [PermissaoUsuario.ADMIN],
+    adicionar: [PermissaoUsuario.RH, PermissaoUsuario.ADMIN],
+    atualizar: [PermissaoUsuario.RH, PermissaoUsuario.ADMIN],
+    deletar: [PermissaoUsuario.RH, PermissaoUsuario.ADMIN],
 };
 
 export const autorizacoesCadastroRh: Autorizacoes = {

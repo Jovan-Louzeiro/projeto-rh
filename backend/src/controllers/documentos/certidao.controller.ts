@@ -1,6 +1,7 @@
 import { CertidaoService } from "@/services/documentos/certidao.service.js";
 import { DocumentosController } from "@/controllers/documentos/documentos.controller.js";
 import { CertidaoSchemas } from "@/schemas/documentos/certidao.schemas.js";
+import { TipoDocumentoDigitalizado } from "#/generated/prisma/enums.js";
 
 export class CertidaoController extends DocumentosController<
     CertidaoService,
@@ -10,7 +11,8 @@ export class CertidaoController extends DocumentosController<
     constructor(){
         super(
             new CertidaoService(),
-            new CertidaoSchemas()
+            new CertidaoSchemas(),
+            TipoDocumentoDigitalizado.CERTIDAO
         )
     }
 

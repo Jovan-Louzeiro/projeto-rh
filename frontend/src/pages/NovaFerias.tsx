@@ -4,8 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import type { Ferias, Servidor } from "../types";
 
 import {
-  listarFerias,
-  salvarFerias,
+  criarFerias,
+  listarFeriasServidor,
 } from "../services/ferias";
 
 import { listarServidores } from "../services/servidores";
@@ -13,6 +13,7 @@ import { listarServidores } from "../services/servidores";
 import Icon from "../components/Icon";
 
 type Props = {
+  servidorIdInicial: string;
   onBack: () => void;
 };
 
@@ -40,8 +41,11 @@ const inicial: Form = {
   observacoes: "",
 };
 
-export default function NovaFerias({ onBack }: Props) {
-  const [form, setForm] = useState<Form>(inicial);
+export default function NovaFerias({ servidorIdInicial, onBack }: Props) {
+  const [form, setForm] = useState<Form>(() => ({
+    ...inicial,
+    servidorId: servidorIdInicial,
+  }));
   const [servidores, setServidores] = useState<Servidor[]>([]);
   const [registros, setRegistros] = useState<Ferias[]>([]);
   const [erro, setErro] = useState("");
@@ -57,46 +61,18 @@ export default function NovaFerias({ onBack }: Props) {
       setCarregandoServidores(true);
 
       try {
-        // Carrega os servidores independentemente das férias.
-        const listaServidores = await listarServidores(
-          controller.signal
-        );
+        const [listaServidores, listaFerias] = await Promise.all([
+          listarServidores(controller.signal),
+          listarFeriasServidor(servidorIdInicial, controller.signal),
+        ]);
 
         if (controller.signal.aborted) {
           return;
         }
 
         setServidores(listaServidores);
-
-        // Carrega as férias separadamente.
-        try {
-          const listaFerias = await listarFerias(
-            controller.signal
-          );
-
-          if (!controller.signal.aborted) {
-            setRegistros(listaFerias);
-          }
-        } catch (erroFerias: unknown) {
-          if (
-            controller.signal.aborted ||
-            (erroFerias instanceof DOMException &&
-              erroFerias.name === "AbortError")
-          ) {
-            return;
-          }
-
-          console.error(
-            "Erro ao carregar registros de férias:",
-            erroFerias
-          );
-
-          setErro(
-            erroFerias instanceof Error
-              ? `Servidores carregados, mas houve um erro ao carregar as férias: ${erroFerias.message}`
-              : "Servidores carregados, mas não foi possível carregar as férias."
-          );
-        }
+        setRegistros(listaFerias);
+        setForm({ ...inicial, servidorId: servidorIdInicial });
       } catch (erroServidores: unknown) {
         if (
           controller.signal.aborted ||
@@ -107,14 +83,14 @@ export default function NovaFerias({ onBack }: Props) {
         }
 
         console.error(
-          "Erro ao carregar servidores:",
+          "Erro ao carregar dados do servidor e férias:",
           erroServidores
         );
 
         setErro(
           erroServidores instanceof Error
             ? erroServidores.message
-            : "Não foi possível carregar os servidores."
+            : "Não foi possível carregar os dados para cadastrar as férias."
         );
       } finally {
         if (!controller.signal.aborted) {
@@ -126,9 +102,8 @@ export default function NovaFerias({ onBack }: Props) {
     carregarDados();
 
     return () => controller.abort();
-  }, []);
+  }, [servidorIdInicial]);
 
-  // O select retorna string, mas o ID da API pode ser number.
   const servidor = useMemo(
     () =>
       servidores.find(
@@ -153,7 +128,7 @@ export default function NovaFerias({ onBack }: Props) {
     setErro("");
 
     if (!servidor) {
-      setErro("Selecione um servidor cadastrado.");
+      setErro("O servidor deste perfil não foi encontrado.");
       return;
     }
 
@@ -167,16 +142,7 @@ export default function NovaFerias({ onBack }: Props) {
     setSalvando(true);
 
     try {
-      await salvarFerias({
-        ...form,
-        servidor: servidor.nome,
-        matricula: servidor.matricula,
-        cpf: servidor.cpf ?? "",
-        cargo: servidor.cargo,
-        secretaria: servidor.secretaria,
-        dias,
-        situacao: "Pendente",
-      });
+      await criarFerias(servidorIdInicial, form);
 
       onBack();
     } catch (erroSalvar: unknown) {
@@ -214,35 +180,7 @@ export default function NovaFerias({ onBack }: Props) {
 
       <div className="card cadastro-servidor">
         <div className="form-grid ferias-form">
-          <label className="full-col">
-            Servidor
-
-            <select
-              value={form.servidorId}
-              onChange={(e) =>
-                atualizar("servidorId", e.target.value)
-              }
-              disabled={carregandoServidores}
-              required
-            >
-              <option value="">
-                {carregandoServidores
-                  ? "Carregando servidores..."
-                  : servidores.length === 0
-                    ? "Nenhum servidor encontrado"
-                    : "Selecione o servidor"}
-              </option>
-
-              {servidores.map((s) => (
-                <option
-                  key={String(s.id)}
-                  value={String(s.id)}
-                >
-                  {s.nome}
-                </option>
-              ))}
-            </select>
-          </label>
+          <Info label="Servidor" value={servidor?.nome ?? (carregandoServidores ? "Carregando..." : "Servidor não encontrado")} />
 
           <Info
             label="Matrícula"

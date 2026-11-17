@@ -8,6 +8,7 @@ import {
   cadastrarServidor,
   verificarCpfDisponivel,
   type NovoServidorDados,
+  type TipoDocumentoServidor,
 } from "../services/servidores";
 import { ApiError } from "../services/api";
 
@@ -71,7 +72,7 @@ type HistoricoFormulario = {
   cargo_id: string;
   funcao_id: string;
   departamento_id: string;
-  situacao_id: string;
+  situacao_historico_funcional_id: string;
   data_inicio: string;
   data_fim: string;
 };
@@ -496,7 +497,7 @@ export default function NovoServidor({
           cargo_id: Number(historico.cargo_id),
           funcao_id: Number(historico.funcao_id),
           departamento_id: Number(historico.departamento_id),
-          situacao_id: Number(historico.situacao_id),
+          situacao_historico_funcional_id: Number(historico.situacao_historico_funcional_id),
           data_inicio: historico.data_inicio,
           ...(historico.data_fim ? { data_fim: historico.data_fim } : {}),
         })),
@@ -709,7 +710,15 @@ export default function NovoServidor({
          return;
        }
 
-      await cadastrarServidor(dados);
+      const arquivosDigitalizados: Partial<Record<TipoDocumentoServidor, File>> = {};
+      for (const { tipo } of documentos) {
+        const arquivo = form.get(`arquivo_${tipo}`);
+        if (arquivo instanceof File && arquivo.size > 0) {
+          arquivosDigitalizados[tipo] = arquivo;
+        }
+      }
+
+      await cadastrarServidor(dados, arquivosDigitalizados);
 
       onBack();
     } catch (erro: unknown) {
@@ -1200,7 +1209,7 @@ export default function NovoServidor({
                               cargo_id: "",
                               funcao_id: "",
                               departamento_id: "",
-                              situacao_id: "",
+                              situacao_historico_funcional_id: "",
                               data_inicio: "",
                               data_fim: "",
                             }],
@@ -1217,7 +1226,7 @@ export default function NovoServidor({
                       ["cargo_id", "Cargo", opcoes.cargos],
                       ["funcao_id", "Função", opcoes.funcoes],
                       ["departamento_id", "Departamento", opcoes.departamentos],
-                      ["situacao_id", "Situação", opcoes.situacoes],
+                      ["situacao_historico_funcional_id", "Situação", opcoes.situacoes],
                     ] as const).map(([campo, rotulo, lista]) => (
                       <label key={campo}>
                         {rotulo}
@@ -1386,6 +1395,13 @@ export default function NovoServidor({
                   <label>Zona eleitoral (4 dígitos)<input name="titulo_zona" inputMode="numeric" maxLength={4} required /></label>
                   <label>Seção (4 dígitos)<input name="titulo_secao" inputMode="numeric" maxLength={4} required /></label>
                 </div>}
+                <label className="full-col">Documento digitalizado (PDF, JPG ou PNG; até 10 MB)
+                  <input
+                    name={`arquivo_${documento.tipo}`}
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+                  />
+                </label>
               </div>
             ))}
           </section>

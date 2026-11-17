@@ -16,6 +16,9 @@ import { UsuariosRouter } from "@/routes/usuarios.routes.js"
 import { MunicipioRouter } from "@/routes/municipio.routes.js"
 import { ServidorRouter } from "@/routes/servidor.routes.js"
 import { RequerimentoRouter } from "@/modules/documentos/routes/requerimento.route.js"
+import { FeriasRouter } from "@/routes/ferias.routes.js"
+import { LicencasRouter } from "@/routes/licencas.routes.js"
+import { QuinqueniosRouter } from "@/routes/quinquenios.routes.js"
 
 
 dotenv.config()
@@ -52,6 +55,12 @@ app.use("/api/municipios", new MunicipioRouter().router)
 app.use("/api/servidores", new ServidorRouter().router)
 
 app.use("/api/requerimentos", new RequerimentoRouter().router)
+
+app.use("/api/ferias", new FeriasRouter().router)
+
+app.use("/api/licencas", new LicencasRouter().router)
+
+app.use("/api/quinquenios", new QuinqueniosRouter().router)
 
 app.use(errorHandler)
 

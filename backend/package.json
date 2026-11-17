@@ -11,6 +11,7 @@
     "seed:departamentos-carutapera": "tsx prisma/seedDepartamentosCarutapera.ts",
     "seed:servidores-demonstracao": "tsx prisma/seedServidoresDemonstracao.ts",
     "seed:requerimentos-demonstracao": "tsx prisma/seedRequerimentosDemonstracao.ts",
+    "seed:beneficios-demonstracao": "tsx prisma/seedBeneficiosDemonstracao.ts",
     "start": "node dist/src/app.js"
   },
   "keywords": [],

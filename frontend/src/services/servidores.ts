@@ -1,8 +1,11 @@
 import {
+  apiFetch,
   apiDelete,
   apiGet,
   apiPatch,
   apiPost,
+  getApiUrl,
+  getAuthHeaders,
 } from "./api";
 import type { Servidor as ServidorTela } from "../types";
 
@@ -58,8 +61,24 @@ export type Servidor = {
   [key: string]: unknown;
 };
 
+export type TipoDocumentoServidor =
+  | "certidao"
+  | "cnh"
+  | "ctps"
+  | "identidade"
+  | "tituloEleitor";
+
+const tipoDocumentoApi: Record<TipoDocumentoServidor, string> = {
+  certidao: "CERTIDAO",
+  cnh: "CNH",
+  ctps: "CTPS",
+  identidade: "IDENTIDADE",
+  tituloEleitor: "TITULO_ELEITOR",
+};
+
 type MatriculaServidor = {
   numero: string;
+  admissao?: string;
   ativo?: boolean;
 };
 
@@ -144,7 +163,7 @@ export type NovoServidorDados = {
       cargo_id: number;
       funcao_id: number;
       departamento_id: number;
-      situacao_id: number;
+      situacao_historico_funcional_id: number;
       data_inicio: string;
       data_fim?: string;
     }[];
@@ -287,8 +306,15 @@ export async function listarServidores(
     const matriculas = Array.isArray(servidor.matriculas)
       ? servidor.matriculas as MatriculaServidor[]
       : [];
-    const matricula = matriculas.find(item => item.ativo) ?? matriculas[0];
-    return adaptarServidor({ ...servidor, matricula: matricula?.numero });
+    const matricula = [...matriculas].sort((a, b) =>
+      Number(Boolean(b.ativo)) - Number(Boolean(a.ativo)) ||
+      (b.admissao ?? "").localeCompare(a.admissao ?? "")
+    )[0];
+    return adaptarServidor({
+      ...servidor,
+      matricula: matricula?.numero,
+      data_admissao: matricula?.admissao ?? servidor.data_admissao,
+    });
   });
 }
 
@@ -326,7 +352,9 @@ export function adaptarServidor(item: Servidor): ServidorTela {
     email: String(raw.email ?? ""),
     cpf: raw.cpf ?? undefined,
     dataNascimento: raw.data_nascimento ?? undefined,
-    dataAdmissao: raw.data_admissao ?? undefined,
+    dataAdmissao: typeof raw.data_admissao === "string"
+      ? raw.data_admissao.slice(0, 10)
+      : undefined,
     endereco: raw.logradouro ?? undefined,
     numeroEndereco: raw.numero ?? undefined,
     bairro: raw.bairro ?? undefined,
@@ -360,11 +388,58 @@ export async function buscarServidor(
 
 export async function cadastrarServidor(
   dados: NovoServidorDados,
+  arquivos: Partial<Record<TipoDocumentoServidor, File>> = {},
 ): Promise<Servidor> {
-  return apiPost<Servidor>(
-    "/api/servidores",
-    dados,
+  const form = new FormData();
+  form.append("dados", JSON.stringify(dados));
+  for (const [tipo, arquivo] of Object.entries(arquivos)) {
+    if (arquivo) form.append(`arquivo_${tipo}`, arquivo);
+  }
+  return apiFetch<Servidor>("/api/servidores", {
+    method: "POST",
+    body: form,
+  });
+}
+
+export async function salvarDocumentoServidor(
+  idServidor: number | string,
+  recurso: TipoDocumentoServidor,
+  dados: Record<string, unknown>,
+  arquivo: File | undefined,
+  existente: boolean,
+): Promise<void> {
+  const form = new FormData();
+  form.append("dados", JSON.stringify(dados));
+  if (arquivo) form.append("arquivo", arquivo);
+
+  await apiFetch(
+    `/api/servidores/${normalizarId(idServidor)}/${recurso}`,
+    {
+      method: existente ? "PUT" : "POST",
+      body: form,
+    },
   );
+}
+
+export async function baixarDocumentoDigitalizado(
+  idServidor: number | string,
+  tipo: TipoDocumentoServidor,
+  nomeArquivo: string,
+): Promise<void> {
+  const response = await fetch(
+    getApiUrl(`/api/servidores/${normalizarId(idServidor)}/documentos/${tipoDocumentoApi[tipo]}/arquivo`),
+    { headers: getAuthHeaders() },
+  );
+  if (!response.ok) {
+    throw new Error("Não foi possível baixar o documento digitalizado.");
+  }
+
+  const url = URL.createObjectURL(await response.blob());
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = nomeArquivo;
+  link.click();
+  URL.revokeObjectURL(url);
 }
 
 export async function verificarCpfDisponivel(

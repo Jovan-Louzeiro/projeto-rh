@@ -42,7 +42,7 @@ export function gerarFeriasDemo(lista: readonly Servidor[]): Ferias[] {
   const diasFerias = [15, 20, 30, 15, 10, 20, 30, 15, 20, 30];
   const situacoes: Ferias["situacao"][] = [
     "Aprovada", "Aprovada", "Cancelada", "Aprovada", "Aprovada",
-    "Aprovada", "Cancelada", "Aprovada", "Pendente", "Pendente",
+    "Aprovada", "Cancelada", "Aprovada", "Aprovada", "Aprovada",
   ];
 
   return Array.from({ length: 10 }, (_, indice) => {
@@ -86,8 +86,8 @@ export function gerarLicencasDemo(lista: readonly Servidor[]): LicencaAfastament
     "Afastamento para capacitação",
   ];
   const situacoes: LicencaAfastamento["situacao"][] = [
-    "Encerrada", "Encerrada", "Aprovada", "Encerrada", "Em análise",
-    "Encerrada", "Aprovada", "Encerrada", "Encerrada", "Pendente",
+    "Encerrada", "Encerrada", "Aprovada", "Encerrada", "Aprovada",
+    "Encerrada", "Aprovada", "Encerrada", "Encerrada", "Aprovada",
   ];
 
   return Array.from({ length: 10 }, (_, indice) => {
@@ -150,8 +150,8 @@ export function gerarQuinqueniosDemo(lista: readonly Servidor[]): Quinquenio[] {
   const servidores = servidoresParaDemo(lista);
   if (!servidores.length) return [];
   const situacoes: Quinquenio["situacao"][] = [
-    "Implantado", "Concedido", "Em análise", "Aguardando concessão", "Implantado",
-    "Suspenso", "Em análise", "Concedido", "Implantado", "Aguardando concessão",
+    "Implantado", "Concedido", "Aguardando concessão", "Aguardando concessão", "Implantado",
+    "Suspenso", "Aguardando concessão", "Concedido", "Implantado", "Aguardando concessão",
   ];
 
   return Array.from({ length: 10 }, (_, indice) => {

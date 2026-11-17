@@ -7,6 +7,15 @@ import {
 import { CRUDServices } from "@/services/crud.service.js";
 import { includes, string } from "zod";
 import { Prisma } from "#/generated/prisma/client.js";
+import { TipoDocumentoDigitalizado } from "#/generated/prisma/enums.js";
+
+export type ArquivoServidorDigitalizado = {
+    tipo: TipoDocumentoDigitalizado
+    nome: string
+    mime_type: string
+    tamanho: number
+    conteudo: Uint8Array<ArrayBuffer>
+}
 
 interface Filtros {
 
@@ -186,6 +195,15 @@ export class ServidorService extends CRUDServices<ServidorCreate, ServidorUpdate
                 identidade: true,
                 titulo_eleitor: true,
                 contatos: true,
+                documentos_digitalizados: {
+                    select: {
+                        tipo: true,
+                        nome: true,
+                        mime_type: true,
+                        tamanho: true,
+                        enviado_em: true,
+                    },
+                },
                 municipio_endereco: true,
                 matriculas: {
                     include: {
@@ -210,7 +228,11 @@ export class ServidorService extends CRUDServices<ServidorCreate, ServidorUpdate
         return resultado
     }
 
-    async adicionar(usuario: string, data: ServidorCreate) {
+    async adicionar(
+        usuario: string,
+        data: ServidorCreate,
+        arquivosDigitalizados: ArquivoServidorDigitalizado[] = []
+    ) {
         if (!(await this.cpfDisponivel(data.cpf))) {
             throw new RegistroJaExistenteError("CPF")
         }
@@ -270,6 +292,10 @@ export class ServidorService extends CRUDServices<ServidorCreate, ServidorUpdate
 
                 matriculas: matriculasFormatadas
                     ? { create: matriculasFormatadas }
+                    : undefined,
+
+                documentos_digitalizados: arquivosDigitalizados.length
+                    ? { create: arquivosDigitalizados }
                     : undefined
             },
             include: {
@@ -279,6 +305,15 @@ export class ServidorService extends CRUDServices<ServidorCreate, ServidorUpdate
                 identidade: true,
                 titulo_eleitor: true,
                 contatos: true,
+                documentos_digitalizados: {
+                    select: {
+                        tipo: true,
+                        nome: true,
+                        mime_type: true,
+                        tamanho: true,
+                        enviado_em: true,
+                    },
+                },
                 matriculas: {
                     include: {
                         historicos_funcionais: true
@@ -296,5 +331,59 @@ export class ServidorService extends CRUDServices<ServidorCreate, ServidorUpdate
         })
 
         return !servidor
+    }
+
+    async salvarDocumentoDigitalizado(
+        servidorId: number,
+        tipo: TipoDocumentoDigitalizado,
+        arquivo: Omit<ArquivoServidorDigitalizado, "tipo">
+    ) {
+        return prisma.documentoDigitalizadoServidor.upsert({
+            where: {
+                servidor_id_tipo: {
+                    servidor_id: servidorId,
+                    tipo,
+                },
+            },
+            create: {
+                servidor_id: servidorId,
+                tipo,
+                ...arquivo,
+            },
+            update: arquivo,
+            select: {
+                tipo: true,
+                nome: true,
+                mime_type: true,
+                tamanho: true,
+                enviado_em: true,
+            },
+        })
+    }
+
+    async obterDocumentoDigitalizado(servidorId: number, tipo: TipoDocumentoDigitalizado) {
+        return prisma.documentoDigitalizadoServidor.findUnique({
+            where: {
+                servidor_id_tipo: {
+                    servidor_id: servidorId,
+                    tipo,
+                },
+            },
+            select: {
+                nome: true,
+                mime_type: true,
+                tamanho: true,
+                conteudo: true,
+            },
+        })
+    }
+
+    async removerDocumentoDigitalizado(servidorId: number, tipo: TipoDocumentoDigitalizado) {
+        return prisma.documentoDigitalizadoServidor.deleteMany({
+            where: {
+                servidor_id: servidorId,
+                tipo,
+            },
+        })
     }
 }

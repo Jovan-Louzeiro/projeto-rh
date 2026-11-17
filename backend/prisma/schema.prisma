@@ -35,6 +35,38 @@ enum TipoIdentidade {
   CIN
 }
 
+enum TipoDocumentoDigitalizado {
+  CERTIDAO
+  CNH
+  CTPS
+  IDENTIDADE
+  TITULO_ELEITOR
+}
+
+enum SituacaoFerias {
+  PENDENTE
+  APROVADA
+  CANCELADA
+}
+
+enum SituacaoLicenca {
+  PENDENTE
+  EM_ANALISE
+  APROVADA
+  REJEITADA
+  EM_ANDAMENTO
+  ENCERRADA
+  CANCELADA
+}
+
+enum SituacaoQuinquenio {
+  AGUARDANDO_CONCESSAO
+  CONCEDIDO
+  IMPLANTADO
+  SUSPENSO
+  CANCELADO
+}
+
 // Tabelas de Dominio Simples
 model Sexo {
   id_sexo   Int     @id @default(autoincrement())
@@ -371,6 +403,126 @@ model Matricula {
   historicos_funcionais HistoricoFuncional[]
 
   requerimentos Requerimento[]
+  ferias        Ferias[]
+  licencas      Licenca[]
+  quinquenios   Quinquenio[]
+}
+
+model Ferias {
+  id_ferias Int @id @default(autoincrement())
+
+  servidor_id Int
+  servidor    Servidor @relation(fields: [servidor_id], references: [id_servidor], onDelete: Cascade)
+
+  matricula_id Int?
+  matricula    Matricula? @relation(fields: [matricula_id], references: [id_matricula], onDelete: SetNull)
+
+  periodo_aquisitivo_inicio DateTime @db.Date
+  periodo_aquisitivo_fim    DateTime @db.Date
+  dias_direito              Int
+  inicio                    DateTime @db.Date
+  fim                       DateTime @db.Date
+  dias                      Int
+  abono_pecuniario           Boolean        @default(false)
+  antecipacao_decimo_terceiro Boolean       @default(false)
+  observacoes                String?        @db.VarChar(1000)
+  situacao                   SituacaoFerias @default(PENDENTE)
+  aprovado_em                DateTime?
+  cancelado_em               DateTime?
+  criado_em                  DateTime       @default(now())
+  atualizado_em              DateTime       @updatedAt
+
+  @@index([servidor_id])
+  @@index([situacao])
+  @@index([inicio, fim])
+}
+
+model Licenca {
+  id_licenca Int @id @default(autoincrement())
+
+  servidor_id Int
+  servidor    Servidor @relation(fields: [servidor_id], references: [id_servidor], onDelete: Cascade)
+
+  matricula_id Int?
+  matricula    Matricula? @relation(fields: [matricula_id], references: [id_matricula], onDelete: SetNull)
+
+  tipo                String         @db.VarChar(100)
+  inicio              DateTime       @db.Date
+  termino             DateTime?      @db.Date
+  sem_data_termino    Boolean        @default(false)
+  dias                Int?
+  previsao_retorno    DateTime?      @db.Date
+  numero_documento    String?        @db.VarChar(100)
+  data_documento      DateTime?      @db.Date
+  orgao_emissor       String?        @db.VarChar(150)
+  observacoes         String?        @db.VarChar(2000)
+  situacao            SituacaoLicenca @default(PENDENTE)
+  criado_em           DateTime       @default(now())
+  atualizado_em       DateTime       @updatedAt
+
+  anexo LicencaAnexo?
+
+  @@index([servidor_id])
+  @@index([situacao])
+  @@index([inicio, termino])
+}
+
+model LicencaAnexo {
+  id_anexo_licenca Int      @id @default(autoincrement())
+  nome              String   @db.VarChar(255)
+  tipo              String   @db.VarChar(100)
+  tamanho           Int
+  conteudo          Bytes
+  enviado_em        DateTime @default(now())
+
+  licenca_id Int      @unique
+  licenca    Licenca  @relation(fields: [licenca_id], references: [id_licenca], onDelete: Cascade)
+}
+
+model Quinquenio {
+  id_quinquenio Int @id @default(autoincrement())
+
+  servidor_id Int
+  servidor    Servidor @relation(fields: [servidor_id], references: [id_servidor], onDelete: Cascade)
+
+  matricula_id Int?
+  matricula    Matricula? @relation(fields: [matricula_id], references: [id_matricula], onDelete: SetNull)
+
+  numero                     Int
+  data_admissao              DateTime @db.Date
+  periodo_aquisitivo_inicio  DateTime @db.Date
+  periodo_aquisitivo_fim     DateTime @db.Date
+  data_aquisicao             DateTime @db.Date
+  percentual_adicional       Float
+  valor_calculado            Float
+  data_inicio_pagamento      DateTime @db.Date
+  situacao                   SituacaoQuinquenio @default(AGUARDANDO_CONCESSAO)
+  ato_numero                 String @db.VarChar(100)
+  ato_tipo                   String @db.VarChar(100)
+  ato_data                   DateTime @db.Date
+  observacoes                String? @db.VarChar(2000)
+  cancelado_em               DateTime?
+  criado_em                  DateTime @default(now())
+  atualizado_em              DateTime @updatedAt
+
+  anexo QuinquenioAnexo?
+
+  @@unique([servidor_id, numero])
+  @@index([servidor_id])
+  @@index([situacao])
+  @@index([data_aquisicao, data_inicio_pagamento])
+}
+
+model QuinquenioAnexo {
+  id_anexo_quinquenio Int      @id @default(autoincrement())
+  nome                String   @db.VarChar(255)
+  tipo                String   @db.VarChar(100)
+  tamanho             Int
+  conteudo            Bytes
+  enviado_em          DateTime @default(now())
+
+  quinquenio_id Int        @unique
+  quinquenio    Quinquenio @relation(fields: [quinquenio_id], references: [id_quinquenio], onDelete: Cascade)
 }
 
 model TiposLicenca {
@@ -513,6 +665,7 @@ model Servidor {
   ctps           CTPS?
   identidade     Identidade?
   titulo_eleitor TituloEleitor?
+  documentos_digitalizados DocumentoDigitalizadoServidor[]
 
   // Saúde
   cartao_sus   String?       @unique @db.VarChar(15)
@@ -523,6 +676,9 @@ model Servidor {
   situacao    Situacao @relation(fields: [situacao_id], references: [id_situacao])
 
   requerimentos Requerimento[]
+  ferias        Ferias[]
+  licencas      Licenca[]
+  quinquenios   Quinquenio[]
 
   escolaridade_id Int?
   escolaridade    Escolaridade? @relation(fields: [escolaridade_id], references: [id_escolaridade])
@@ -536,4 +692,18 @@ model Servidor {
   // Outros
   observacao String?  @db.VarChar(500)
   usuario    Usuario?
+}
+
+model DocumentoDigitalizadoServidor {
+  id_documento_digitalizado Int                      @id @default(autoincrement())
+  servidor_id               Int
+  servidor                  Servidor                 @relation(fields: [servidor_id], references: [id_servidor], onDelete: Cascade)
+  tipo                      TipoDocumentoDigitalizado
+  nome                      String                   @db.VarChar(255)
+  mime_type                 String                   @db.VarChar(100)
+  tamanho                   Int
+  conteudo                  Bytes
+  enviado_em                DateTime                 @default(now())
+
+  @@unique([servidor_id, tipo])
 }

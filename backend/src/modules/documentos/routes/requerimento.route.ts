@@ -40,6 +40,10 @@ export class RequerimentoRouter {
         this.router.delete("/:id/anexos/:anexoId", rhOuAdmin, this.controller.deletarAnexo);
         this.router.get("/:id/documento", rhOuAdmin, this.controller.gerarDocumento);
         this.router.post("/:id/pdf", rhOuAdmin, this.controller.gerarPdf);
-        this.router.delete("/:id", autorizar(PermissaoUsuario.ADMIN), this.controller.deletarRequerimento);
+        this.router.delete(
+            "/:id",
+            autorizar(PermissaoUsuario.RH, PermissaoUsuario.ADMIN),
+            this.controller.deletarRequerimento,
+        );
     }
 }

@@ -135,26 +135,31 @@ export default function App() {
             element={<PerfilRoute />}
           />
 
+          <Route
+            path="/servidores/:id/ferias/novo"
+            element={<NovaFeriasRoute />}
+          />
+
+          <Route
+            path="/servidores/:id/licencas/novo"
+            element={<NovaLicencaRoute />}
+          />
+
+          <Route
+            path="/servidores/:id/quinquenios/novo"
+            element={<NovoQuinquenioServidorRoute />}
+          />
+
           {/* Férias */}
           <Route
             path="/ferias"
             element={<FeriasRoute />}
           />
 
-          <Route
-            path="/ferias/novo"
-            element={<NovaFeriasRoute />}
-          />
-
           {/* Licenças */}
           <Route
             path="/licencas"
             element={<LicencasRoute />}
-          />
-
-          <Route
-            path="/licencas/novo"
-            element={<NovaLicencaRoute />}
           />
 
           {/* Contratos */}
@@ -176,7 +181,12 @@ export default function App() {
 
           <Route
             path="/quinquenios/novo"
-            element={<NovoQuinquenioRoute />}
+            element={<Navigate to="/servidores" replace />}
+          />
+
+          <Route
+            path="/quinquenios/:id/editar"
+            element={<EditarQuinquenioRoute />}
           />
 
           {/* Solicitações */}
@@ -444,27 +454,16 @@ function NovoServidorRoute() {
 ========================================================= */
 
 function FeriasRoute() {
-  const navigate = useNavigate();
-
-  return (
-    <Ferias
-      onNew={() =>
-        navigate("/ferias/novo")
-      }
-    />
-  );
+  return <Ferias />;
 }
 
 function NovaFeriasRoute() {
   const navigate = useNavigate();
+  const { id } = useParams();
 
-  return (
-    <NovaFerias
-      onBack={() =>
-        navigate("/ferias")
-      }
-    />
-  );
+  if (!id || !/^[1-9]\d*$/.test(id)) return <Navigate to="/servidores" replace />;
+  const retorno = `/servidores/${encodeURIComponent(id)}?aba=ferias`;
+  return <NovaFerias servidorIdInicial={id} onBack={() => navigate(retorno)} />;
 }
 
 /* =========================================================
@@ -472,25 +471,19 @@ function NovaFeriasRoute() {
 ========================================================= */
 
 function LicencasRoute() {
-  const navigate = useNavigate();
-
-  return (
-    <Licencas
-      onNew={() =>
-        navigate("/licencas/novo")
-      }
-    />
-  );
+  return <Licencas />;
 }
 
 function NovaLicencaRoute() {
   const navigate = useNavigate();
+  const { id } = useParams();
 
+  if (!id || !/^[1-9]\d*$/.test(id)) return <Navigate to="/servidores" replace />;
+  const retorno = `/servidores/${encodeURIComponent(id)}?aba=licencas`;
   return (
     <NovaLicenca
-      onBack={() =>
-        navigate("/licencas")
-      }
+      servidorIdInicial={id}
+      onBack={() => navigate(retorno)}
     />
   );
 }
@@ -532,23 +525,34 @@ function QuinqueniosRoute() {
 
   return (
     <Quinquenios
-      onNew={() =>
-        navigate("/quinquenios/novo")
-      }
+      onEdit={(id) => navigate(`/quinquenios/${encodeURIComponent(id)}/editar`)}
     />
   );
 }
 
-function NovoQuinquenioRoute() {
+function NovoQuinquenioServidorRoute() {
   const navigate = useNavigate();
+  const { id } = useParams();
 
-  return (
-    <NovoQuinquenio
-      onBack={() =>
-        navigate("/quinquenios")
-      }
-    />
-  );
+  if (!id || !/^[1-9]\d*$/.test(id)) return <Navigate to="/servidores" replace />;
+  const retorno = `/servidores/${encodeURIComponent(id)}?aba=quinquenios`;
+  return <NovoQuinquenio servidorIdInicial={id} onBack={() => navigate(retorno)} />;
+}
+
+function EditarQuinquenioRoute() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { id } = useParams();
+
+  if (!id || !/^[1-9]\d*$/.test(id)) return <Navigate to="/quinquenios" replace />;
+  const returnTo = typeof location.state === "object"
+    && location.state !== null
+    && "returnTo" in location.state
+    && typeof location.state.returnTo === "string"
+    && location.state.returnTo.startsWith("/")
+      ? location.state.returnTo
+      : "/quinquenios";
+  return <NovoQuinquenio id={id} onBack={() => navigate(returnTo)} />;
 }
 
 /* =========================================================
@@ -763,8 +767,9 @@ function PerfilRoute() {
     && location.state !== null
     && "editar" in location.state
     && location.state.editar === true;
-  const abaInicial = new URLSearchParams(location.search).get("aba") === "requerimentos"
-    ? "requerimentos"
+  const abaSolicitada = new URLSearchParams(location.search).get("aba");
+  const abaInicial = abaSolicitada === "requerimentos" || abaSolicitada === "ferias" || abaSolicitada === "licencas" || abaSolicitada === "quinquenios"
+    ? abaSolicitada
     : "dados";
 
   const [perfil, setPerfil] = useState<{
@@ -841,12 +846,17 @@ function PerfilRoute() {
       iniciarEdicao={iniciarEdicao}
       abaInicial={abaInicial}
       onUpdated={() => setVersaoPerfil(versao => versao + 1)}
-      onQuinquenios={() =>
-        navigate("/quinquenios")
-      }
       onNovoRequerimento={() =>
         navigate("/requerimentos/novo", {
           state: { servidorId: id },
+        })
+      }
+      onNovaFerias={() => navigate(`/servidores/${encodeURIComponent(id)}/ferias/novo`)}
+      onNovaLicenca={() => navigate(`/servidores/${encodeURIComponent(id)}/licencas/novo`)}
+      onNovoQuinquenio={() => navigate(`/servidores/${encodeURIComponent(id)}/quinquenios/novo`)}
+      onEditarQuinquenio={quinquenioId =>
+        navigate(`/quinquenios/${encodeURIComponent(quinquenioId)}/editar`, {
+          state: { returnTo: `/servidores/${encodeURIComponent(id)}?aba=quinquenios` },
         })
       }
       onVerRequerimento={requerimentoId =>

@@ -1,7 +1,97 @@
 import type { LicencaAfastamento } from "../types";
-const apiUrl = (import.meta.env.VITE_API_URL ?? "").replace(/\/$/, "");
-const endpoint = `${apiUrl}/api/licencas`;
-type ApiListResponse = LicencaAfastamento[] | { data?: LicencaAfastamento[] };
-export async function listarLicencas(signal?: AbortSignal): Promise<LicencaAfastamento[]> { const response = await fetch(endpoint, { headers: { Accept: "application/json" }, signal }); if (!response.ok) throw new Error("Não foi possível carregar licenças."); const body: ApiListResponse = await response.json(); return Array.isArray(body) ? body : body.data ?? []; }
-export async function salvarLicenca(dados: Omit<LicencaAfastamento, "id">, id?: string): Promise<LicencaAfastamento> { const response = await fetch(id ? `${endpoint}/${id}` : endpoint, { method: id ? "PUT" : "POST", headers: { "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify(dados) }); if (!response.ok) throw new Error("Não foi possível salvar a licença."); return response.json(); }
-export async function cancelarLicenca(id: string): Promise<void> { const response = await fetch(`${endpoint}/${id}/cancelar`, { method: "POST", headers: { Accept: "application/json" } }); if (!response.ok) throw new Error("Não foi possível cancelar a licença."); }
+import { apiBlob, apiFetch, apiGet, apiPost, apiPut } from "./api";
+
+const endpoint = "/api/licencas";
+
+export type DadosLicenca = Pick<
+  LicencaAfastamento,
+  | "servidorId"
+  | "tipo"
+  | "inicio"
+  | "termino"
+  | "semDataTermino"
+  | "previsaoRetorno"
+  | "numeroDocumento"
+  | "dataDocumento"
+  | "orgaoEmissor"
+  | "observacoes"
+>;
+
+function campos(dados: DadosLicenca) {
+  return {
+    tipo: dados.tipo,
+    inicio: dados.inicio,
+    termino: dados.semDataTermino ? null : dados.termino,
+    semDataTermino: dados.semDataTermino,
+    previsaoRetorno: dados.previsaoRetorno,
+    numeroDocumento: dados.numeroDocumento,
+    dataDocumento: dados.dataDocumento,
+    orgaoEmissor: dados.orgaoEmissor,
+    observacoes: dados.observacoes,
+  };
+}
+
+export function listarLicencas(signal?: AbortSignal): Promise<LicencaAfastamento[]> {
+  return apiGet<LicencaAfastamento[]>(endpoint, { signal });
+}
+
+export function listarLicencasServidor(
+  servidorId: string,
+  signal?: AbortSignal,
+): Promise<LicencaAfastamento[]> {
+  return apiGet<LicencaAfastamento[]>(
+    `/api/servidores/${encodeURIComponent(servidorId)}/licencas`,
+    { signal },
+  );
+}
+
+function enviar(
+  url: string,
+  metodo: "POST" | "PUT",
+  dados: DadosLicenca,
+  arquivo?: File | null,
+): Promise<LicencaAfastamento> {
+  const dadosApi = campos(dados);
+
+  if (arquivo) {
+    const formData = new FormData();
+    Object.entries(dadosApi).forEach(([chave, valor]) => {
+      formData.append(chave, valor == null ? "" : String(valor));
+    });
+    formData.append("arquivo", arquivo);
+    return apiFetch<LicencaAfastamento>(url, { method: metodo, body: formData });
+  }
+
+  return metodo === "PUT"
+    ? apiPut<LicencaAfastamento>(url, dadosApi)
+    : apiPost<LicencaAfastamento>(url, dadosApi);
+}
+
+export function criarLicencaParaServidor(
+  servidorId: string,
+  dados: DadosLicenca,
+  arquivo?: File | null,
+): Promise<LicencaAfastamento> {
+  return enviar(
+    `/api/servidores/${encodeURIComponent(servidorId)}/licencas`,
+    "POST",
+    dados,
+    arquivo,
+  );
+}
+
+export function salvarLicenca(
+  dados: DadosLicenca,
+  id: string,
+  arquivo?: File | null,
+): Promise<LicencaAfastamento> {
+  return enviar(`${endpoint}/${encodeURIComponent(id)}`, "PUT", dados, arquivo);
+}
+
+export function cancelarLicenca(id: string): Promise<LicencaAfastamento> {
+  return apiPost<LicencaAfastamento>(`${endpoint}/${encodeURIComponent(id)}/cancelar`);
+}
+
+export function baixarDocumentoLicenca(id: string): Promise<Blob> {
+  return apiBlob(`${endpoint}/${encodeURIComponent(id)}/documento`);
+}
